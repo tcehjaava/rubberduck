@@ -1,0 +1,14 @@
+langchain
+langchain-community
+langchain-core
+langchain-anthropic
+langchain-google-genai
+langchain-openai
+langgraph
+openai
+datasets
+gql[requests]
+sseclient
+dashscope
+pydantic
+python-dotenv
