@@ -1,7 +1,7 @@
 # src/agents/base_agent.py
 
 import json
-from typing import Generic, List, Optional, Type, TypeVar
+from typing import Generic, List, Optional, TypeVar
 
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -30,11 +30,19 @@ class SingletonMeta(type):
 
 
 class BaseAgent(Generic[T], metaclass=SingletonMeta):
-    def __init__(self, config: AgentConfig, output_model: Type[T]):
+    def __init__(self, config: AgentConfig):
         self.config = config
-        self.output_model = output_model
         self.llm = LLMFactory.get_llm_from_config(config)
         self.agent_name = self.__class__.__name__
+
+        for base in self.__class__.__orig_bases__:
+            if hasattr(base, "__origin__") and base.__origin__ is BaseAgent:
+                self.output_model = base.__args__[0]
+                break
+        else:
+            raise TypeError(f"Could not determine output model type for {self.__class__.__name__}")
+
+        self.parser = JsonOutputParser(pydantic_object=self.output_model)
 
     def get_context(self, state: WorkflowState) -> AgentExecutionContext[T]:
         return state.get_context(self.agent_name)
@@ -42,19 +50,17 @@ class BaseAgent(Generic[T], metaclass=SingletonMeta):
     def execute(self, messages: List[tuple[MessageRole, str]], state: WorkflowState) -> None:
         context = self.get_context(state)
 
-        parser = JsonOutputParser(pydantic_object=self.output_model)
-
         # Convert to langchain message format and prepend system prompt
         formatted_messages = [(MessageRole.SYSTEM, f"{self.config.SYSTEM_PROMPT}\n\n{{format_instructions}}")]
         formatted_messages.extend([(role.value, content) for role, content in messages])
 
         prompt = ChatPromptTemplate.from_messages(formatted_messages)
-        chain = prompt | self.llm | parser
+        chain = prompt | self.llm | self.parser
 
         user_prompt = next((content for role, content in messages if role == MessageRole.USER), "")
 
         try:
-            raw_result = chain.invoke({"format_instructions": parser.get_format_instructions()})
+            raw_result = chain.invoke({"format_instructions": self.parser.get_format_instructions()})
             result = self.output_model(**raw_result)
 
             validation_error = self.validate(result)

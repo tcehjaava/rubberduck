@@ -4,6 +4,7 @@ from .agent_state_models import (
     AgentExecutionContext,
     IterationRecord,
     RawInputs,
+    SWEBenchVerifiedInstance,
     WorkflowState,
 )
 from .enums import FileRelevanceLevel, FileType, MessageRole, NextStep, QueryType
@@ -30,4 +31,5 @@ __all__ = [
     "NextStep",
     "MessageRole",
     "IssueData",
+    "SWEBenchVerifiedInstance",
 ]

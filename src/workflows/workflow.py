@@ -1,3 +1,5 @@
+# src/workflows/workflow.py
+
 from langgraph.graph import END, StateGraph
 
 from src.agents import (
@@ -13,9 +15,7 @@ class WorkflowBuilder:
     def create_workflow() -> StateGraph:
         workflow = StateGraph(WorkflowState)
 
-        issue_data_extractor = IssueDataExtractorAgent(
-            config=issue_data_extractor_config, output_model=IssueDataExtractorAgent.get_output_model()
-        )
+        issue_data_extractor = IssueDataExtractorAgent(config=issue_data_extractor_config)
 
         workflow.add_node(IssueDataExtractorAgent.__name__, issue_data_extractor.run)
 
