@@ -28,3 +28,11 @@ class WorkflowBuilder:
         )
 
         return workflow.compile()
+
+    @staticmethod
+    def run(initial_state: WorkflowState):
+        workflow = WorkflowBuilder.create_workflow()
+
+        for output in workflow.stream(initial_state):
+            for agent, state in output.items():
+                state.print_agent_output(state.previous_agent)

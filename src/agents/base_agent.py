@@ -1,6 +1,5 @@
 # src/agents/base_agent.py
 
-import json
 from typing import Generic, List, Optional, TypeVar
 
 from langchain_core.output_parsers import JsonOutputParser
@@ -67,7 +66,6 @@ class BaseAgent(Generic[T], metaclass=SingletonMeta):
             if validation_error is None:
                 record = IterationRecord[T](prompt=user_prompt, result=result)
                 context.add_successful_iteration(record)
-                state.set_previous_agent(self.agent_name)
             else:
                 raise ValidationError(validation_error, self.output_model)
 
@@ -79,9 +77,10 @@ class BaseAgent(Generic[T], metaclass=SingletonMeta):
             else:
                 self.on_retry(state)
 
+        state.set_previous_agent(self.agent_name)
         context.reset()
 
-    def run(self, state: WorkflowState) -> None:
+    def run(self, state: WorkflowState) -> WorkflowState:
         raise NotImplementedError("Subclasses must implement run method.")
 
     def on_retry(self, state: WorkflowState) -> None:
@@ -95,21 +94,3 @@ class BaseAgent(Generic[T], metaclass=SingletonMeta):
 
     def next_step(self, state: WorkflowState) -> NextStep:
         raise NotImplementedError("Implement the workflow next step decision logic")
-
-    def print_output(self, state: WorkflowState) -> None:
-        print(f"\n=== Node: {self.agent_name} ===\n")
-
-        context = self.get_context(state)
-        if not context.full_history:
-            print("No execution history available.")
-        else:
-            last_record = context.full_history[-1]
-
-            if last_record.error:
-                print(f"Error: {last_record.error}")
-            elif last_record.result:
-                print(json.dumps(last_record.result.model_dump(), indent=2))
-            else:
-                print("No output available.")
-
-        print("=" * 40)

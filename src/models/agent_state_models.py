@@ -1,5 +1,6 @@
 # src/models/agent_state_models.py
 
+import json
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 from pydantic import BaseModel, Field
@@ -36,13 +37,13 @@ class SWEBenchVerifiedInstance(BaseModel):
         )
 
 
-class IterationRecord(Generic[T], BaseModel):
+class IterationRecord(BaseModel, Generic[T]):
     prompt: str
     result: Optional[T] = None
     error: Optional[str] = None
 
 
-class AgentExecutionContext(Generic[T], BaseModel):
+class AgentExecutionContext(BaseModel, Generic[T]):
     error: Optional[str] = None
     iteration_history: List[IterationRecord[T]] = []
     full_history: List[IterationRecord[T]] = []
@@ -73,6 +74,10 @@ class AgentExecutionContext(Generic[T], BaseModel):
         self.attempts = 0
         self.iteration_history.clear()
 
+    def get_last_record(self) -> Optional[IterationRecord[T]]:
+        """Returns the last iteration record, if available."""
+        return self.full_history[-1] if self.full_history else None
+
 
 class WorkflowState(BaseModel):
     raw_inputs: RawInputs
@@ -86,3 +91,21 @@ class WorkflowState(BaseModel):
     def set_previous_agent(self, agent_name: str):
         """Set the previous agent name."""
         self.previous_agent = agent_name
+
+    def print_agent_output(self, agent_name: str) -> None:
+        """Print the output or error for a specific agent."""
+        context = self.get_context(agent_name)
+        last_record = context.get_last_record()
+
+        print(f"\n=== Node: {agent_name} ===\n")
+
+        if last_record is None:
+            print("No execution history available.")
+        elif last_record.error:
+            print(f"Error: {last_record.error}")
+        elif last_record.result:
+            print(json.dumps(last_record.result.model_dump(), indent=2))
+        else:
+            print("No output available.")
+
+        print("=" * 40)

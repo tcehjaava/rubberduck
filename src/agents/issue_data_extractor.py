@@ -70,11 +70,12 @@ issue_data_extractor_config = AgentConfig(
 
 class IssueDataExtractorAgent(BaseAgent[IssueData]):
 
-    def run(self, state: WorkflowState) -> None:
+    def run(self, state: WorkflowState) -> WorkflowState:
         raw_inputs = state.raw_inputs
-        user_prompt = USER_PROMPT_TEMPLATE.format(**raw_inputs)
+        user_prompt = USER_PROMPT_TEMPLATE.format(**raw_inputs.model_dump())
         messages = [(MessageRole.USER, user_prompt)]
         self.execute(messages, state)
+        return state
 
     def on_retry(self, state: WorkflowState) -> None:
         pass
