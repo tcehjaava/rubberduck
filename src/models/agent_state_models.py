@@ -66,6 +66,7 @@ class AgentExecutionContext(BaseModel, Generic[T]):
     def add_successful_iteration(self, record: IterationRecord[T]):
         """Add a successful iteration record."""
         self.full_history.append(record)
+        self.iteration_history.append(record)
         self.error = None
 
     def reset(self):
@@ -88,9 +89,19 @@ class WorkflowState(BaseModel):
         """Get or create an execution context for an agent."""
         return self.contexts.setdefault(agent_name, AgentExecutionContext())
 
-    def set_previous_agent(self, agent_name: str):
-        """Set the previous agent name."""
+    def end_iteration(self, agent_name: str):
+        """Called at the end of iteration."""
         self.previous_agent = agent_name
+        self.get_context(agent_name).reset()
+
+    def copy_context(self, agent_name: str) -> AgentExecutionContext[Any]:
+        return self.get_context(agent_name).model_copy(deep=True)
+
+    def updated_context(self, agent_name: str, context: AgentExecutionContext[Any]) -> dict:
+        return {
+            "contexts": {agent_name: context.model_dump()},
+            "previous_agent": agent_name,
+        }
 
     def print_agent_output(self, agent_name: str) -> None:
         """Print the output or error for a specific agent."""
@@ -104,7 +115,7 @@ class WorkflowState(BaseModel):
         elif last_record.error:
             print(f"Error: {last_record.error}")
         elif last_record.result:
-            print(json.dumps(last_record.result.model_dump(), indent=2))
+            print(json.dumps(last_record.result, indent=2))
         else:
             print("No output available.")
 

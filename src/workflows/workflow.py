@@ -32,7 +32,10 @@ class WorkflowBuilder:
     @staticmethod
     def run(initial_state: WorkflowState):
         workflow = WorkflowBuilder.create_workflow()
+        current_state_dict = initial_state.model_dump()
 
-        for output in workflow.stream(initial_state):
-            for agent, state in output.items():
-                state.print_agent_output(state.previous_agent)
+        for output in workflow.stream(current_state_dict):
+            for agent, partial_update in output.items():
+                current_state_dict.update(partial_update)
+                current_state = WorkflowState.model_validate(current_state_dict)
+                current_state.print_agent_output(agent)

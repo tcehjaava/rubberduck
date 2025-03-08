@@ -46,12 +46,11 @@ class BaseAgent(Generic[T], metaclass=SingletonMeta):
     def get_context(self, state: WorkflowState) -> AgentExecutionContext[T]:
         return state.get_context(self.agent_name)
 
-    def execute(self, messages: List[tuple[MessageRole, str]], state: WorkflowState) -> None:
-        context = self.get_context(state)
-
-        # Convert to langchain message format and prepend system prompt
-        formatted_messages = [(MessageRole.SYSTEM, f"{self.config.SYSTEM_PROMPT}\n\n{{format_instructions}}")]
-        formatted_messages.extend([(role.value, content) for role, content in messages])
+    def execute(self, messages: List[tuple[MessageRole, str]], context: AgentExecutionContext[T]) -> None:
+        formatted_messages = [
+            (MessageRole.SYSTEM, f"{self.config.SYSTEM_PROMPT}\n\n{{format_instructions}}"),
+            *[(role.value, content) for role, content in messages],
+        ]
 
         prompt = ChatPromptTemplate.from_messages(formatted_messages)
         chain = prompt | self.llm | self.parser
@@ -68,25 +67,21 @@ class BaseAgent(Generic[T], metaclass=SingletonMeta):
                 context.add_successful_iteration(record)
             else:
                 raise ValidationError(validation_error, self.output_model)
-
         except Exception as e:
             context.handle_error(str(e), user_prompt)
 
             if not context.has_more_retries():
-                self.on_max_retries_exceeded(state)
+                self.on_max_retries_exceeded(context)
             else:
-                self.on_retry(state)
+                self.on_retry(context)
 
-        state.set_previous_agent(self.agent_name)
-        context.reset()
-
-    def run(self, state: WorkflowState) -> WorkflowState:
+    def run(self, state: WorkflowState) -> dict:
         raise NotImplementedError("Subclasses must implement run method.")
 
-    def on_retry(self, state: WorkflowState) -> None:
+    def on_retry(self, context: AgentExecutionContext[T]) -> None:
         raise NotImplementedError("Subclasses must implement on_retry method.")
 
-    def on_max_retries_exceeded(self, state: WorkflowState) -> None:
+    def on_max_retries_exceeded(self, context: AgentExecutionContext[T]) -> None:
         raise NotImplementedError("Subclasses must implement on_max_retries_exceeded method.")
 
     def validate(self, result: T) -> Optional[str]:

@@ -5,7 +5,13 @@ from typing import Optional
 
 from agents import BaseAgent
 from config import AgentConfig
-from models import IssueData, MessageRole, NextStep, WorkflowState
+from models import (
+    AgentExecutionContext,
+    IssueData,
+    MessageRole,
+    NextStep,
+    WorkflowState,
+)
 
 SYSTEM_PROMPT = """
 You are the Structural Foundation Agent in an autonomous code repair system.
@@ -70,27 +76,25 @@ issue_data_extractor_config = AgentConfig(
 
 class IssueDataExtractorAgent(BaseAgent[IssueData]):
 
-    def run(self, state: WorkflowState) -> WorkflowState:
+    def run(self, state: WorkflowState) -> dict:
         raw_inputs = state.raw_inputs
         user_prompt = USER_PROMPT_TEMPLATE.format(**raw_inputs.model_dump())
         messages = [(MessageRole.USER, user_prompt)]
-        self.execute(messages, state)
-        return state
+        context_copy = state.copy_context(self.agent_name)
+        self.execute(messages, context_copy)
+        return state.updated_context(self.agent_name, context_copy)
 
-    def on_retry(self, state: WorkflowState) -> None:
+    def on_retry(self, context: AgentExecutionContext[IssueData]) -> None:
         pass
 
-    def on_max_retries_exceeded(self, state: WorkflowState) -> None:
+    def on_max_retries_exceeded(self, context: AgentExecutionContext[IssueData]) -> None:
         pass
 
     def validate(self, result: IssueData) -> Optional[str]:
         return None
 
     def next_step(self, state: WorkflowState) -> NextStep:
-        if state is None:
-            return NextStep.END
-
-        context = self.get_context(state)
+        context = state.get_context(self.agent_name)
         if context.error:
             logging.error(f"{self.agent_name} encountered an error: {context.error}")
             return NextStep.END
