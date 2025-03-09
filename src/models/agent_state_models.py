@@ -14,29 +14,6 @@ class RawInputs(BaseModel):
     base_commit: str
 
 
-class SWEBenchVerifiedInstance(BaseModel):
-    repo: str
-    instance_id: str
-    base_commit: str
-    patch: str
-    test_patch: str
-    problem_statement: str
-    hints_text: str
-    created_at: str
-    version: str
-    fail_to_pass: List[str] = Field(..., alias="FAIL_TO_PASS")
-    pass_to_pass: List[str] = Field(..., alias="PASS_TO_PASS")
-    environment_setup_commit: str
-    difficulty: Optional[str]
-
-    def get_raw_inputs(self) -> RawInputs:
-        return RawInputs(
-            repo=self.repo,
-            problem_statement=self.problem_statement,
-            base_commit=self.base_commit,
-        )
-
-
 class IterationRecord(BaseModel, Generic[T]):
     prompt: str
     result: Optional[T] = None
@@ -120,3 +97,26 @@ class WorkflowState(BaseModel):
             print("No output available.")
 
         print("=" * 40)
+
+
+class SWEBenchVerifiedInstance(BaseModel):
+    repo: str
+    instance_id: str
+    base_commit: str
+    patch: str
+    test_patch: str
+    problem_statement: str
+    hints_text: str
+    created_at: str
+    version: str
+    fail_to_pass: List[str] = Field(..., alias="FAIL_TO_PASS")
+    pass_to_pass: List[str] = Field(..., alias="PASS_TO_PASS")
+    environment_setup_commit: str
+    difficulty: Optional[str]
+
+    def get_raw_inputs(self) -> RawInputs:
+        return RawInputs(
+            repo=self.repo,
+            problem_statement=self.problem_statement,
+            base_commit=self.base_commit,
+        )
