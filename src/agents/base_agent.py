@@ -1,5 +1,6 @@
 # src/agents/base_agent.py
 
+import logging
 from typing import Generic, List, Optional, TypeVar
 
 from langchain_core.output_parsers import JsonOutputParser
@@ -43,34 +44,48 @@ class BaseAgent(Generic[T], metaclass=SingletonMeta):
 
         self.parser = JsonOutputParser(pydantic_object=self.output_model)
 
-    def get_context(self, state: WorkflowState) -> AgentExecutionContext[T]:
-        return state.get_context(self.agent_name)
+    def copy_context(self, state: WorkflowState) -> AgentExecutionContext[T]:
+        context = state.copy_context(self.agent_name)
+        context.output_model = self.output_model
+        return context
 
     def execute(self, messages: List[tuple[MessageRole, str]], context: AgentExecutionContext[T]) -> None:
+        iteration = context.attempts
+        logging.info(f"[{self.agent_name}] Starting execute (Iteration: {iteration})")
+
         formatted_messages = [
-            (MessageRole.SYSTEM, f"{self.config.SYSTEM_PROMPT}\n\n{{format_instructions}}"),
+            (MessageRole.SYSTEM.value, f"{self.config.SYSTEM_PROMPT}\n\n{{format_instructions}}"),
             *[(role.value, content) for role, content in messages],
         ]
+
+        template_vars = {
+            "format_instructions": self.parser.get_format_instructions(),
+            **context.get_extra_template_vars(),
+        }
 
         prompt = ChatPromptTemplate.from_messages(formatted_messages)
         chain = prompt | self.llm | self.parser
 
-        user_prompt = next((content for role, content in messages if role == MessageRole.USER), "")
+        user_prompt = next((content for role, content in reversed(messages) if role == MessageRole.USER), "")
 
+        raw_result, result = None, None
         try:
-            raw_result = chain.invoke({"format_instructions": self.parser.get_format_instructions()})
+            raw_result = chain.invoke(template_vars)
             result = self.output_model(**raw_result)
 
             validation_error = self.validate(result)
             if validation_error is None:
-                record = IterationRecord[T](prompt=user_prompt, result=result)
+                record = IterationRecord[T](prompt=user_prompt, result=result, raw_result=raw_result)
                 context.add_successful_iteration(record)
             else:
                 raise ValidationError(validation_error, self.output_model)
         except Exception as e:
-            context.handle_error(str(e), user_prompt)
+            error_message = str(e)
+            logging.error(f"[{self.agent_name}] Error encountered on iteration {iteration}: {error_message}")
+            context.handle_error(error_message, user_prompt, result, raw_result)
 
             if not context.has_more_retries():
+                logging.warning(f"[{self.agent_name}] Max retries ({context.max_retries}) exceeded.")
                 self.on_max_retries_exceeded(context)
             else:
                 self.on_retry(context)

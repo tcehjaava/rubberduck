@@ -1,9 +1,13 @@
 # main.py
 
+import logging
+
 from config import GLOBAL_CONFIG
 from models import WorkflowState
 from utils.dataset_utils import DatasetUtils
 from workflows import WorkflowBuilder
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 
 def main(instance_id: str):

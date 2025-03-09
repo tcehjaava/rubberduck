@@ -37,3 +37,9 @@ class MessageRole(str, Enum):
     SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
+
+
+class OrchestratorAction(str, Enum):
+    RELEVANCE_SEARCH = "RELEVANCE_SEARCH"  # For code/relevance search tasks
+    END = "END"  # To terminate the workflow
+    # Future actions can be added here as needed

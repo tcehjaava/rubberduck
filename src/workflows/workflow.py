@@ -2,6 +2,7 @@
 
 from langgraph.graph import END, StateGraph
 
+from agents import Orchestrator, orchestrator_config
 from src.agents import (
     IssueDataExtractorAgent,
     issue_data_extractor_config,
@@ -16,17 +17,30 @@ class WorkflowBuilder:
         workflow = StateGraph(WorkflowState)
 
         issue_data_extractor = IssueDataExtractorAgent(config=issue_data_extractor_config)
+        orchestrator = Orchestrator(config=orchestrator_config)
 
         workflow.add_node(IssueDataExtractorAgent.__name__, issue_data_extractor.run)
-
-        workflow.set_entry_point(IssueDataExtractorAgent.__name__)
+        workflow.add_node(Orchestrator.__name__, orchestrator.run)
 
         workflow.add_conditional_edges(
             IssueDataExtractorAgent.__name__,
             issue_data_extractor.next_step,
-            {NextStep.NEXT.value: END, NextStep.END.value: END},
+            {
+                NextStep.NEXT.value: Orchestrator.__name__,
+                NextStep.END.value: END,
+            },
         )
 
+        workflow.add_conditional_edges(
+            Orchestrator.__name__,
+            orchestrator.next_step,
+            {
+                NextStep.NEXT.value: END,
+                NextStep.END.value: END,
+            },
+        )
+
+        workflow.set_entry_point(IssueDataExtractorAgent.__name__)
         return workflow.compile()
 
     @staticmethod

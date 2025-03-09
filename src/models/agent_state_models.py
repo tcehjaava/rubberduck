@@ -1,9 +1,13 @@
 # src/models/agent_state_models.py
 
 import json
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+import logging
+import textwrap
+from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
 from pydantic import BaseModel, Field
+
+from models.enums import MessageRole
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -18,43 +22,65 @@ class IterationRecord(BaseModel, Generic[T]):
     prompt: str
     result: Optional[T] = None
     error: Optional[str] = None
+    raw_result: Optional[dict] = None
 
 
 class AgentExecutionContext(BaseModel, Generic[T]):
-    error: Optional[str] = None
     iteration_history: List[IterationRecord[T]] = []
     full_history: List[IterationRecord[T]] = []
-    attempts: int = 0
+    attempts: int = 1
     max_retries: int = 3
+    extra_template_vars: Dict[str, Any] = {}
+    output_model: Optional[Type[T]] = None
+
+    def set_extra_template_vars(self, vars: dict):
+        self.extra_template_vars = vars
+
+    def get_extra_template_vars(self) -> dict:
+        return self.extra_template_vars
 
     def has_more_retries(self) -> bool:
-        """Check if there are more retries available."""
-        return self.attempts < self.max_retries
+        return self.attempts <= self.max_retries
 
-    def handle_error(self, error_message: str, prompt: str):
-        """Handle an error by recording it and incrementing attempts."""
-        self.error = error_message
+    def handle_error(self, error_message: str, prompt: str, result: Optional[T], raw_result: Optional[dict]):
         self.attempts += 1
-
-        record = IterationRecord[T](prompt=prompt, error=error_message)
+        record = IterationRecord[T](prompt=prompt, error=error_message, result=result, raw_result=raw_result)
         self.iteration_history.append(record)
         self.full_history.append(record)
 
     def add_successful_iteration(self, record: IterationRecord[T]):
-        """Add a successful iteration record."""
         self.full_history.append(record)
         self.iteration_history.append(record)
-        self.error = None
 
     def reset(self):
-        """Reset the context for a new execution."""
-        self.error = None
         self.attempts = 0
+        self.extra_template_vars = {}
         self.iteration_history.clear()
 
     def get_last_record(self) -> Optional[IterationRecord[T]]:
-        """Returns the last iteration record, if available."""
-        return self.full_history[-1] if self.full_history else None
+        if not self.full_history:
+            return None
+
+        last_record = self.full_history[-1]
+
+        if last_record.result and isinstance(last_record.result, dict) and self.output_model:
+            last_record.result = self.output_model(**last_record.result)
+
+        return last_record
+
+    def build_conversation_messages(self, use_full_history: bool = False) -> List[tuple[MessageRole, str]]:
+        history = self.full_history if use_full_history else self.iteration_history
+        messages = []
+
+        for record in history:
+            if record.prompt:
+                messages.append((MessageRole.USER, record.prompt))
+
+            if record.raw_result:
+                result_str = json.dumps(record.raw_result, indent=2)
+                messages.append((MessageRole.ASSISTANT, result_str))
+
+        return messages
 
 
 class WorkflowState(BaseModel):
@@ -63,16 +89,12 @@ class WorkflowState(BaseModel):
     previous_agent: Optional[str] = None
 
     def get_context(self, agent_name: str) -> AgentExecutionContext[Any]:
-        """Get or create an execution context for an agent."""
         return self.contexts.setdefault(agent_name, AgentExecutionContext())
 
-    def end_iteration(self, agent_name: str):
-        """Called at the end of iteration."""
-        self.previous_agent = agent_name
-        self.get_context(agent_name).reset()
-
     def copy_context(self, agent_name: str) -> AgentExecutionContext[Any]:
-        return self.get_context(agent_name).model_copy(deep=True)
+        context = self.get_context(agent_name).model_copy(deep=True)
+        context.reset()
+        return context
 
     def updated_context(self, agent_name: str, context: AgentExecutionContext[Any]) -> dict:
         return {
@@ -81,22 +103,25 @@ class WorkflowState(BaseModel):
         }
 
     def print_agent_output(self, agent_name: str) -> None:
-        """Print the output or error for a specific agent."""
         context = self.get_context(agent_name)
         last_record = context.get_last_record()
 
-        print(f"\n=== Node: {agent_name} ===\n")
+        separator = "=" * 60
+        header = f"Agent Output: [{agent_name}]"
 
         if last_record is None:
-            print("No execution history available.")
+            content = f"No execution history available for agent '{agent_name}'."
         elif last_record.error:
-            print(f"Error: {last_record.error}")
-        elif last_record.result:
-            print(json.dumps(last_record.result, indent=2))
+            content = textwrap.indent(f"Error:\n{last_record.error}", prefix="  ")
+        elif last_record.raw_result:
+            formatted_output = json.dumps(last_record.raw_result, indent=2, ensure_ascii=False)
+            content = textwrap.indent(f"Output:\n{formatted_output}", prefix="  ")
         else:
-            print("No output available.")
+            content = f"Agent '{agent_name}' produced no output."
 
-        print("=" * 40)
+        full_message = f"\n{separator}\n{header}\n{separator}\n{content}\n{separator}"
+
+        logging.info(full_message)
 
 
 class SWEBenchVerifiedInstance(BaseModel):

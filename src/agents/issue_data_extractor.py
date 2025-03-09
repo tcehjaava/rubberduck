@@ -80,7 +80,7 @@ class IssueDataExtractorAgent(BaseAgent[IssueData]):
         raw_inputs = state.raw_inputs
         user_prompt = USER_PROMPT_TEMPLATE.format(**raw_inputs.model_dump())
         messages = [(MessageRole.USER, user_prompt)]
-        context_copy = state.copy_context(self.agent_name)
+        context_copy = self.copy_context(state)
         self.execute(messages, context_copy)
         return state.updated_context(self.agent_name, context_copy)
 
@@ -95,7 +95,11 @@ class IssueDataExtractorAgent(BaseAgent[IssueData]):
 
     def next_step(self, state: WorkflowState) -> NextStep:
         context = state.get_context(self.agent_name)
-        if context.error:
-            logging.error(f"{self.agent_name} encountered an error: {context.error}")
+        last_record = context.get_last_record()
+
+        if not last_record or last_record.error:
+            error_details = last_record.error if last_record else "No execution record found"
+            logging.error(f"Issue Data Extraction failed: {error_details}.")
             return NextStep.END
+
         return NextStep.NEXT

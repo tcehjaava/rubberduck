@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from models import QueryType
+from models import OrchestratorAction, QueryType
 
 
 class ExpectedBehavior(BaseModel):
@@ -123,3 +123,39 @@ class SearchQuery(BaseModel):
     query_type: QueryType = Field(description="Type of Sourcegraph query to execute")
     query: str = Field(description="The Sourcegraph query string")
     rationale: str = Field(description="Explanation of why this query is relevant")
+
+
+class OrchestratorTask(BaseModel):
+    """Task assignment for a downstream agent."""
+
+    task_prompt: str = Field(
+        description="The specific prompt to be sent to the downstream agent.",
+        example=(
+            "Given the issue with API authentication failures, analyze the token validation logic in",
+            " auth_service.py",
+        ),
+    )
+    reasoning: Optional[str] = Field(
+        default=None,
+        description="The orchestrator's reasoning for assigning this specific task.",
+        example=(
+            "Authentication failures suggest issues in the token validation logic, which should be examined",
+            " first before looking at the database layer.",
+        ),
+    )
+
+
+class OrchestratorOutput(BaseModel):
+    """Orchestrator decision output."""
+
+    action: OrchestratorAction = Field(
+        description="The next action to take in the workflow pipeline.", example="RELEVANCE_SEARCH"
+    )
+    task: Optional[OrchestratorTask] = Field(
+        default=None,
+        description="The task details to be assigned based on the selected action. Required unless action is END.",
+        example={
+            "task_prompt": "Create a Sourcegraph query to find token validation code in the auth module",
+            "reasoning": "Need to identify all token validation methods to understand the authentication flow.",
+        },
+    )

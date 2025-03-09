@@ -1,5 +1,6 @@
 # models/__init__.py
 
+
 from .agent_state_models import (
     AgentExecutionContext,
     IterationRecord,
@@ -7,12 +8,21 @@ from .agent_state_models import (
     SWEBenchVerifiedInstance,
     WorkflowState,
 )
-from .enums import FileRelevanceLevel, FileType, MessageRole, NextStep, QueryType
+from .enums import (
+    FileRelevanceLevel,
+    FileType,
+    MessageRole,
+    NextStep,
+    OrchestratorAction,
+    QueryType,
+)
 from .output_models import (
     ActualBehavior,
     ExpectedBehavior,
     IssueData,
     KnowledgeUsed,
+    OrchestratorOutput,
+    OrchestratorTask,
     SearchQuery,
 )
 
@@ -32,4 +42,7 @@ __all__ = [
     "MessageRole",
     "IssueData",
     "SWEBenchVerifiedInstance",
+    "OrchestratorAction",
+    "OrchestratorOutput",
+    "OrchestratorTask",
 ]
