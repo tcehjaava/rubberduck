@@ -161,6 +161,12 @@ class OrchestratorOutput(BaseModel):
     )
     conversation_summary: Optional[str] = Field(
         default=None,
-        description="Summary of the conversation so far.",
-        example="The issue involves authentication failures, specifically related to token validation logic.",
+        description=(
+            "A concise summary explaining what actions have been taken so far in the workflow and "
+            "what the current goal or next steps are."
+        ),
+        example=(
+            "We have identified authentication failures related to token validation. Currently, we're "
+            "aiming to pinpoint problematic code sections by initiating a relevance search."
+        ),
     )
