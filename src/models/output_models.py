@@ -159,3 +159,8 @@ class OrchestratorOutput(BaseModel):
             "reasoning": "Need to identify all token validation methods to understand the authentication flow.",
         },
     )
+    conversation_summary: Optional[str] = Field(
+        default=None,
+        description="Summary of the conversation so far.",
+        example="The issue involves authentication failures, specifically related to token validation logic.",
+    )

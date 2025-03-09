@@ -67,10 +67,13 @@ class Orchestrator(BaseAgent[OrchestratorOutput]):
         return state.updated_context(self.agent_name, orchestrator_context)
 
     def validate(self, result: OrchestratorOutput) -> Optional[str]:
-        if result.action == OrchestratorAction.END:
-            return None
+        errors = []
         if result.action == OrchestratorAction.RELEVANCE_SEARCH and not result.task:
-            return "RELEVANCE_SEARCH requires a defined task."
+            errors.append("RELEVANCE_SEARCH requires a defined task.")
+        if not result.conversation_summary:
+            errors.append("A conversation summary must be provided.")
+        if errors:
+            return "; ".join(errors)
         return None
 
     def on_retry(self, context: AgentExecutionContext[OrchestratorOutput]) -> None:

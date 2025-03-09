@@ -1,16 +1,19 @@
 # main.py
 
 import logging
+import uuid
 
-from config import GLOBAL_CONFIG
+from config import GLOBAL_CONFIG, LoggingConfig
 from models import WorkflowState
 from utils.dataset_utils import DatasetUtils
 from workflows import WorkflowBuilder
 
-logging.basicConfig(level=logging.INFO, format="%(message)s")
-
 
 def main(instance_id: str):
+    run_id = uuid.uuid4().hex[:8]
+    LoggingConfig.setup_run_logging(run_id=run_id)
+    logging.info(f"Starting workflow run: {run_id} for instance: {instance_id}")
+
     instance = DatasetUtils.load_instance(instance_id)
     assert instance is not None
 
