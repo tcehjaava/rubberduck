@@ -20,16 +20,7 @@ from utils.llm_factory import LLMFactory
 T = TypeVar("T", bound=BaseModel)
 
 
-class SingletonMeta(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super().__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-
-class BaseAgent(Generic[T], metaclass=SingletonMeta):
+class BaseAgent(Generic[T]):
     def __init__(self, config: AgentConfig):
         self.config = config
         self.llm = LLMFactory.get_llm_from_config(config)
