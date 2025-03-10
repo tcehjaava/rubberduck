@@ -13,10 +13,17 @@ class LoggingConfig:
     @staticmethod
     def setup_run_logging(run_id: str = None):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"workflow_{timestamp}"
+        run_folder_name = f"run_{timestamp}"
         if run_id:
-            filename += f"_{run_id}"
-        log_file = LoggingConfig.LOG_DIR / f"{filename}.log"
+            run_folder_name += f"_{run_id}"
+
+        run_dir = LoggingConfig.LOG_DIR / run_folder_name
+        run_dir.mkdir(parents=True, exist_ok=True)
+
+        agents_log_dir = run_dir / "agents"
+        agents_log_dir.mkdir(parents=True, exist_ok=True)
+
+        console_log_file = run_dir / "console.log"
 
         log_format = "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
 
@@ -24,7 +31,9 @@ class LoggingConfig:
             level=logging.INFO,
             format=log_format,
             handlers=[
-                RotatingFileHandler(log_file, maxBytes=10 * 1024 * 1024, backupCount=3),
+                RotatingFileHandler(console_log_file, maxBytes=10 * 1024 * 1024, backupCount=3),
                 logging.StreamHandler(),
             ],
         )
+
+        return agents_log_dir

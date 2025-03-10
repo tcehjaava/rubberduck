@@ -3,11 +3,9 @@
 from langgraph.graph import END, StateGraph
 
 from agents import Orchestrator, orchestrator_config
-from src.agents import (
-    IssueDataExtractorAgent,
-    issue_data_extractor_config,
-)
+from src.agents import IssueDataExtractorAgent, issue_data_extractor_config
 from src.models import NextStep, WorkflowState
+from utils import WorkflowLogger
 
 
 class WorkflowBuilder:
@@ -44,12 +42,14 @@ class WorkflowBuilder:
         return workflow.compile()
 
     @staticmethod
-    def run(initial_state: WorkflowState):
+    def run(initial_state: WorkflowState) -> WorkflowState:
         workflow = WorkflowBuilder.create_workflow()
         current_state_dict = initial_state.model_dump()
 
         for output in workflow.stream(current_state_dict):
             for agent, partial_update in output.items():
                 current_state_dict.update(partial_update)
-                current_state = WorkflowState.model_validate(current_state_dict)
-                current_state.print_agent_output(agent)
+                current_state = WorkflowState.model_validate(current_state_dict, from_attributes=True)
+                WorkflowLogger.print_agent_output(current_state, agent)
+
+        return current_state

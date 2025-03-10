@@ -1,8 +1,7 @@
 # src/models/agent_state_models.py
 
+import copy
 import json
-import logging
-import textwrap
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
 from pydantic import BaseModel, Field
@@ -86,31 +85,12 @@ class WorkflowState(BaseModel):
         return new_context
 
     def build_context_update(self, agent_name: str, context: AgentExecutionContext[Any]) -> dict:
+        updated_contexts = copy.deepcopy(self.contexts)
+        updated_contexts.setdefault(agent_name, []).append(context)
         return {
-            "contexts": {agent_name: [context.model_dump()]},
+            "contexts": updated_contexts,
             "previous_agent": agent_name,
         }
-
-    def print_agent_output(self, agent_name: str) -> None:
-        context = self.get_latest_context(agent_name)
-        last_record = context.get_last_record()
-
-        separator = "=" * 60
-        header = f"Agent Output: [{agent_name}]"
-
-        if last_record is None:
-            content = f"No execution history available for agent '{agent_name}'."
-        elif last_record.error:
-            content = textwrap.indent(f"Error:\n{last_record.error}", prefix="  ")
-        elif last_record.raw_result:
-            formatted_output = json.dumps(last_record.raw_result, indent=2, ensure_ascii=False)
-            content = textwrap.indent(f"Output:\n{formatted_output}", prefix="  ")
-        else:
-            content = f"Agent '{agent_name}' produced no output."
-
-        full_message = f"\n{separator}\n{header}\n{separator}\n{content}\n{separator}"
-
-        logging.info(full_message)
 
 
 class SWEBenchVerifiedInstance(BaseModel):

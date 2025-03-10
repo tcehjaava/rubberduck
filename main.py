@@ -5,13 +5,13 @@ import uuid
 
 from config import GLOBAL_CONFIG, LoggingConfig
 from models import WorkflowState
-from utils.dataset_utils import DatasetUtils
+from utils import DatasetUtils, WorkflowLogger
 from workflows import WorkflowBuilder
 
 
 def main(instance_id: str):
     run_id = uuid.uuid4().hex[:8]
-    LoggingConfig.setup_run_logging(run_id=run_id)
+    agents_log_dir = LoggingConfig.setup_run_logging(run_id=run_id)
     logging.info(f"Starting workflow run: {run_id} for instance: {instance_id}")
 
     instance = DatasetUtils.load_instance(instance_id)
@@ -20,7 +20,8 @@ def main(instance_id: str):
     raw_inputs = instance.get_raw_inputs()
     initial_state = WorkflowState(raw_inputs=raw_inputs)
 
-    WorkflowBuilder.run(initial_state)
+    workflow_state = WorkflowBuilder.run(initial_state)
+    WorkflowLogger.log_all_agents_history(workflow_state, agents_log_dir)
 
 
 if __name__ == "__main__":
