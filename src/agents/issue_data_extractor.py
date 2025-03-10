@@ -80,9 +80,9 @@ class IssueDataExtractorAgent(BaseAgent[IssueData]):
         raw_inputs = state.raw_inputs
         user_prompt = USER_PROMPT_TEMPLATE.format(**raw_inputs.model_dump())
         messages = [(MessageRole.USER, user_prompt)]
-        context_copy = self.copy_context(state)
-        self.execute(messages, context_copy)
-        return state.updated_context(self.agent_name, context_copy)
+        context = self.create_context(state)
+        self.execute(messages, context)
+        return state.build_context_update(self.agent_name, context)
 
     def on_retry(self, context: AgentExecutionContext[IssueData]) -> None:
         pass
@@ -94,7 +94,7 @@ class IssueDataExtractorAgent(BaseAgent[IssueData]):
         return None
 
     def next_step(self, state: WorkflowState) -> NextStep:
-        context = state.get_context(self.agent_name)
+        context = state.get_latest_context(self.agent_name)
         last_record = context.get_last_record()
 
         if not last_record or last_record.error:

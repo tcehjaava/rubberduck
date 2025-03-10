@@ -35,13 +35,11 @@ class BaseAgent(Generic[T]):
 
         self.parser = JsonOutputParser(pydantic_object=self.output_model)
 
-    def copy_context(self, state: WorkflowState) -> AgentExecutionContext[T]:
-        context = state.copy_context(self.agent_name)
-        context.output_model = self.output_model
-        return context
+    def create_context(self, state: WorkflowState) -> AgentExecutionContext[T]:
+        return state.create_new_context(self.agent_name, self.output_model)
 
     def execute(self, messages: List[tuple[MessageRole, str]], context: AgentExecutionContext[T]) -> None:
-        iteration = context.attempts
+        iteration = context.add_attempt()
         logging.info(f"[{self.agent_name}] Starting execute (Iteration: {iteration})")
 
         formatted_messages = [

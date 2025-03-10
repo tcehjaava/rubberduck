@@ -50,30 +50,34 @@ orchestrator_config = AgentConfig(
 class Orchestrator(BaseAgent[OrchestratorOutput]):
 
     def run(self, state: WorkflowState) -> dict:
-        issue_data_context = state.get_context(IssueDataExtractorAgent.__name__)
+        issue_data_context = state.get_latest_context(IssueDataExtractorAgent.__name__)
 
         issue_data_record = issue_data_context.get_last_record()
         assert issue_data_record.raw_result, "Orchestrator called without issue_data_record."
 
         issue_data_json = json.dumps(issue_data_record.raw_result, indent=2)
 
-        orchestrator_context = self.copy_context(state)
+        orchestrator_context = self.create_context(state)
         orchestrator_context.set_extra_template_vars({"issue_data_json": issue_data_json})
 
-        messages = orchestrator_context.build_conversation_messages(use_full_history=True)
+        messages = orchestrator_context.build_conversation_messages()
         messages.append((MessageRole.USER, USER_PROMPT_TEMPLATE))
 
         self.execute(messages, orchestrator_context)
-        return state.updated_context(self.agent_name, orchestrator_context)
+        return state.build_context_update(self.agent_name, orchestrator_context)
 
     def validate(self, result: OrchestratorOutput) -> Optional[str]:
         errors = []
+
         if result.action == OrchestratorAction.RELEVANCE_SEARCH and not result.task:
             errors.append("RELEVANCE_SEARCH requires a defined task.")
+
         if not result.conversation_summary:
             errors.append("A conversation summary must be provided.")
+
         if errors:
             return "; ".join(errors)
+
         return None
 
     def on_retry(self, context: AgentExecutionContext[OrchestratorOutput]) -> None:
@@ -96,7 +100,7 @@ class Orchestrator(BaseAgent[OrchestratorOutput]):
         pass
 
     def next_step(self, state: WorkflowState) -> NextStep:
-        context = state.get_context(self.agent_name)
+        context = state.get_latest_context(self.agent_name)
         last_record = context.get_last_record()
 
         if not last_record or last_record.error:
