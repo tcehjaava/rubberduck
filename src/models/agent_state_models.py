@@ -79,15 +79,14 @@ class WorkflowState(BaseModel):
         return self.contexts.get(agent_name, [None])[-1]
 
     def create_new_context(self, agent_name: str, output_model: Optional[Type[T]] = None) -> AgentExecutionContext[Any]:
-        return AgentExecutionContext(output_model=output_model)
+        context = AgentExecutionContext(output_model=output_model)
+        self.contexts.setdefault(agent_name, []).append(context)
+        return context
 
     def build_context_update(self, agent_name: str, context: AgentExecutionContext[Any]) -> dict:
         contexts_dict = {
             name: [ctx.model_dump() for ctx in contexts if ctx is not None] for name, contexts in self.contexts.items()
         }
-
-        agent_contexts = contexts_dict.get(agent_name, [])
-        contexts_dict[agent_name] = agent_contexts + [context.model_dump()]
 
         return {
             "contexts": contexts_dict,
