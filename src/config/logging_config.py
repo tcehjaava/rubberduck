@@ -1,5 +1,3 @@
-# config/logging_config.py
-
 import logging
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
@@ -7,17 +5,18 @@ from pathlib import Path
 
 
 class LoggingConfig:
-    LOG_DIR = Path(__file__).resolve().parents[2] / "logs"
-    LOG_DIR.mkdir(exist_ok=True)
+    BASE_LOG_DIR = Path(__file__).resolve().parents[2] / "logs"
 
     @staticmethod
     def setup_run_logging(run_id: str = None):
+        date_folder = datetime.now().strftime("%Y-%m-%d")
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
         run_folder_name = f"run_{timestamp}"
         if run_id:
             run_folder_name += f"_{run_id}"
 
-        run_dir = LoggingConfig.LOG_DIR / run_folder_name
+        run_dir = LoggingConfig.BASE_LOG_DIR / date_folder / run_folder_name
         run_dir.mkdir(parents=True, exist_ok=True)
 
         agents_log_dir = run_dir / "agents"
