@@ -1,6 +1,5 @@
 # src/models/agent_state_models.py
 
-import copy
 import json
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
@@ -80,15 +79,18 @@ class WorkflowState(BaseModel):
         return self.contexts.get(agent_name, [None])[-1]
 
     def create_new_context(self, agent_name: str, output_model: Optional[Type[T]] = None) -> AgentExecutionContext[Any]:
-        new_context = AgentExecutionContext(output_model=output_model)
-        self.contexts.setdefault(agent_name, []).append(new_context)
-        return new_context
+        return AgentExecutionContext(output_model=output_model)
 
     def build_context_update(self, agent_name: str, context: AgentExecutionContext[Any]) -> dict:
-        updated_contexts = copy.deepcopy(self.contexts)
-        updated_contexts.setdefault(agent_name, []).append(context)
+        contexts_dict = {
+            name: [ctx.model_dump() for ctx in contexts if ctx is not None] for name, contexts in self.contexts.items()
+        }
+
+        agent_contexts = contexts_dict.get(agent_name, [])
+        contexts_dict[agent_name] = agent_contexts + [context.model_dump()]
+
         return {
-            "contexts": updated_contexts,
+            "contexts": contexts_dict,
             "previous_agent": agent_name,
         }
 

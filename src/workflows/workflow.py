@@ -49,7 +49,7 @@ class WorkflowBuilder:
         for output in workflow.stream(current_state_dict):
             for agent, partial_update in output.items():
                 current_state_dict.update(partial_update)
-                current_state = WorkflowState.model_validate(current_state_dict, from_attributes=True)
+                current_state = WorkflowState.model_validate(current_state_dict)
                 WorkflowLogger.print_agent_output(current_state, agent)
 
         return current_state
