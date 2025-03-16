@@ -69,8 +69,7 @@ Extract the data according to the schema provided to you, and return only valid 
 """
 
 issue_data_extractor_config = AgentConfig(
-    SYSTEM_PROMPT=SYSTEM_PROMPT,
-    TEMPERATURE=0.0,  # MODEL_NAME="qwen-max"
+    SYSTEM_PROMPT=SYSTEM_PROMPT, TEMPERATURE=0.0, MODEL_NAME="claude-3-7-sonnet-20250219"
 )
 
 

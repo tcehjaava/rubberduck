@@ -18,6 +18,7 @@ GLOBAL_CONFIG = GlobalConfig(
     # pytest-dev/pytest is the easiest repo to start with
     INSTANCE_ID="pytest-dev__pytest-10051",
     # Default model configuration:
+    #   claude-3-7-sonnet-20250219
     #   claude-3-5-sonnet-20241022
     #   deepseek-chat
     #   deepseek-reasoner
@@ -28,7 +29,7 @@ GLOBAL_CONFIG = GlobalConfig(
     #   qwen-max
     #   qwen-plus
     #   qwen-turbo
-    MODEL_NAME="gpt-4o-mini",
+    MODEL_NAME="qwen-turbo",
     SOURCEGRAPH_ENDPOINT="https://codeon.sourcegraph.app/.api/",
     SOURCEGRAPH_GQL_URL="https://codeon.sourcegraph.app/.api/graphql",
     SOURCEGRAPH_API_TOKEN=os.getenv("SOURCEGRAPH_API_TOKEN"),

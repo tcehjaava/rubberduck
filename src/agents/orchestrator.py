@@ -44,6 +44,7 @@ Determine the next action and associated task.
 orchestrator_config = AgentConfig(
     SYSTEM_PROMPT=SYSTEM_PROMPT_TEMPLATE,
     TEMPERATURE=0.3,
+    MODEL_NAME="claude-3-7-sonnet-20250219",
 )
 
 
