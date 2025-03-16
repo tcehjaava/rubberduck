@@ -10,6 +10,13 @@ class EntryType(str, Enum):
     DIRECTORY = "DIRECTORY"
 
 
+class ContentStatus(str, Enum):
+    NONE = "NONE"
+    LOADED = "LOADED"
+    SKIPPED = "SKIPPED"
+    ERROR = "ERROR"
+
+
 class TreeEntry(BaseModel):
     path: str = Field(..., description="File or directory path")
     entry_type: EntryType = Field(..., description="Type of entry (file or directory)")

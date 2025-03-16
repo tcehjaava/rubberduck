@@ -1,6 +1,7 @@
 # repo_context/__init__.py
 
 from .models import (
+    ContentStatus,
     DirectoryTree,
     EntryType,
     FileSnippet,
@@ -21,6 +22,7 @@ __all__ = [
     "FileSummary",
     "RepoFetchRequest",
     "EntryType",
+    "ContentStatus",
     "RepoSummarizer",
     "DirectoryTree",
 ]

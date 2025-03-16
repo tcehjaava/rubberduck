@@ -6,7 +6,13 @@ from typing import Any, Dict, List, Optional
 from joblib import delayed
 
 from config import GLOBAL_CONFIG
-from repo_context.models import EntryType, FileSnippet, RepoFetchRequest, TreeEntry
+from repo_context.models import (
+    ContentStatus,
+    EntryType,
+    FileSnippet,
+    RepoFetchRequest,
+    TreeEntry,
+)
 from repo_context.repo_summarizer import RepoSummarizer
 from repo_context.storage_manager import StorageManager
 from utils import SourcegraphClient
@@ -126,14 +132,22 @@ class RepoFetcher:
             return None
 
     @staticmethod
-    def _should_process_file(file_path: str, file_size: Optional[int]) -> bool:
+    def _should_process_file(file_path: str, file_size: Optional[int], repo_name: str = None, commit: str = None):
         _, ext = os.path.splitext(file_path.lower())
         if ext in RepoFetcher.BINARY_EXTENSIONS:
             logging.info(f"Skipping binary file: {file_path}")
+            if repo_name and commit:
+                StorageManager.store_entry(
+                    repo_name, commit, file_path, EntryType.FILE, content_status=ContentStatus.SKIPPED
+                )
             return False
 
         if file_size and file_size > RepoFetcher.MAX_FILE_SIZE:
             logging.info(f"Skipping large file: {file_path} ({file_size} bytes)")
+            if repo_name and commit:
+                StorageManager.store_entry(
+                    repo_name, commit, file_path, EntryType.FILE, content_status=ContentStatus.SKIPPED
+                )
             return False
 
         return True
@@ -233,8 +247,12 @@ class RepoFetcher:
         return file_sizes
 
     @classmethod
-    def fetch_summarize_and_store_snippets(cls, request: RepoFetchRequest):
-        file_paths = StorageManager.load_file_paths(request.repo_name, request.base_commit)
+    def fetch_summarize_and_store_snippets(cls, request: RepoFetchRequest, refresh: bool = False):
+        if refresh:
+            StorageManager.reset_file_summaries(request.repo_name, request.base_commit)
+            logging.info(f"Reset all existing summaries for {request.repo_name}@{request.base_commit}")
+
+        file_paths = StorageManager.get_files_needing_summaries(request.repo_name, request.base_commit)
         logging.info(f"Found {len(file_paths)} files to process for {request.repo_name}@{request.base_commit}")
 
         file_sizes = cls._check_file_sizes_batch(request, file_paths)
@@ -245,19 +263,33 @@ class RepoFetcher:
         repo_summarizer = RepoSummarizer()
 
         def process_file(file_path):
+            content = None
+            content_status = ContentStatus.ERROR
+
             try:
                 snippet = cls._fetch_file_snippet(request.repo_name, request.base_commit, file_path)
 
                 if not snippet.snippet:
-                    return
-
-                summary = repo_summarizer.summarize_snippet(snippet)
-                if summary and summary.summary:
-                    StorageManager.store_summary(request.repo_name, request.base_commit, file_path, summary.summary)
+                    content_status = ContentStatus.SKIPPED
+                    logging.info(f"Skipping empty file: {file_path}")
                 else:
-                    logging.warning(f"Failed to generate summary for file: {file_path}")
+                    summary = repo_summarizer.summarize_snippet(snippet)
+                    if summary and summary.summary:
+                        content = summary.summary
+                        content_status = ContentStatus.LOADED
+                    else:
+                        logging.warning(f"Failed to generate summary for file: {file_path}")
             except Exception as e:
                 logging.error(f"Error processing file '{file_path}': {e}")
+
+            StorageManager.store_entry(
+                request.repo_name,
+                request.base_commit,
+                file_path,
+                EntryType.FILE,
+                content=content,
+                content_status=content_status,
+            )
 
         for i in range(0, len(processable_files), cls.DEFAULT_BATCH_SIZE):
             batch = processable_files[i : i + cls.DEFAULT_BATCH_SIZE]
@@ -269,13 +301,9 @@ class RepoFetcher:
     def fetch_repo_full(cls, repo_name: str, commit: str, refresh: bool = False):
         request = RepoFetchRequest(repo_name=repo_name, base_commit=commit)
 
-        if not refresh:
-            root_entries = StorageManager.get_root_entries(repo_name, commit)
-            if root_entries:
-                logging.info(f"Using existing data for {repo_name}@{commit}")
-                return StorageManager.build_directory_tree(repo_name, commit)
+        if refresh:
+            cls.fetch_and_store_repo_structure(request)
 
-        cls.fetch_and_store_repo_structure(request)
-        cls.fetch_summarize_and_store_snippets(request)
+        cls.fetch_summarize_and_store_snippets(request, refresh=refresh)
 
         return StorageManager.build_directory_tree(repo_name, commit)

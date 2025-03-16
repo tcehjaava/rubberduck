@@ -6,7 +6,7 @@ from typing import Optional
 from sqlalchemy import Column, ForeignKey, String, Text, create_engine, event
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
-from repo_context.models import DirectoryTree, EntryType
+from repo_context.models import ContentStatus, DirectoryTree, EntryType
 
 Base = declarative_base()
 
@@ -20,6 +20,7 @@ class FileSystemEntryORM(Base):
     path = Column(String, nullable=False)
     entry_type = Column(String, nullable=False)
     content = Column(Text, nullable=True)
+    content_status = Column(String, default=ContentStatus.NONE.value)
     parent_id = Column(String, ForeignKey("file_system_entries.id"), nullable=True, index=True)
 
     children = relationship("FileSystemEntryORM", backref="parent", remote_side=[id])
@@ -66,37 +67,31 @@ class StorageManager:
         path: str,
         entry_type: EntryType,
         content: Optional[str] = None,
+        content_status: Optional[ContentStatus] = None,
         parent_id: Optional[str] = None,
     ):
         entry_id = f"{repo}:{commit}:{path}"
-        entry = FileSystemEntryORM(
-            id=entry_id,
-            repo=repo,
-            commit=commit,
-            path=path,
-            entry_type=entry_type.value,
-            content=content,
-            parent_id=parent_id,
-        )
-        session.merge(entry)
+        existing = session.query(FileSystemEntryORM).filter_by(id=entry_id).first()
 
-    @staticmethod
-    @with_session
-    def store_summary(session, repo: str, commit: str, path: str, summary: str):
-        entry_id = f"{repo}:{commit}:{path}"
-        entry = session.query(FileSystemEntryORM).filter_by(id=entry_id).first()
-        if entry:
-            entry.content = summary
+        if existing:
+            if content is not None:
+                existing.content = content
+            if content_status is not None:
+                existing.content_status = content_status.value
+            if parent_id is not None:
+                existing.parent_id = parent_id
         else:
             entry = FileSystemEntryORM(
                 id=entry_id,
                 repo=repo,
                 commit=commit,
                 path=path,
-                entry_type=EntryType.FILE.value,
-                content=summary,
+                entry_type=entry_type.value,
+                content=content,
+                content_status=content_status.value if content_status else ContentStatus.NONE.value,
+                parent_id=parent_id,
             )
-            session.merge(entry)
+            session.add(entry)
 
     @staticmethod
     @with_session
@@ -105,11 +100,46 @@ class StorageManager:
 
     @staticmethod
     @with_session
-    def load_file_paths(session, repo: str, commit: str):
-        entries = (
-            session.query(FileSystemEntryORM).filter_by(repo=repo, commit=commit, entry_type=EntryType.FILE.value).all()
+    def get_files_needing_summaries(session, repo: str, commit: str):
+        all_files = (
+            session.query(FileSystemEntryORM.path, FileSystemEntryORM.content_status)
+            .filter(
+                FileSystemEntryORM.repo == repo,
+                FileSystemEntryORM.commit == commit,
+                FileSystemEntryORM.entry_type == EntryType.FILE.value,
+            )
+            .all()
         )
-        return [e.path for e in entries]
+
+        files_needing_summaries = []
+
+        for entry in all_files:
+            if (
+                not entry.content_status
+                or entry.content_status == ContentStatus.NONE.value
+                or entry.content_status == ContentStatus.ERROR.value
+            ):
+                files_needing_summaries.append(entry.path)
+
+        return files_needing_summaries
+
+    @staticmethod
+    @with_session
+    def reset_file_summaries(session, repo: str, commit: str):
+        files = (
+            session.query(FileSystemEntryORM)
+            .filter(
+                FileSystemEntryORM.repo == repo,
+                FileSystemEntryORM.commit == commit,
+                FileSystemEntryORM.entry_type == EntryType.FILE.value,
+            )
+            .all()
+        )
+
+        for file in files:
+            if file.content_status == ContentStatus.LOADED.value:
+                file.content_status = ContentStatus.NONE.value
+                file.content = None
 
     @staticmethod
     @with_session

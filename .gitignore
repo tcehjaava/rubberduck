@@ -46,3 +46,4 @@ logs/
 # Local configuration
 config.local.py
 repo_files.db
+repo_files.db.backup
