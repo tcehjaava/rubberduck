@@ -1,4 +1,4 @@
-# tools/sourcegraph_client.py
+# tools/sourcegraph/sourcegraph_client.py
 import json
 import logging
 import os

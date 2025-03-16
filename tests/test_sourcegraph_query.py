@@ -2,7 +2,7 @@
 
 import json
 
-from tools.sourcegraph_client import SourcegraphClient
+from tools.sourcegraph.sourcegraph_client import SourcegraphClient
 
 
 def main():
