@@ -3,6 +3,7 @@
 from .base_agent import BaseAgent
 from .issue_data_extractor import IssueDataExtractorAgent, issue_data_extractor_config
 from .orchestrator import Orchestrator, orchestrator_config
+from .query_builder import QueryBuilderAgent, query_builder_config
 
 __all__ = [
     "BaseAgent",
@@ -11,4 +12,6 @@ __all__ = [
     "issue_data_extractor_config",
     "Orchestrator",
     "orchestrator_config",
+    "QueryBuilderAgent",
+    "query_builder_config",
 ]
