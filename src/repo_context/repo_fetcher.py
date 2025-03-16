@@ -1,23 +1,18 @@
 # repo_context/repo_fetcher.py
-
 import logging
 import os
 from typing import Any, Dict, List, Optional
 
-import requests
 from joblib import delayed
 
 from config import GLOBAL_CONFIG
 from repo_context.models import EntryType, FileSnippet, RepoFetchRequest, TreeEntry
 from repo_context.repo_summarizer import RepoSummarizer
 from repo_context.storage_manager import StorageManager
+from utils import SourcegraphClient
 
 
 class RepoFetcher:
-    HEADERS = {
-        "Authorization": f"token {GLOBAL_CONFIG.SOURCEGRAPH_API_TOKEN}",
-        "Content-Type": "application/json",
-    }
 
     BINARY_EXTENSIONS = {
         ".png",
@@ -57,6 +52,8 @@ class RepoFetcher:
     }
 
     MAX_FILE_SIZE = 1024 * 1024
+    MAX_SNIPPET_SIZE = 10240
+    DEFAULT_BATCH_SIZE = 50
 
     @staticmethod
     def _get_nested_value(data: Dict, keys: List[str], default: Any = None) -> Any:
@@ -86,15 +83,7 @@ class RepoFetcher:
         variables = {"repo": repo_name, "commit": commit, "path": path}
 
         try:
-            response = requests.post(
-                GLOBAL_CONFIG.SOURCEGRAPH_GQL_URL,
-                json={"query": query, "variables": variables},
-                headers=RepoFetcher.HEADERS,
-                timeout=30,
-            )
-            response.raise_for_status()
-            data = response.json()
-
+            data = SourcegraphClient.execute_graphql_query(query, variables)
             entries = RepoFetcher._get_nested_value(data, ["data", "repository", "commit", "tree", "entries"], [])
 
             if not entries:
@@ -125,15 +114,7 @@ class RepoFetcher:
         variables = {"repo": repo_name, "commit": commit, "path": file_path}
 
         try:
-            response = requests.post(
-                GLOBAL_CONFIG.SOURCEGRAPH_GQL_URL,
-                json={"query": query, "variables": variables},
-                headers=RepoFetcher.HEADERS,
-                timeout=20,
-            )
-            response.raise_for_status()
-            data = response.json()
-
+            data = SourcegraphClient.execute_graphql_query(query, variables)
             byte_size = RepoFetcher._get_nested_value(data, ["data", "repository", "commit", "file", "byteSize"], None)
 
             if byte_size is None:
@@ -177,23 +158,15 @@ class RepoFetcher:
         variables = {"repo": repo_name, "commit": commit, "path": file_path}
 
         try:
-            response = requests.post(
-                GLOBAL_CONFIG.SOURCEGRAPH_GQL_URL,
-                json={"query": query, "variables": variables},
-                headers=RepoFetcher.HEADERS,
-                timeout=30,
-            )
-            response.raise_for_status()
-            data = response.json()
-
+            data = SourcegraphClient.execute_graphql_query(query, variables)
             content = RepoFetcher._get_nested_value(data, ["data", "repository", "commit", "file", "content"], None)
 
             if content is None:
                 logging.warning(f"No content found for file: {file_path}")
                 return FileSnippet(path=file_path, snippet="")
 
-            if content and len(content) > 10240:
-                content = content[:10240] + "\n\n... [content truncated due to size] ..."
+            if content and len(content) > RepoFetcher.MAX_SNIPPET_SIZE:
+                content = content[: RepoFetcher.MAX_SNIPPET_SIZE] + "\n\n... [content truncated due to size] ..."
 
             return FileSnippet(path=file_path, snippet=content if content else "")
         except Exception as e:
@@ -225,11 +198,11 @@ class RepoFetcher:
     def fetch_and_store_repo_structure(cls, request: RepoFetchRequest):
         logging.info(f"Fetching structure for {request.repo_name}@{request.base_commit}")
 
-        dirs_to_process = [("", None)]  # (path, parent_id)
+        dirs_to_process = [("", None)]
 
         while dirs_to_process:
-            batch = dirs_to_process[:100]  # Process in batches to avoid memory issues
-            dirs_to_process = dirs_to_process[100:]
+            batch = dirs_to_process[: cls.DEFAULT_BATCH_SIZE]
+            dirs_to_process = dirs_to_process[cls.DEFAULT_BATCH_SIZE :]
 
             def process_single_dir(dir_info):
                 path, parent_id = dir_info
@@ -242,11 +215,11 @@ class RepoFetcher:
                 dirs_to_process.extend(subdir_list)
 
     @classmethod
-    def _check_file_sizes_batch(cls, request: RepoFetchRequest, file_paths: List[str], batch_size: int = 50):
+    def _check_file_sizes_batch(cls, request: RepoFetchRequest, file_paths: List[str]):
         file_sizes = {}
 
-        for i in range(0, len(file_paths), batch_size):
-            batch = file_paths[i : i + batch_size]
+        for i in range(0, len(file_paths), cls.DEFAULT_BATCH_SIZE):
+            batch = file_paths[i : i + cls.DEFAULT_BATCH_SIZE]
 
             def check_size(path):
                 size = cls._check_file_size(request.repo_name, request.base_commit, path)
@@ -286,7 +259,10 @@ class RepoFetcher:
             except Exception as e:
                 logging.error(f"Error processing file '{file_path}': {e}")
 
-        GLOBAL_CONFIG.PARALLEL_EXECUTOR(delayed(process_file)(path) for path in processable_files[:20])
+        for i in range(0, len(processable_files), cls.DEFAULT_BATCH_SIZE):
+            batch = processable_files[i : i + cls.DEFAULT_BATCH_SIZE]
+            GLOBAL_CONFIG.PARALLEL_EXECUTOR(delayed(process_file)(path) for path in batch)
+
         logging.info(f"Completed processing files for {request.repo_name}@{request.base_commit}")
 
     @classmethod

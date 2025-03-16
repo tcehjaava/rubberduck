@@ -1,7 +1,7 @@
 # repo_context/storage_manager.py
-
 import logging
-from typing import Dict, List, Optional
+from functools import wraps
+from typing import Optional
 
 from sqlalchemy import Column, ForeignKey, String, Text, create_engine, event
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
@@ -13,13 +13,14 @@ Base = declarative_base()
 
 class FileSystemEntryORM(Base):
     __tablename__ = "file_system_entries"
+
     id = Column(String, primary_key=True)
     repo = Column(String, index=True)
     commit = Column(String, index=True)
     path = Column(String, nullable=False)
     entry_type = Column(String, nullable=False)
     content = Column(Text, nullable=True)
-    parent_id = Column(String, ForeignKey("file_system_entries.id"), nullable=True)
+    parent_id = Column(String, ForeignKey("file_system_entries.id"), nullable=True, index=True)
 
     children = relationship("FileSystemEntryORM", backref="parent", remote_side=[id])
 
@@ -28,9 +29,10 @@ engine = create_engine("sqlite:///repo_files.db", connect_args={"check_same_thre
 
 
 @event.listens_for(engine, "connect")
-def enable_sqlite_wal_mode(dbapi_connection, connection_record):
+def configure_sqlite(dbapi_connection, connection_record):
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA journal_mode=WAL;")
+    cursor.execute("PRAGMA foreign_keys=ON;")
     cursor.close()
 
 
@@ -38,10 +40,27 @@ Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 
 
-class StorageManager:
+def with_session(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        with Session() as session:
+            try:
+                result = func(session, *args, **kwargs)
+                session.commit()
+                return result
+            except Exception as e:
+                session.rollback()
+                logging.error(f"Error in '{func.__name__}': {e}")
+                raise
 
+    return wrapper
+
+
+class StorageManager:
     @staticmethod
+    @with_session
     def store_entry(
+        session,
         repo: str,
         commit: str,
         path: str,
@@ -49,192 +68,80 @@ class StorageManager:
         content: Optional[str] = None,
         parent_id: Optional[str] = None,
     ):
-        session = Session()
         entry_id = f"{repo}:{commit}:{path}"
-        try:
+        entry = FileSystemEntryORM(
+            id=entry_id,
+            repo=repo,
+            commit=commit,
+            path=path,
+            entry_type=entry_type.value,
+            content=content,
+            parent_id=parent_id,
+        )
+        session.merge(entry)
+
+    @staticmethod
+    @with_session
+    def store_summary(session, repo: str, commit: str, path: str, summary: str):
+        entry_id = f"{repo}:{commit}:{path}"
+        entry = session.query(FileSystemEntryORM).filter_by(id=entry_id).first()
+        if entry:
+            entry.content = summary
+        else:
             entry = FileSystemEntryORM(
                 id=entry_id,
                 repo=repo,
                 commit=commit,
                 path=path,
-                entry_type=entry_type.value,
-                content=content,
-                parent_id=parent_id,
+                entry_type=EntryType.FILE.value,
+                content=summary,
             )
             session.merge(entry)
-            session.commit()
-        except Exception as e:
-            session.rollback()
-            logging.error(f"Error storing entry '{path}': {e}")
-        finally:
-            session.close()
 
     @staticmethod
-    def get_root_entries(repo: str, commit: str) -> List[FileSystemEntryORM]:
-        session = Session()
-        try:
-            return session.query(FileSystemEntryORM).filter_by(repo=repo, commit=commit, parent_id=None).all()
-        except Exception as e:
-            logging.error(f"Error loading root entries: {e}")
-            return []
-        finally:
-            session.close()
+    @with_session
+    def get_root_entries(session, repo: str, commit: str):
+        return session.query(FileSystemEntryORM).filter_by(repo=repo, commit=commit, parent_id=None).all()
 
     @staticmethod
-    def get_children(entry_id: str) -> List[FileSystemEntryORM]:
-        session = Session()
-        try:
-            return session.query(FileSystemEntryORM).filter_by(parent_id=entry_id).all()
-        except Exception as e:
-            logging.error(f"Error loading children for entry '{entry_id}': {e}")
-            return []
-        finally:
-            session.close()
+    @with_session
+    def load_file_paths(session, repo: str, commit: str):
+        entries = (
+            session.query(FileSystemEntryORM).filter_by(repo=repo, commit=commit, entry_type=EntryType.FILE.value).all()
+        )
+        return [e.path for e in entries]
 
     @staticmethod
-    def store_file_paths(repo: str, commit: str, paths: List[str], parent_id: Optional[str] = None):
-        for path in paths:
-            StorageManager.store_entry(repo, commit, path, EntryType.FILE, parent_id=parent_id)
+    @with_session
+    def build_directory_tree(session, repo: str, commit: str, from_path: str = ""):
+        entries = session.query(FileSystemEntryORM).filter_by(repo=repo, commit=commit).all()
 
-    @staticmethod
-    def store_snippet(repo: str, commit: str, path: str, snippet: str):
-        session = Session()
-        entry_id = f"{repo}:{commit}:{path}"
-        try:
-            entry = session.query(FileSystemEntryORM).filter_by(id=entry_id).first()
-            if entry:
-                entry.content = snippet
-                session.commit()
-            else:
-                StorageManager.store_entry(repo, commit, path, EntryType.FILE, content=snippet)
-        except Exception as e:
-            session.rollback()
-            logging.error(f"Error storing snippet for '{path}': {e}")
-        finally:
-            session.close()
+        children_map = {}
+        for entry in entries:
+            if entry.parent_id not in children_map:
+                children_map[entry.parent_id] = []
+            children_map[entry.parent_id].append(entry)
 
-    @staticmethod
-    def store_summary(repo: str, commit: str, path: str, summary: str):
-        session = Session()
-        entry_id = f"{repo}:{commit}:{path}"
-        try:
-            entry = session.query(FileSystemEntryORM).filter_by(id=entry_id).first()
-            if entry:
-                entry.content = summary
-                session.commit()
-            else:
-                StorageManager.store_entry(repo, commit, path, EntryType.FILE, content=summary)
-        except Exception as e:
-            session.rollback()
-            logging.error(f"Error storing summary for '{path}': {e}")
-        finally:
-            session.close()
+        def build_tree(parent_id):
+            nodes = []
+            for entry in children_map.get(parent_id, []):
+                entry_type_enum = EntryType(entry.entry_type) if entry.entry_type else EntryType.FILE
+                is_directory = entry_type_enum == EntryType.DIRECTORY
 
-    @staticmethod
-    def load_summaries(repo: str, commit: str) -> Dict[str, str]:
-        session = Session()
-        try:
-            entries = (
-                session.query(FileSystemEntryORM)
-                .filter_by(repo=repo, commit=commit, entry_type=EntryType.FILE.value)
-                .all()
-            )
-            return {e.path: e.content for e in entries if e.content}
-        except Exception as e:
-            logging.error(f"Error loading summaries: {e}")
-            return {}
-        finally:
-            session.close()
-
-    @staticmethod
-    def load_file_paths(repo: str, commit: str) -> List[str]:
-        session = Session()
-        try:
-            entries = (
-                session.query(FileSystemEntryORM)
-                .filter_by(repo=repo, commit=commit, entry_type=EntryType.FILE.value)
-                .all()
-            )
-            return [e.path for e in entries]
-        except Exception as e:
-            logging.error(f"Error loading file paths: {e}")
-            return []
-        finally:
-            session.close()
-
-    @staticmethod
-    def load_directory_paths(repo: str, commit: str) -> List[str]:
-        session = Session()
-        try:
-            entries = (
-                session.query(FileSystemEntryORM)
-                .filter_by(repo=repo, commit=commit, entry_type=EntryType.DIRECTORY.value)
-                .all()
-            )
-            return [e.path for e in entries]
-        except Exception as e:
-            logging.error(f"Error loading directory paths: {e}")
-            return []
-        finally:
-            session.close()
-
-    @staticmethod
-    def load_snippet(repo: str, commit: str, path: str) -> Optional[str]:
-        session = Session()
-        try:
-            entry_id = f"{repo}:{commit}:{path}"
-            entry = session.query(FileSystemEntryORM).filter_by(id=entry_id).first()
-            return entry.content if entry else None
-        except Exception as e:
-            logging.error(f"Error loading snippet: {e}")
-            return None
-        finally:
-            session.close()
-
-    @staticmethod
-    def build_directory_tree(repo: str, commit: str, from_path: str = "") -> Optional[Dict]:
-        session = Session()
-        try:
-            # Get the entry for the specified path
-            if from_path:
-                entry_id = f"{repo}:{commit}:{from_path}"
-                entry = session.query(FileSystemEntryORM).filter_by(id=entry_id).first()
-                if not entry:
-                    return None
-                root_entries = [entry]
-            else:
-                # Get root entries if no path specified
-                root_entries = (
-                    session.query(FileSystemEntryORM).filter_by(repo=repo, commit=commit, parent_id=None).all()
+                nodes.append(
+                    DirectoryTree(
+                        path=entry.path,
+                        entry_type=entry_type_enum,
+                        summary=entry.content,
+                        children=build_tree(entry.id) if is_directory else [],
+                    )
                 )
+            return nodes
 
-            # Build tree recursively
-            def build_tree(entries):
-                result = []
-                for entry in entries:
-                    if entry.entry_type == EntryType.DIRECTORY.value:
-                        children = session.query(FileSystemEntryORM).filter_by(parent_id=entry.id).all()
-                        child_trees = build_tree(children)
-                        tree = DirectoryTree(
-                            path=entry.path, entry_type=EntryType.DIRECTORY, children=child_trees, summary=entry.content
-                        )
-                    else:
-                        tree = DirectoryTree(
-                            path=entry.path, entry_type=EntryType.FILE, children=[], summary=entry.content
-                        )
-                    result.append(tree)
-                return result
-
-            return build_tree(root_entries)
-
-        except Exception as e:
-            logging.error(f"Error building directory tree: {e}")
-            return None
-        finally:
-            session.close()
+        return build_tree(f"{repo}:{commit}:{from_path}" if from_path else None)
 
     @staticmethod
-    def format_directory_tree(tree_nodes, indent=0, show_summaries=True) -> str:
+    def format_directory_tree(tree_nodes, indent=0, show_summaries=True):
         if not tree_nodes:
             return ""
 
@@ -245,7 +152,6 @@ class StorageManager:
             icon = "📁" if is_dir else "📄"
             line = f"{prefix}{icon} {node.path}"
 
-            # Add summary if available and requested
             if show_summaries and node.summary and not is_dir:
                 line += f": {node.summary}"
 

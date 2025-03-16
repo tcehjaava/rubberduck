@@ -32,5 +32,5 @@ GLOBAL_CONFIG = GlobalConfig(
     SOURCEGRAPH_ENDPOINT="https://codeon.sourcegraph.app/.api/",
     SOURCEGRAPH_GQL_URL="https://codeon.sourcegraph.app/.api/graphql",
     SOURCEGRAPH_API_TOKEN=os.getenv("SOURCEGRAPH_API_TOKEN"),
-    PARALLEL_EXECUTOR=Parallel(n_jobs=4, backend="threading"),
+    PARALLEL_EXECUTOR=Parallel(n_jobs=8, backend="threading"),
 )

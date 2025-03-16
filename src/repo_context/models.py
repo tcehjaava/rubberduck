@@ -1,25 +1,25 @@
 # repo_context/models.py
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
 
 class EntryType(str, Enum):
-    FILE = "file"
-    DIRECTORY = "directory"
+    FILE = "FILE"
+    DIRECTORY = "DIRECTORY"
 
 
 class TreeEntry(BaseModel):
-    path: str
-    entry_type: EntryType
+    path: str = Field(..., description="File or directory path")
+    entry_type: EntryType = Field(..., description="Type of entry (file or directory)")
 
 
 class DirectoryTree(BaseModel):
-    path: str
-    entry_type: EntryType = EntryType.DIRECTORY
-    children: List["DirectoryTree"] = Field(default_factory=list)
-    summary: Optional[str] = None
+    path: str = Field(..., description="Directory path")
+    entry_type: EntryType = Field(EntryType.DIRECTORY, description="Entry type, defaults to DIRECTORY")
+    children: List["DirectoryTree"] = Field(default_factory=list, description="Child directories")
+    summary: Optional[str] = Field(None, description="Optional summary of directory contents")
 
     class Config:
         from_attributes = True
@@ -29,20 +29,20 @@ DirectoryTree.model_rebuild()
 
 
 class FileSnippet(BaseModel):
-    path: str
-    snippet: str
+    path: str = Field(..., description="Path to the file")
+    snippet: str = Field(..., description="Snippet extracted from file")
 
 
 class FileSummary(BaseModel):
-    path: str
-    summary: str
+    path: str = Field(..., description="Path to the file")
+    summary: str = Field(..., description="Summary description of file contents")
 
 
 class RepoFetchRequest(BaseModel):
-    repo_name: str
-    base_commit: str
+    repo_name: str = Field(..., description="Name of the repository")
+    base_commit: str = Field(..., description="Commit hash or reference")
 
 
 class SourcegraphResponse(BaseModel):
-    data: Dict = Field(default_factory=dict)
-    errors: Optional[List[Dict]] = None
+    data: Dict[str, Any] = Field(default_factory=dict, description="Data returned from Sourcegraph")
+    errors: Optional[List[Dict]] = Field(None, description="List of errors returned from Sourcegraph")

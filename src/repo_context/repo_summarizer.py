@@ -1,6 +1,5 @@
 # repo_context/repo_summarizer.py
 import logging
-from typing import Dict
 
 from langchain.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
@@ -98,9 +97,8 @@ class RepoSummarizer:
                 result = FileSummaryResponse(**raw_result)
 
                 return FileSummary(path=snippet.path, summary=result.summary)
-
             except Exception as e:
-                error_msg = str(e)
+                error_msg = str(e).replace("{", "[CURLY_OPEN]").replace("}", "[CURLY_CLOSE]")
 
                 if attempt >= max_retries:
                     logging.error(f"Exceeded retries for file '{snippet.path}'. Final error: {error_msg}")
@@ -120,11 +118,3 @@ class RepoSummarizer:
 
         # Default fallback (should not typically be reached)
         return FileSummary(path=snippet.path, summary="")
-
-    def batch_summarize(self, snippets: Dict[str, str]) -> Dict[str, str]:
-        results = {}
-        for path, content in snippets.items():
-            snippet = FileSnippet(path=path, snippet=content)
-            summary = self.summarize_snippet(snippet)
-            results[path] = summary.summary
-        return results

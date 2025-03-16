@@ -30,14 +30,6 @@ def test_repo_context(instance_id, refresh=False):
 
         print(StorageManager.format_directory_tree(tree))
 
-        summaries = StorageManager.load_summaries(repo_name, commit)
-        if summaries:
-            print(f"\nSample Summaries ({min(5, len(summaries))} of {len(summaries)}):")
-            for i, (path, summary) in enumerate(sorted(summaries.items())):
-                if i >= 5:
-                    break
-                print(f"- {path}: {summary}")
-
 
 if __name__ == "__main__":
     instance_id = GLOBAL_CONFIG.INSTANCE_ID
