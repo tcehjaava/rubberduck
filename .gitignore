@@ -45,3 +45,4 @@ logs/
 
 # Local configuration
 config.local.py
+repo_files.db

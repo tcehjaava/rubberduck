@@ -3,6 +3,7 @@ langchain-community
 langchain-core
 langchain-anthropic
 langchain-google-genai
+langchain-ollama
 langchain-openai
 langgraph
 openai
@@ -12,3 +13,6 @@ sseclient
 dashscope
 pydantic
 python-dotenv
+joblib
+requests
+sqlalchemy

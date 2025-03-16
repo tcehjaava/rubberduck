@@ -2,7 +2,8 @@
 
 from typing import Optional
 
-from pydantic import BaseModel
+from joblib import Parallel
+from pydantic import BaseModel, Field
 
 
 class GlobalConfig(BaseModel):
@@ -19,9 +20,10 @@ class GlobalConfig(BaseModel):
     SOURCEGRAPH_GQL_URL: str
     SOURCEGRAPH_API_TOKEN: str
 
-    RELEVANCE_PROCESSOR_BATCH_SIZE: int = 5
-    RELEVANCE_PROCESSOR_PARALLEL_TASKS: int = 2
-    RELEVANCE_PROCESSOR_MAX_RETRIES: int = 3
+    PARALLEL_EXECUTOR: Parallel = Field(exclude=True)
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class AgentConfig(BaseModel):

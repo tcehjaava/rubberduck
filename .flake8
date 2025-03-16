@@ -2,3 +2,4 @@
 [flake8]
 max-line-length = 120
 exclude = venv,.git,__pycache__
+extend-ignore = E203

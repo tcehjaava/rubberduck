@@ -3,6 +3,7 @@
 import os
 
 from dotenv import load_dotenv
+from joblib import Parallel
 
 from config.config_models import GlobalConfig
 
@@ -26,8 +27,10 @@ GLOBAL_CONFIG = GlobalConfig(
     #   o3-mini
     #   qwen-max
     #   qwen-plus
+    #   qwen-turbo
     MODEL_NAME="gpt-4o-mini",
     SOURCEGRAPH_ENDPOINT="https://codeon.sourcegraph.app/.api/",
     SOURCEGRAPH_GQL_URL="https://codeon.sourcegraph.app/.api/graphql",
     SOURCEGRAPH_API_TOKEN=os.getenv("SOURCEGRAPH_API_TOKEN"),
+    PARALLEL_EXECUTOR=Parallel(n_jobs=4, backend="threading"),
 )
