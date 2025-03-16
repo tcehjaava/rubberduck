@@ -67,7 +67,7 @@ class Orchestrator(BaseAgent[OrchestratorOutput]):
         self.execute(messages, orchestrator_context)
         return state.build_context_update(self.agent_name, orchestrator_context)
 
-    def validate(self, result: OrchestratorOutput) -> Optional[str]:
+    def validate(self, context: AgentExecutionContext[OrchestratorOutput], result: OrchestratorOutput) -> Optional[str]:
         errors = []
 
         if result.action == OrchestratorAction.RELEVANCE_SEARCH and not result.task:

@@ -62,7 +62,7 @@ class BaseAgent(Generic[T]):
             raw_result = chain.invoke(template_vars)
             result = self.output_model(**raw_result)
 
-            validation_error = self.validate(result)
+            validation_error = self.validate(context, result)
             if validation_error is None:
                 record = IterationRecord[T](prompt=user_prompt, result=result, raw_result=raw_result)
                 context.add_successful_iteration(record)
@@ -88,7 +88,7 @@ class BaseAgent(Generic[T]):
     def on_max_retries_exceeded(self, context: AgentExecutionContext[T]) -> None:
         raise NotImplementedError("Subclasses must implement on_max_retries_exceeded method.")
 
-    def validate(self, result: T) -> Optional[str]:
+    def validate(self, context: AgentExecutionContext[T], result: T) -> Optional[str]:
         raise NotImplementedError("Subclasses must implement validate method.")
 
     def next_step(self, state: WorkflowState) -> NextStep:

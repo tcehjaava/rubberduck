@@ -27,7 +27,7 @@ class QueryBuilderAgent(BaseAgent):
     def on_max_retries_exceeded(self, context: AgentExecutionContext[IssueData]) -> None:
         raise NotImplementedError("Subclasses must implement on_max_retries_exceeded method.")
 
-    def validate(self, result: IssueData) -> Optional[str]:
+    def validate(self, context: AgentExecutionContext[IssueData], result: IssueData) -> Optional[str]:
         raise NotImplementedError("Subclasses must implement validate method.")
 
     def next_step(self, state: WorkflowState) -> NextStep:

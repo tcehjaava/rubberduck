@@ -89,7 +89,7 @@ class IssueDataExtractorAgent(BaseAgent[IssueData]):
     def on_max_retries_exceeded(self, context: AgentExecutionContext[IssueData]) -> None:
         pass
 
-    def validate(self, result: IssueData) -> Optional[str]:
+    def validate(self, context: AgentExecutionContext[IssueData], result: IssueData) -> Optional[str]:
         return None
 
     def next_step(self, state: WorkflowState) -> NextStep:
