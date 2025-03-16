@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from config import AgentConfig
 from models.enums import MessageRole
-from repo_context.models import FileSnippet, FileSummary
+from tools.repo_context.models import FileSnippet, FileSummary
 from utils import LLMFactory
 
 SYSTEM_PROMPT = """

@@ -6,16 +6,16 @@ from typing import Any, Dict, List, Optional
 from joblib import delayed
 
 from config import GLOBAL_CONFIG
-from repo_context.models import (
+from tools import SourcegraphClient
+from tools.repo_context.models import (
     ContentStatus,
     EntryType,
     FileSnippet,
     RepoFetchRequest,
     TreeEntry,
 )
-from repo_context.repo_summarizer import RepoSummarizer
-from repo_context.storage_manager import StorageManager
-from utils import SourcegraphClient
+from tools.repo_context.repo_summarizer import RepoSummarizer
+from tools.repo_context.storage_manager import StorageManager
 
 
 class RepoFetcher:

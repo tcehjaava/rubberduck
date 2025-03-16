@@ -1,4 +1,4 @@
-# repo_context/sourcegraph_client.py
+# tools/sourcegraph_client.py
 
 import logging
 
@@ -11,6 +11,7 @@ from config import GLOBAL_CONFIG
 class SourcegraphClient:
     HEADERS = {
         "Authorization": f"token {GLOBAL_CONFIG.SOURCEGRAPH_API_TOKEN}",
+        "Accept": "text/event-stream",
         "Content-Type": "application/json",
     }
 

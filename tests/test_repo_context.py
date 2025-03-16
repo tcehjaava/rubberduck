@@ -3,7 +3,8 @@ import logging
 import sys
 
 from config import GLOBAL_CONFIG
-from repo_context.repo_fetcher import RepoFetcher
+from tools.repo_context.repo_fetcher import RepoFetcher
+from tools.repo_context.storage_manager import StorageManager
 from utils import DatasetUtils
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -26,8 +27,6 @@ def test_repo_context(instance_id, refresh=False):
 
     if tree:
         print("\nRepository Structure:")
-        from repo_context import StorageManager
-
         print(StorageManager.format_directory_tree(tree))
 
 

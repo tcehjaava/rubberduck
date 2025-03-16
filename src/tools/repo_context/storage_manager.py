@@ -6,7 +6,7 @@ from typing import Optional
 from sqlalchemy import Column, ForeignKey, String, Text, create_engine, event
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
-from repo_context.models import ContentStatus, DirectoryTree, EntryType
+from tools.repo_context.models import ContentStatus, DirectoryTree, EntryType
 
 Base = declarative_base()
 
