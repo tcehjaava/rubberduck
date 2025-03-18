@@ -85,15 +85,8 @@ class Orchestrator(BaseAgent[OrchestratorOutput]):
         last_record = context.get_last_record()
         assert last_record.error, "on_retry called without an error in last record."
 
-        messages = context.build_conversation_messages(use_full_history=True)
-        messages.append((MessageRole.USER, RETRY_PROMPT_TEMPLATE))
-
-        context.set_extra_template_vars(
-            {
-                **context.get_extra_template_vars(),
-                "error": last_record.error,
-            }
-        )
+        messages = context.build_conversation_messages()
+        messages.append((MessageRole.USER, RETRY_PROMPT_TEMPLATE.format(error=last_record.error)))
 
         self.execute(messages, context)
 

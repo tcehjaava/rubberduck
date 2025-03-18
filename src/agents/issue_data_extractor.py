@@ -68,6 +68,10 @@ Do NOT add any details or context that are not directly contained in the input.
 Extract the data according to the schema provided to you, and return only valid JSON with no extra commentary.
 """
 
+RETRY_PROMPT_TEMPLATE = """
+Previous attempt resulted in error: {error}. Please revise your response.
+"""
+
 issue_data_extractor_config = AgentConfig(
     SYSTEM_PROMPT=SYSTEM_PROMPT, TEMPERATURE=0.0, MODEL_NAME="claude-3-7-sonnet-20250219"
 )
@@ -84,12 +88,31 @@ class IssueDataExtractorAgent(BaseAgent[IssueData]):
         return state.build_context_update(self.agent_name, context)
 
     def on_retry(self, context: AgentExecutionContext[IssueData]) -> None:
-        pass
+        last_record = context.get_last_record()
+        assert last_record.error, "on_retry called without an error in last record."
+
+        formatted_retry_prompt = RETRY_PROMPT_TEMPLATE.format(error=last_record.error)
+
+        messages = context.build_conversation_messages()
+        messages.append((MessageRole.USER, formatted_retry_prompt))
+
+        self.execute(messages, context)
 
     def on_max_retries_exceeded(self, context: AgentExecutionContext[IssueData]) -> None:
         pass
 
     def validate(self, context: AgentExecutionContext[IssueData], result: IssueData) -> Optional[str]:
+        errors = []
+
+        if not result.repo_name:
+            errors.append("Repository name is required but was not provided.")
+
+        if not result.base_commit:
+            errors.append("Base commit information is required but was not provided.")
+
+        if errors:
+            return "; ".join(errors)
+
         return None
 
     def next_step(self, state: WorkflowState) -> NextStep:

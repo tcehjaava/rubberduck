@@ -62,6 +62,10 @@ class IssueData(BaseModel):
     """
 
     repo_name: str = Field(description="Repository name in 'owner/repo' format.", example="django/django")
+    base_commit: str = Field(
+        description="SHA of the relevant commit, if provided.",
+        example="aa55975c7d3f6c9f6d7f68accc41bb7cadf0eb9a",
+    )
     issue_title: str = Field(
         description="A short descriptive title for the issue.",
         example="The value of a TextChoices/IntegerChoices field has a differing type",
@@ -111,9 +115,6 @@ class IssueData(BaseModel):
         description="Any external links, references, or related resources.",
         example=["https://github.com/django/django/issues/12345", "https://yapb.in/exUE.png"],
     )
-    base_commit: Optional[str] = Field(
-        None, description="SHA of the relevant commit, if provided.", example="fc2b1cc926e34041953738e58fa6ad3053059b22"
-    )
     knowledge_used: KnowledgeUsed = Field(
         default_factory=KnowledgeUsed, description="Information about what was used to produce this extraction."
     )
@@ -154,10 +155,7 @@ class OrchestratorOutput(BaseModel):
     task: Optional[OrchestratorTask] = Field(
         default=None,
         description="The task details to be assigned based on the selected action. Required unless action is END.",
-        example={
-            "task_prompt": "Create a Sourcegraph query to find token validation code in the auth module",
-            "reasoning": "Need to identify all token validation methods to understand the authentication flow.",
-        },
+        example='{{"task_prompt": "Find token validation code", "reasoning": "Need to identify methods"}}',
     )
     conversation_summary: Optional[str] = Field(
         default=None,

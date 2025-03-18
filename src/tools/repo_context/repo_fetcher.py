@@ -1,7 +1,7 @@
 # repo_context/repo_fetcher.py
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from joblib import delayed
 
@@ -15,7 +15,8 @@ from tools.repo_context.models import (
 )
 from tools.repo_context.repo_summarizer import RepoSummarizer
 from tools.repo_context.storage_manager import StorageManager
-from tools.sourcegraph import SourcegraphClient
+from tools.sourcegraph import SourcegraphClient, SourcegraphQuery
+from utils import Utils
 
 
 class RepoFetcher:
@@ -62,35 +63,12 @@ class RepoFetcher:
     DEFAULT_BATCH_SIZE = 50
 
     @staticmethod
-    def _get_nested_value(data: Dict, keys: List[str], default: Any = None) -> Any:
-        current = data
-        for key in keys:
-            if not current or not isinstance(current, dict) or key not in current:
-                return default
-            current = current[key]
-        return current
-
-    @staticmethod
     def _fetch_tree_entries(repo_name: str, commit: str, path: str) -> List[TreeEntry]:
-        query = """
-        query ($repo: String!, $commit: String!, $path: String!) {
-          repository(name: $repo) {
-            commit(rev: $commit) {
-              tree(path: $path) {
-                entries {
-                  path
-                  isDirectory
-                }
-              }
-            }
-          }
-        }
-        """
         variables = {"repo": repo_name, "commit": commit, "path": path}
 
         try:
-            data = SourcegraphClient.execute_graphql_query(query, variables)
-            entries = RepoFetcher._get_nested_value(data, ["data", "repository", "commit", "tree", "entries"], [])
+            data = SourcegraphClient.execute_graphql_query(SourcegraphQuery.DIRECTORY_ENTRIES.value, variables)
+            entries = Utils.get_nested_value(data, ["data", "repository", "commit", "tree", "entries"], [])
 
             if not entries:
                 logging.warning(f"No entries found for path: {path}")
@@ -106,22 +84,11 @@ class RepoFetcher:
 
     @staticmethod
     def _check_file_size(repo_name: str, commit: str, file_path: str) -> Optional[int]:
-        query = """
-        query ($repo: String!, $commit: String!, $path: String!) {
-          repository(name: $repo) {
-            commit(rev: $commit) {
-              file(path: $path) {
-                byteSize
-              }
-            }
-          }
-        }
-        """
         variables = {"repo": repo_name, "commit": commit, "path": file_path}
 
         try:
-            data = SourcegraphClient.execute_graphql_query(query, variables)
-            byte_size = RepoFetcher._get_nested_value(data, ["data", "repository", "commit", "file", "byteSize"], None)
+            data = SourcegraphClient.execute_graphql_query(SourcegraphQuery.FILE_SIZE.value, variables)
+            byte_size = Utils.get_nested_value(data, ["data", "repository", "commit", "file", "byteSize"], None)
 
             if byte_size is None:
                 logging.warning(f"Could not retrieve size for file: {file_path}")
@@ -158,22 +125,11 @@ class RepoFetcher:
         if not RepoFetcher._should_process_file(file_path, file_size):
             return FileSnippet(path=file_path, snippet="")
 
-        query = """
-        query ($repo: String!, $commit: String!, $path: String!) {
-          repository(name: $repo) {
-            commit(rev: $commit) {
-              file(path: $path) {
-                content
-              }
-            }
-          }
-        }
-        """
         variables = {"repo": repo_name, "commit": commit, "path": file_path}
 
         try:
-            data = SourcegraphClient.execute_graphql_query(query, variables)
-            content = RepoFetcher._get_nested_value(data, ["data", "repository", "commit", "file", "content"], None)
+            data = SourcegraphClient.execute_graphql_query(SourcegraphQuery.FILE_CONTENT.value, variables)
+            content = Utils.get_nested_value(data, ["data", "repository", "commit", "file", "content"], None)
 
             if content is None:
                 logging.warning(f"No content found for file: {file_path}")

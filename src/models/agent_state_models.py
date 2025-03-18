@@ -45,7 +45,6 @@ class AgentExecutionContext(BaseModel, Generic[T]):
         return self.attempts <= self.max_retries
 
     def handle_error(self, error_message: str, prompt: str, result: Optional[T], raw_result: Optional[dict]):
-        error_message = str(error_message).replace("{", "[CURLY_OPEN]").replace("}", "[CURLY_CLOSE]")
         record = IterationRecord[T](prompt=prompt, error=error_message, result=result, raw_result=raw_result)
         self.history.append(record)
 

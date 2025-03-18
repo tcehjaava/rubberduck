@@ -6,10 +6,10 @@ from tools.sourcegraph.sourcegraph_client import SourcegraphClient
 
 
 def main():
-    query = "repo:^github.com/django/django$@e02f67ef2d03d48128e7a118bf75f0418e24e8ac (Enum OR Choices OR Field) AND migration AND type:file"  # noqa: E501
+    query = "repo:^github.com/pytest-dev/pytest$@aa55975c7d3f6c9f6d7f68accc41bb7cadf0eb9a path:/_pytest/logging.py"  # noqa: E501
 
     # Execute the search query
-    result = SourcegraphClient.get_relevance_summary(query, max_files=-1)
+    result = SourcegraphClient.get_relevance_summary(query)
 
     # Pretty-print the results using model_dump with indentation
     print(json.dumps(result.model_dump(), indent=4))

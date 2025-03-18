@@ -31,7 +31,7 @@ class WorkflowLogger:
                         content += f"Prompt:\n{textwrap.indent(record.prompt, '  ')}\n"
 
                     if record.error:
-                        content += f"Error:\n{textwrap.indent(record.error, '  ')}\n"
+                        content += f"Error:\n{textwrap.indent(record.error, '  ')}\n\n"
 
                     if record.raw_result:
                         result_str = json.dumps(record.raw_result, indent=2, ensure_ascii=False)

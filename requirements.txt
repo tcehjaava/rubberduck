@@ -16,3 +16,4 @@ python-dotenv
 joblib
 requests
 sqlalchemy
+jinja2

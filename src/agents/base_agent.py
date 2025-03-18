@@ -3,9 +3,10 @@
 import logging
 from typing import Generic, List, Optional, TypeVar
 
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
 from config.config_models import AgentConfig
 from models import (
@@ -42,15 +43,19 @@ class BaseAgent(Generic[T]):
         iteration = context.add_attempt()
         logging.info(f"[{self.agent_name}] Starting execute (Iteration: {iteration})")
 
-        formatted_messages = [
-            (MessageRole.SYSTEM.value, f"{self.config.SYSTEM_PROMPT}\n\n{{format_instructions}}"),
-            *[(role.value, content) for role, content in messages],
-        ]
+        extra_vars = context.get_extra_template_vars()
+        formatted_system_prompt = self.config.SYSTEM_PROMPT.format(**extra_vars)
+        format_instructions = self.parser.get_format_instructions()
+        system_prompt = f"{formatted_system_prompt}\n\n{format_instructions}"
 
-        template_vars = {
-            "format_instructions": self.parser.get_format_instructions(),
-            **context.get_extra_template_vars(),
-        }
+        formatted_messages = [
+            SystemMessage(content=system_prompt),
+            *[
+                (HumanMessage(content) if role == MessageRole.USER else AIMessage(content))
+                for role, content in messages
+                if role != MessageRole.SYSTEM
+            ],
+        ]
 
         prompt = ChatPromptTemplate.from_messages(formatted_messages)
         chain = prompt | self.llm | self.parser
@@ -59,7 +64,7 @@ class BaseAgent(Generic[T]):
 
         raw_result, result = None, None
         try:
-            raw_result = chain.invoke(template_vars)
+            raw_result = chain.invoke({})
             result = self.output_model(**raw_result)
 
             validation_error = self.validate(context, result)
@@ -67,7 +72,7 @@ class BaseAgent(Generic[T]):
                 record = IterationRecord[T](prompt=user_prompt, result=result, raw_result=raw_result)
                 context.add_successful_iteration(record)
             else:
-                raise ValidationError(validation_error, self.output_model)
+                raise ValueError(validation_error, self.output_model)
         except Exception as e:
             error_message = str(e)
             logging.error(f"[{self.agent_name}] Error encountered on iteration {iteration}: {error_message}")
