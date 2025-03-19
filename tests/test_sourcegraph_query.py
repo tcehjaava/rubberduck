@@ -6,7 +6,7 @@ from tools.sourcegraph.sourcegraph_client import SourcegraphClient
 
 
 def main():
-    query = "repo:^github.com/pytest-dev/pytest$@aa55975c7d3f6c9f6d7f68accc41bb7cadf0eb9a path:/_pytest/logging.py"  # noqa: E501
+    query = "repo:^github.com/pytest-dev/pytest$@aa55975c7d3f6c9f6d7f68accc41bb7cadf0eb9a file:src/_pytest/logging.py AND (caplog.get_records OR caplog.clear) -file:.*\\.(md|txt)$"  # noqa: E501
 
     # Execute the search query
     result = SourcegraphClient.get_relevance_summary(query)

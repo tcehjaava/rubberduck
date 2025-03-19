@@ -36,7 +36,6 @@ ORCHESTRATOR TASK:
 {orchestrator_task}
 """
 
-
 USER_PROMPT_TEMPLATE = """
 Generate a Sourcegraph search query to locate relevant code for debugging the described issue.
 """
@@ -45,6 +44,17 @@ RETRY_PROMPT_TEMPLATE = """
 Previous query attempt resulted in error: {error}. Please revise your response.
 """
 
+REFINEMENT_PROMPT_TEMPLATE = """
+I've executed your search query and here are the results:
+
+{search_results}
+
+Please review these results and either:
+1. If the results seem relevant and focused, return the EXACT SAME query
+2. If you see irrelevant file types or results, provide a refined query that excludes them
+
+Remember to maintain the required repo pattern and focus on files relevant to the issue.
+"""
 
 query_builder_config = AgentConfig(
     SYSTEM_PROMPT=SYSTEM_PROMPT,
@@ -93,8 +103,30 @@ class QueryBuilderAgent(BaseAgent[SearchQuery]):
             }
         )
 
-        messages = [(MessageRole.USER, USER_PROMPT_TEMPLATE)]
-        self.execute(messages, query_builder_context)
+        current_query = None
+        previous_query = None
+
+        while (
+            previous_query is None or previous_query.query != current_query.query
+        ) and query_builder_context.has_more_retries():
+            previous_query = current_query
+            messages = query_builder_context.build_conversation_messages()
+
+            if previous_query is None:
+                prompt = USER_PROMPT_TEMPLATE
+            else:
+                search_results = SourcegraphClient.get_relevance_summary(current_query.query)
+                search_results_json = search_results.model_dump_json(indent=2)
+
+                prompt = REFINEMENT_PROMPT_TEMPLATE.format(search_results=search_results_json)
+
+            messages.append((MessageRole.USER, prompt))
+            self.execute(messages, query_builder_context)
+
+            last_record = query_builder_context.get_last_record()
+            current_query = last_record.result
+
+        logging.info(f"[{self.agent_name}] Query converged after {query_builder_context.attempts-1} iterations.")
         return state.build_context_update(self.agent_name, query_builder_context)
 
     def validate(self, context: AgentExecutionContext[SearchQuery], result: SearchQuery) -> Optional[str]:

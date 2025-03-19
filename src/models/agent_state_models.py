@@ -51,13 +51,21 @@ class AgentExecutionContext(BaseModel, Generic[T]):
     def add_successful_iteration(self, record: IterationRecord[T]):
         self.history.append(record)
 
+    def _convert_dict_result_to_model(self, record: IterationRecord[T]) -> IterationRecord[T]:
+        if record and record.result and isinstance(record.result, dict) and self.output_model:
+            record.result = self.output_model(**record.result)
+        return record
+
     def get_last_record(self) -> Optional[IterationRecord[T]]:
         if not self.history:
             return None
-        last_record = self.history[-1]
-        if last_record.result and isinstance(last_record.result, dict) and self.output_model:
-            last_record.result = self.output_model(**last_record.result)
-        return last_record
+        return self._convert_dict_result_to_model(self.history[-1])
+
+    def get_last_successful_record(self) -> Optional[IterationRecord[T]]:
+        for record in reversed(self.history):
+            if not record.error:
+                return self._convert_dict_result_to_model(record)
+        return None
 
     def build_conversation_messages(self) -> List[tuple[MessageRole, str]]:
         messages = []
