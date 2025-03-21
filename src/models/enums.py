@@ -16,9 +16,9 @@ class FileType(str, Enum):
 class FileRelevanceLevel(str, Enum):
     """Classification of how relevant a file is to solving the issue."""
 
-    CRITICAL = "critical"
-    RELEVANT = "relevant"
-    REFERENCE = "reference"
+    RELEVANT = "relevant"  # Files that are related to the issue
+    NOT_RELEVANT = "not_relevant"  # Files that are not related to the issue
+    NOT_SURE = "not_sure"  # Files where relevance couldn't be determined
 
 
 class QueryType(str, Enum):

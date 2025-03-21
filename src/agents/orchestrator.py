@@ -4,7 +4,8 @@ import json
 import logging
 from typing import Optional
 
-from agents import BaseAgent, IssueDataExtractorAgent
+from agents.base_agent import BaseAgent
+from agents.issue_data_extractor import IssueDataExtractorAgent
 from config import AgentConfig
 from models import (
     AgentExecutionContext,

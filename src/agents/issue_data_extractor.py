@@ -3,7 +3,7 @@
 import logging
 from typing import Optional
 
-from agents import BaseAgent
+from agents.base_agent import BaseAgent
 from config import AgentConfig
 from models import (
     AgentExecutionContext,
@@ -72,9 +72,7 @@ RETRY_PROMPT_TEMPLATE = """
 Previous attempt resulted in error: {error}. Please revise your response.
 """
 
-issue_data_extractor_config = AgentConfig(
-    SYSTEM_PROMPT=SYSTEM_PROMPT, TEMPERATURE=0.0, MODEL_NAME="claude-3-7-sonnet-20250219"
-)
+issue_data_extractor_config = AgentConfig(SYSTEM_PROMPT=SYSTEM_PROMPT, TEMPERATURE=0.0, MODEL_NAME="qwen-max")
 
 
 class IssueDataExtractorAgent(BaseAgent[IssueData]):
@@ -84,6 +82,7 @@ class IssueDataExtractorAgent(BaseAgent[IssueData]):
         user_prompt = USER_PROMPT_TEMPLATE.format(**raw_inputs.model_dump())
         messages = [(MessageRole.USER, user_prompt)]
         context = self.create_context(state)
+        context.max_retries = 5
         self.execute(messages, context)
         return state.build_context_update(self.agent_name, context)
 

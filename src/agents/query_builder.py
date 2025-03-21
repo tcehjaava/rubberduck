@@ -3,7 +3,7 @@
 import logging
 from typing import Optional
 
-from agents import BaseAgent
+from agents.base_agent import BaseAgent
 from agents.issue_data_extractor import IssueDataExtractorAgent
 from agents.orchestrator import Orchestrator
 from config import AgentConfig
@@ -44,16 +44,27 @@ RETRY_PROMPT_TEMPLATE = """
 Previous query attempt resulted in error: {error}. Please revise your response.
 """
 
+
 REFINEMENT_PROMPT_TEMPLATE = """
 I've executed your search query and here are the results:
 
 {search_results}
 
-Please review these results and either:
-1. If the results seem relevant and focused, return the EXACT SAME query
-2. If you see irrelevant file types or results, provide a refined query that excludes them
+Please review these results and refine as follows:
 
-Remember to maintain the required repo pattern and focus on files relevant to the issue.
+1. If results are relevant, focused, and of manageable size (under 20 files), return the EXACT SAME query
+
+2. If results are too numerous (20+ files) or contain irrelevant content, provide a refined query that:
+   - Narrows scope by targeting specific directories or file types
+   - Uses more precise keywords or patterns
+   - Excludes irrelevant file types using "-filename:" filters
+   - Prioritizes core implementation files over tests/docs when appropriate
+   - Uses "path:" or "filename:" qualifiers to target specific areas
+
+3. If results seem incomplete, broaden slightly using OR operators or wildcards
+
+Remember to maintain the required repo pattern and balance between precision and recall - prioritize including ALL
+potentially relevant files while excluding clear noise.
 """
 
 query_builder_config = AgentConfig(
@@ -189,11 +200,9 @@ class QueryBuilderAgent(BaseAgent[SearchQuery]):
 
     def next_step(self, state: WorkflowState) -> NextStep:
         context = state.get_latest_context(self.agent_name)
-        last_record = context.get_last_record()
+        last_record = context.get_last_successful_record()
 
-        if not last_record or last_record.error:
-            error_details = last_record.error if last_record else "No execution record found"
-            logging.error(f"Query Builder failed: {error_details}.")
+        if not last_record:
             return NextStep.END
 
         return NextStep.NEXT

@@ -6,10 +6,10 @@ from tools.sourcegraph.sourcegraph_client import SourcegraphClient
 
 
 def main():
-    query = "repo:^github.com/pytest-dev/pytest$@aa55975c7d3f6c9f6d7f68accc41bb7cadf0eb9a file:src/_pytest/logging.py AND (caplog.get_records OR caplog.clear) -file:.*\\.(md|txt)$"  # noqa: E501
+    query = "repo:^github.com/pytest-dev/pytest$@c98bc4cd3d687fe9b392d8eecd905627191d4f06 (path:src/_pytest unittest OR TestCase OR tearDown OR skipped OR --pdb) -file:.*\\.md$ -file:.*\\.txt$ -file:.*\\.rst$"  # noqa: E501
 
     # Execute the search query
-    result = SourcegraphClient.get_relevance_summary(query)
+    result = SourcegraphClient.search_relevance_files(query)
 
     # Pretty-print the results using model_dump with indentation
     print(json.dumps(result.model_dump(), indent=4))

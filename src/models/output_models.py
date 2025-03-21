@@ -5,6 +5,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 from models import OrchestratorAction, QueryType
+from models.enums import FileRelevanceLevel
 
 
 class ExpectedBehavior(BaseModel):
@@ -168,3 +169,20 @@ class OrchestratorOutput(BaseModel):
             "aiming to pinpoint problematic code sections by initiating a relevance search."
         ),
     )
+
+
+class PrioritizedFile(BaseModel):
+    file_path: str = Field(
+        description="Path to the file relative to the repository root.", example="django/core/field.py"
+    )
+    relevance_level: FileRelevanceLevel = Field(
+        description="How relevant this file is to solving the issue.", example="HIGHLY_RELEVANT"
+    )
+    reasoning: str = Field(
+        description="Explanation of why this file is relevant or not relevant.",
+        example="This file contains the implementation of field type handling which is directly related to the issue.",
+    )
+
+
+class FilePrioritizationOutput(BaseModel):
+    prioritized_files: List[PrioritizedFile] = Field(description="Files evaluated for relevance to the issue.")

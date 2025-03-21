@@ -3,9 +3,11 @@
 from langgraph.graph import END, StateGraph
 
 from agents import (
+    FilePrioritizationAgent,
     IssueDataExtractorAgent,
     Orchestrator,
     QueryBuilderAgent,
+    file_prioritization_config,
     issue_data_extractor_config,
     orchestrator_config,
     query_builder_config,
@@ -23,10 +25,12 @@ class WorkflowBuilder:
         issue_data_extractor = IssueDataExtractorAgent(config=issue_data_extractor_config)
         orchestrator = Orchestrator(config=orchestrator_config)
         query_builder = QueryBuilderAgent(config=query_builder_config)
+        file_prioritization = FilePrioritizationAgent(config=file_prioritization_config)
 
         workflow.add_node(IssueDataExtractorAgent.__name__, issue_data_extractor.run)
         workflow.add_node(Orchestrator.__name__, orchestrator.run)
         workflow.add_node(QueryBuilderAgent.__name__, query_builder.run)
+        workflow.add_node(FilePrioritizationAgent.__name__, file_prioritization.run)
 
         workflow.add_conditional_edges(
             IssueDataExtractorAgent.__name__,
@@ -49,6 +53,15 @@ class WorkflowBuilder:
         workflow.add_conditional_edges(
             QueryBuilderAgent.__name__,
             query_builder.next_step,
+            {
+                NextStep.NEXT.value: FilePrioritizationAgent.__name__,
+                NextStep.END.value: END,
+            },
+        )
+
+        workflow.add_conditional_edges(
+            FilePrioritizationAgent.__name__,
+            file_prioritization.next_step,
             {
                 NextStep.NEXT.value: END,
                 NextStep.END.value: END,

@@ -19,10 +19,12 @@ from .enums import (
 from .output_models import (
     ActualBehavior,
     ExpectedBehavior,
+    FilePrioritizationOutput,
     IssueData,
     KnowledgeUsed,
     OrchestratorOutput,
     OrchestratorTask,
+    PrioritizedFile,
     SearchQuery,
 )
 
@@ -45,4 +47,6 @@ __all__ = [
     "OrchestratorAction",
     "OrchestratorOutput",
     "OrchestratorTask",
+    "PrioritizedFile",
+    "FilePrioritizationOutput",
 ]

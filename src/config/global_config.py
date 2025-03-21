@@ -16,7 +16,7 @@ GLOBAL_CONFIG = GlobalConfig(
     OPENAI_API_KEY=os.getenv("OPENAI_API_KEY"),
     QWEN_API_KEY=os.getenv("QWEN_API_KEY"),
     # pytest-dev/pytest is the easiest repo to start with
-    INSTANCE_ID="pytest-dev__pytest-10051",
+    INSTANCE_ID="pytest-dev__pytest-7236",
     # Default model configuration:
     #   claude-3-7-sonnet-20250219
     #   claude-3-5-sonnet-20241022
@@ -29,7 +29,7 @@ GLOBAL_CONFIG = GlobalConfig(
     #   qwen-max
     #   qwen-plus
     #   qwen-turbo
-    MODEL_NAME="qwen-turbo",
+    MODEL_NAME="qwen-plus",
     SOURCEGRAPH_ENDPOINT="https://codeon.sourcegraph.app/.api/",
     SOURCEGRAPH_GQL_URL="https://codeon.sourcegraph.app/.api/graphql",
     SOURCEGRAPH_API_TOKEN=os.getenv("SOURCEGRAPH_API_TOKEN"),
