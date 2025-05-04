@@ -3,10 +3,10 @@
 import logging
 import uuid
 
-from config import GLOBAL_CONFIG, LoggingConfig
-from models import WorkflowState
-from utils import DatasetUtils, WorkflowLogger
-from workflows import WorkflowBuilder
+from rubberduck.langgraph.graph_orchestrator.config import GLOBAL_CONFIG, LoggingConfig
+from rubberduck.langgraph.graph_orchestrator.models import WorkflowState
+from rubberduck.langgraph.graph_orchestrator.utils import DatasetUtils, WorkflowLogger
+from rubberduck.langgraph.graph_orchestrator.workflows import WorkflowBuilder
 
 
 def main(instance_id: str):
