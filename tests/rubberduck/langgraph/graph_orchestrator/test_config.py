@@ -1,4 +1,3 @@
-# test_config.py
 from rubberduck.langgraph.graph_orchestrator.config import GLOBAL_CONFIG
 
 print(GLOBAL_CONFIG.model_dump_json(indent=2))
