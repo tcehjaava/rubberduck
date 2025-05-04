@@ -1,5 +1,3 @@
-# rubberduck/__init__.py
-
 from . import langgraph
 
-__all__ = ["langgraph"]
+__all__ = ["langgraph", "leader_executor"]

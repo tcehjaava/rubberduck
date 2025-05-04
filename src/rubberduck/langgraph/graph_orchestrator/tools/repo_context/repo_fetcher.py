@@ -1,4 +1,3 @@
-# repo_context/repo_fetcher.py
 import logging
 import os
 from typing import List, Optional

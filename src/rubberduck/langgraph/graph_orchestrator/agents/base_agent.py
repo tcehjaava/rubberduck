@@ -1,5 +1,3 @@
-# src/agents/base_agent.py
-
 import logging
 from typing import Generic, List, Optional, TypeVar
 

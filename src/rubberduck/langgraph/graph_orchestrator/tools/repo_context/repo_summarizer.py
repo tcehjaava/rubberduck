@@ -1,4 +1,3 @@
-# repo_context/repo_summarizer.py
 import logging
 
 from langchain.prompts import ChatPromptTemplate

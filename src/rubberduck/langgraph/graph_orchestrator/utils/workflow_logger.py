@@ -1,5 +1,3 @@
-# utils/workflow_logger.py
-
 import json
 import logging
 import textwrap

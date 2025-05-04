@@ -1,5 +1,3 @@
-# config/config_models.py
-
 from typing import Optional
 
 from joblib import Parallel

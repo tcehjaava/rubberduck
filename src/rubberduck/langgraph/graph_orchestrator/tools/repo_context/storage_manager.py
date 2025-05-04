@@ -1,4 +1,3 @@
-# repo_context/storage_manager.py
 import logging
 from functools import wraps
 from typing import Optional

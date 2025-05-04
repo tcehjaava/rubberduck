@@ -1,5 +1,3 @@
-# src/agents/issue_data_extractor.py
-
 import logging
 from typing import Optional
 

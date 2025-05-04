@@ -1,5 +1,3 @@
-# agents/__init__.py
-
 from .base_agent import BaseAgent
 from .file_prioritization import FilePrioritizationAgent, file_prioritization_config
 from .issue_data_extractor import IssueDataExtractorAgent, issue_data_extractor_config

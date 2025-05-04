@@ -1,5 +1,3 @@
-# src/agents/file_prioritization_agent.py
-
 import logging
 from typing import Optional
 

@@ -1,5 +1,3 @@
-# sourcegraph/queries.py
-
 from enum import Enum
 
 

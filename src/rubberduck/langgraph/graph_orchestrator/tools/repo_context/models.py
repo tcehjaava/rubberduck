@@ -1,4 +1,3 @@
-# repo_context/models.py
 from enum import Enum
 from typing import Any, Dict, List, Optional
 

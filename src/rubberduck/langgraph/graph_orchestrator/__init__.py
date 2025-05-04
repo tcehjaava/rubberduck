@@ -1,5 +1,3 @@
-# graph_orchestrator/__init__.py
-
 from .agents import (
     BaseAgent,
     FilePrioritizationAgent,

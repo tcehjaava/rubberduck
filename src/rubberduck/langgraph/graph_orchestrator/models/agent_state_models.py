@@ -1,5 +1,3 @@
-# src/models/agent_state_models.py
-
 import json
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 

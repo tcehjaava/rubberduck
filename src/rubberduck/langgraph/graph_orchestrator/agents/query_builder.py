@@ -1,5 +1,3 @@
-# agents/query_builder_agent.py
-
 import logging
 from typing import Optional
 

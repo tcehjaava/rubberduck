@@ -1,5 +1,3 @@
-# repo_context/__init__.py
-
 from .models import (
     ContentStatus,
     DirectoryTree,
