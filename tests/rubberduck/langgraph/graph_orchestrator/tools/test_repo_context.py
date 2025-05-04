@@ -2,10 +2,10 @@
 import logging
 import sys
 
-from config import GLOBAL_CONFIG
-from tools.repo_context.repo_fetcher import RepoFetcher
-from tools.repo_context.storage_manager import StorageManager
-from utils import DatasetUtils
+from rubberduck.langgraph.graph_orchestrator.config import GLOBAL_CONFIG
+from rubberduck.langgraph.graph_orchestrator.tools.repo_context.repo_fetcher import RepoFetcher
+from rubberduck.langgraph.graph_orchestrator.tools.repo_context.storage_manager import StorageManager
+from rubberduck.langgraph.graph_orchestrator.utils import DatasetUtils
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 

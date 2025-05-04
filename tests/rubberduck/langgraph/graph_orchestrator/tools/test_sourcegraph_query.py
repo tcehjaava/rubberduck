@@ -2,7 +2,7 @@
 
 import json
 
-from tools.sourcegraph.sourcegraph_client import SourcegraphClient
+from rubberduck.langgraph.graph_orchestrator.tools.sourcegraph.sourcegraph_client import SourcegraphClient
 
 
 def main():
