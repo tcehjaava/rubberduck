@@ -11,9 +11,12 @@ datasets
 gql[requests]
 sseclient
 dashscope
+pyautogen
 pydantic
 python-dotenv
 joblib
 requests
 sqlalchemy
 jinja2
+docker
+swebench
