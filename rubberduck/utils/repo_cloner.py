@@ -1,10 +1,6 @@
-import logging
-
 from autogen.coding import DockerCommandLineCodeExecutor
 
 from rubberduck.autogen.leader_executor.models.swebench import SWEBenchVerifiedInstance
-
-logger = logging.getLogger(__name__)
 
 
 class RepoCloner:

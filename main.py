@@ -1,9 +1,11 @@
 import shutil
+import uuid
 from contextlib import suppress
 
 from rubberduck.autogen.leader_executor.agents import ExecutorAgent
 from rubberduck.autogen.leader_executor.tools import RepoDockerExecutor
 from rubberduck.autogen.leader_executor.utils import RepoCloner
+from rubberduck.autogen.leader_executor.utils.logger import setup_logger
 from rubberduck.langgraph.graph_orchestrator.utils import DatasetUtils
 
 
@@ -34,4 +36,6 @@ cat src/_pytest/unittest.py | sed -n '/class TestCaseFunction/,/^\s*class /p'
 
 
 if __name__ == "__main__":
-    main("pytest-dev__pytest-7236")
+    logger, log_path = setup_logger(run_id=str(uuid.uuid4()))
+    logger.info("Starting executor agent...")
+    # main("pytest-dev__pytest-7236")

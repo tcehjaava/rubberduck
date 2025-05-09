@@ -1,10 +1,8 @@
-import logging
 import os
 from typing import List
 
 from autogen import config_list_from_json
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 
 def load_llm_config(model_config: str = "default_executor") -> List[dict]:
