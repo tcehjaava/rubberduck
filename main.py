@@ -1,41 +1,47 @@
-import shutil
+import argparse
 import uuid
-from contextlib import suppress
 
-from rubberduck.autogen.leader_executor.agents import ExecutorAgent
+from rubberduck.autogen.leader_executor.agents.executor import ExecutorAgent
+from rubberduck.autogen.leader_executor.agents.leader import LeaderAgent
 from rubberduck.autogen.leader_executor.tools import RepoDockerExecutor
-from rubberduck.autogen.leader_executor.utils import RepoCloner
+from rubberduck.autogen.leader_executor.utils.dataset_utils import DatasetUtils
 from rubberduck.autogen.leader_executor.utils.logger import setup_logger
-from rubberduck.langgraph.graph_orchestrator.utils import DatasetUtils
+from rubberduck.autogen.leader_executor.utils.repo_cloner import RepoCloner
 
 
-def main(instance_id: str):
+def main(instance_id: str, logger):
     instance = DatasetUtils.load_instance(instance_id)
-    if instance is None:
-        raise ValueError(f"Instance '{instance_id}' not found")
+    logger.info(f"Loaded instance {instance_id} for repository {instance.repo}")
 
-    try:
-        with RepoDockerExecutor(instance) as repo_executor:
-            RepoCloner(repo_executor).clone(instance)
-            agent = ExecutorAgent(repo_executor, instance)
-            agent.perform_task(
-                """
-Now I need to see how the actual TestCaseFunction.runtest method is implemented to understand how it handles both skipped tests and the --pdb option together.
+    repo_executor = RepoDockerExecutor(instance=instance)
+    logger.info(f"Initialized Docker executor for repository {instance.repo}")
 
-Task 11: Let's view the complete TestCaseFunction class implementation:
+    repo_cloner = RepoCloner(repo_executor)
+    repo_cloner.clone(instance)
+    logger.info(f"Cloned repository {instance.repo}")
 
-```bash
-cat src/_pytest/unittest.py | sed -n '/class TestCaseFunction/,/^\s*class /p'
-```
-"""
-            )
-    finally:
-        if repo_executor is not None:
-            with suppress(FileNotFoundError):
-                shutil.rmtree(repo_executor.host_code_execution_dir)
+    executor_agent = ExecutorAgent(repo_executor=repo_executor, instance=instance)
+    logger.info(f"Initialized ExecutorAgent for {instance.repo}")
+
+    leader_agent = LeaderAgent(executor_agent=executor_agent, instance=instance)
+    logger.info(f"Initialized LeaderAgent for {instance.repo}")
+
+    resolution = leader_agent.solve_issue(instance.problem_statement)
+    logger.info(f"Issue resolution: {resolution}")
+
+    return resolution
 
 
 if __name__ == "__main__":
-    logger, log_path = setup_logger(run_id=str(uuid.uuid4()))
-    logger.info("Starting executor agent...")
-    # main("pytest-dev__pytest-7236")
+    parser = argparse.ArgumentParser(description="Leader-Executor agent system runner")
+    parser.add_argument("instance_id", type=str, help="Instance ID to process")
+
+    args = parser.parse_args()
+
+    run_id = str(uuid.uuid4())
+    logger, log_path = setup_logger(run_id=run_id)
+    logger.info("Starting Leader-Executor agent system...")
+
+    result = main(args.instance_id, logger)
+    logger.info(f"Completed processing for {args.instance_id}")
+    logger.info(f"Result: {result}")
