@@ -1,13 +1,10 @@
-import logging
-
 from autogen import AssistantAgent, UserProxyAgent
+from loguru import logger
 
 from rubberduck.autogen.leader_executor.config import load_llm_config
 from rubberduck.autogen.leader_executor.models import SWEBenchVerifiedInstance
 from rubberduck.autogen.leader_executor.prompts import load_markdown_message
 from rubberduck.autogen.leader_executor.tools import RepoDockerExecutor
-
-logger = logging.getLogger(__name__)
 
 
 def is_termination_msg(msg: dict) -> bool:
@@ -45,4 +42,5 @@ class ExecutorAgent:
 
     def perform_task(self, task: str) -> None:
         logger.info("ExecutorAgent received task: %s", task)
-        self.proxy.initiate_chat(self.executor, message=task)
+        chat_result = self.proxy.initiate_chat(self.executor, message=task)
+        return chat_result.summary if hasattr(chat_result, "summary") else "Task executed, No summary to return."

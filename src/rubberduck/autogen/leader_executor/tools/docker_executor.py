@@ -1,14 +1,12 @@
-import logging
 import tempfile
 from pathlib import Path
 
 import docker
 from autogen.coding import DockerCommandLineCodeExecutor
 from docker.errors import NotFound as DockerNotFound
+from loguru import logger
 
 from rubberduck.autogen.leader_executor.models import SWEBenchVerifiedInstance
-
-logger = logging.getLogger(__name__)
 
 
 class RepoDockerExecutor(DockerCommandLineCodeExecutor):
