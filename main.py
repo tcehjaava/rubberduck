@@ -1,5 +1,4 @@
 import shutil
-import time
 from contextlib import suppress
 
 from rubberduck.autogen.leader_executor.agents import ExecutorAgent
@@ -15,10 +14,19 @@ def main(instance_id: str):
 
     try:
         with RepoDockerExecutor(instance) as repo_executor:
-            RepoCloner(repo_executor).clone(instance.repo)
-            agent = ExecutorAgent(repo_executor)
-            agent.perform_task("Run tests and see if everything is working fine")
-            time.sleep(10)
+            RepoCloner(repo_executor).clone(instance)
+            agent = ExecutorAgent(repo_executor, instance)
+            agent.perform_task(
+                """
+Now I need to see how the actual TestCaseFunction.runtest method is implemented to understand how it handles both skipped tests and the --pdb option together.
+
+Task 11: Let's view the complete TestCaseFunction class implementation:
+
+```bash
+cat src/_pytest/unittest.py | sed -n '/class TestCaseFunction/,/^\s*class /p'
+```
+"""
+            )
     finally:
         if repo_executor is not None:
             with suppress(FileNotFoundError):

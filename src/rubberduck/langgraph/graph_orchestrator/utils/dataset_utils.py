@@ -4,9 +4,7 @@ from typing import Optional, Set
 
 from datasets import load_dataset
 
-from rubberduck.langgraph.graph_orchestrator.models.agent_state_models import (
-    SWEBenchVerifiedInstance,
-)
+from rubberduck.autogen.leader_executor.models.swebench import SWEBenchVerifiedInstance
 
 
 class DatasetUtils:

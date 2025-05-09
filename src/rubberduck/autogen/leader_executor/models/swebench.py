@@ -16,3 +16,11 @@ class SWEBenchVerifiedInstance(BaseModel):
     fail_to_pass: List[str] = Field(..., alias="FAIL_TO_PASS")
     pass_to_pass: List[str] = Field(..., alias="PASS_TO_PASS")
     environment_setup_commit: str
+
+    @property
+    def repo_subdir_name(self) -> str:
+        return self.repo.rstrip("/").split("/")[-1]
+
+    class Config:
+        populate_by_name = True
+        frozen = True
