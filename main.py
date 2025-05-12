@@ -27,6 +27,9 @@ def main(instance_id: str, logger):
     logger.info(f"Initialized LeaderAgent for {instance.repo}")
 
     resolution = leader_agent.solve_issue(instance.problem_statement)
+    # resolution = leader_agent.solve_issue(
+    #     "Understand the setup and capabilities of the environment, and report what kind of things you can do."
+    # )
     logger.info(f"Issue resolution: {resolution}")
 
     return resolution
