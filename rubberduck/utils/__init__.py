@@ -1,5 +1,6 @@
 from .dataset_utils import DatasetUtils
+from .helpers import is_termination_msg
 from .logger import setup_logger
 from .repo_cloner import RepoCloner
 
-__all__ = ["DatasetUtils", "RepoCloner", "setup_logger"]
+__all__ = ["DatasetUtils", "RepoCloner", "setup_logger", "is_termination_msg"]

@@ -4,10 +4,10 @@ from autogen import AssistantAgent, UserProxyAgent, register_function
 from loguru import logger
 
 from rubberduck.autogen.leader_executor.agents.executor import ExecutorAgent
-from rubberduck.autogen.leader_executor.agents.helpers import is_termination_msg
 from rubberduck.autogen.leader_executor.config import load_llm_config
 from rubberduck.autogen.leader_executor.models import SWEBenchVerifiedInstance
 from rubberduck.autogen.leader_executor.prompts import load_markdown_message
+from rubberduck.autogen.leader_executor.utils.helpers import is_termination_msg
 
 
 class LeaderAgent:
@@ -27,7 +27,6 @@ class LeaderAgent:
         self.leader = AssistantAgent(
             name="LEADER",
             system_message=system_message,
-            description=load_markdown_message("leader_description.md"),
             llm_config={"config_list": config_list, "temperature": 0},
             is_termination_msg=termination_check,
             human_input_mode="NEVER",
@@ -60,6 +59,6 @@ class LeaderAgent:
         )
 
         logger.info(f"LeaderAgent solving issue for {self.instance.repo_subdir_name}")
-        chat_result = self.leader_proxy.initiate_chat(recipient=self.leader, message=formatted_issue, max_turns=10)
+        chat_result = self.leader_proxy.initiate_chat(recipient=self.leader, message=formatted_issue, max_turns=25)
 
         return chat_result.summary if hasattr(chat_result, "summary") else "Issue solved, no summary available."
