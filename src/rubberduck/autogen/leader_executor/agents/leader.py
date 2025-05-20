@@ -21,9 +21,7 @@ class LeaderAgent:
         self.instance = instance
         config_list = load_llm_config(model_config)
 
-        system_message = load_markdown_message(
-            "leader_system_message.md", repo_name=instance.repo_subdir_name, commit_hash=instance.base_commit
-        )
+        system_message = load_markdown_message("leader_system_message.md", repo_name=instance.repo_subdir_name)
         termination_check = partial(is_termination_msg, termination_marker="TERMINATE")
 
         self.leader = AssistantAgent(
