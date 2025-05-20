@@ -95,19 +95,16 @@ You must enclose your code within triple backticks, specifying one of the follow
 ### 4.2 Examples of Action Code Blocks
 
 ```python
-# Example: Using Python to write to a file
 with open("/workspace/output.txt", "w") as f:
     f.write("Hello from Python Executor!")
 ```
 
 ```bash
-# Example: Using bash to create a directory and list contents
 mkdir /workspace/my_new_directory
 ls -la /workspace
 ```
 
 ```shell
-# Example: Using shell to check for a file's existence
 if [ -f "/workspace/data.csv" ]; then
   echo "File data.csv exists."
 else
@@ -116,23 +113,18 @@ fi
 ```
 
 ```sh
-# Example: Using sh to append text to a file
 echo "A new line via sh" >> /workspace/log.txt
 ```
 
 ```pwsh
-# Example: Using PowerShell Core (pwsh) to get running processes
 Get-Process | Select-Object -First 5 -Property ProcessName, Id
 ```
 
 ```powershell
-# Example: Using PowerShell syntax (e.g., for Windows-style commands if ever needed, but runs via pwsh)
-# Get the items in the current directory
 Get-ChildItem -Path .
 ```
 
 ```ps1
-# Example: PowerShell syntax, often used for scripts, run via pwsh
 $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 Write-Output "Current time: $Timestamp"
 ```
@@ -245,4 +237,5 @@ TERMINATE
 ### 6.4 Crucial Reminders
 
 * **Intermediate Steps:** Messages you send during the ReAct cycle (your "Act" steps containing only the code blocks you want executed) must **not** include this JSON structure or the `TERMINATE` keyword. They contain *only* the code blocks for execution.
+* **Avoid Comments in Execution Blocks:** Do not include comments within the code blocks intended for direct execution (e.g., your bash commands or script content). Comments can sometimes be misinterpreted by the execution environment or parsing logic, potentially leading to executor errors or unexpected behavior. If you need to explain a step, do so in the thought process leading up to the code block, not within the executable code itself.
 * **Final Step Only:** This specific JSON + `TERMINATE` format is reserved **exclusively** for the single, final message signifying the completion (success or failure) of the entire sub-task assigned to you. Omitting `TERMINATE` will prevent the system from recognizing that you have finished.
