@@ -21,3 +21,4 @@ jinja2
 docker
 swebench
 loguru
+pytest
