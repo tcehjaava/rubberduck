@@ -6,50 +6,56 @@ from pydantic import BaseModel, Field
 
 
 class ExecutorTaskSpec(BaseModel):
-    """Task messages produced by the Executor when executing a LeaderTaskSpec."""
-
     type: Literal["executor_task"] = Field(
         default="executor_task",
         description="Discriminator identifying an ExecutorTaskSpec object.",
     )
     reasoning: Optional[str] = Field(
         default=None,
-        description="Rationale for the commands that will be executed.",
-        example="Listing directories to confirm project layout before searching for TODO markers.",
+        description="Detailed rationale and analysis for the approach being taken.",
     )
-    commands: List[str] = Field(
+    operations: List[str] = Field(
         default_factory=list,
-        description=(
-            "Commands to be executed sequentially. Format each command in a fenced"
-            " code block, for example:\n```bash\ncommand\n```."
-        ),
+        description="Operations to be executed sequentially as code blocks.",
         example=[
-            "bash -lc 'ls -la /workspace/project/src'",
-            "python scripts/scan_for_todo.py",
-            "pytest tests/unit/test_sample.py",
+            """```python
+if unittest and call.excinfo and call.excinfo.errisinstance(unittest.SkipTest):
+    call2 = CallInfo.from_call(
+        lambda: pytest.skip(str(call.excinfo.value)), call.when
+    )
+    call.excinfo = call2.excinfo
+```""",
+            """```bash
+grep -C 5 "_explicit_tearDown" /workspace/pytest/src/_pytest/unittest.py
+```""",
         ],
     )
 
 
 class ExecutorReport(BaseModel):
-    """Final report from the Executor sent back to the Leader."""
-
     type: Literal["executor_report"] = Field(
         default="executor_report",
         description="Discriminator identifying an ExecutorReport object.",
     )
-    summary: str = Field(
-        ..., description="Summary of the commands executed and results.", example="Executed 2 commands successfully."
-    )
-    details: str = Field(
+    status: Literal["success", "failure", "partial", "terminated"] = Field(
         ...,
-        description="Detailed output or logs from the commands.",
-        example="Found 3 TODO occurrences across two files.",
+        description="Overall status of the task execution.",
     )
-    diff: Optional[str] = Field(
+    findings: List[str] = Field(
+        default_factory=list,
+        description="Key discoveries or insights from the task execution.",
+    )
+    execution_details: List[str] = Field(
+        default_factory=list,
+        description="Detailed results from each operation that was executed.",
+    )
+    code_changes: Optional[str] = Field(
         default=None,
-        description="Optional diff of any changes produced by command execution.",
-        example="diff --git a/file.py b/file.py\n- old line\n+ new line",
+        description="Diff of any code modifications made.",
+    )
+    termination_reason: Optional[str] = Field(
+        default=None,
+        description="Reason for early termination, if applicable.",
     )
 
 
