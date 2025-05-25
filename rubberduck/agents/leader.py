@@ -51,14 +51,7 @@ class LeaderAgent:
         )
 
     def solve_issue(self, problem_statement: str) -> str:
-        formatted_issue = (
-            f"Please solve the following software engineering issue for {self.instance.repo_subdir_name}:\n\n"
-            f"{problem_statement}\n\n"
-            f"Remember to follow the ReAct protocol - think through your solution, "
-            f"take actions by delegating tasks, and observe results."
-        )
-
         logger.info(f"LeaderAgent solving issue for {self.instance.repo_subdir_name}")
-        chat_result = self.leader_proxy.initiate_chat(recipient=self.leader, message=formatted_issue, max_turns=25)
+        chat_result = self.leader_proxy.initiate_chat(recipient=self.leader, message=problem_statement, max_turns=25)
 
         return chat_result.summary if hasattr(chat_result, "summary") else "Issue solved, no summary available."
