@@ -6,6 +6,10 @@ from loguru import logger
 from rubberduck.autogen.leader_executor.agents.executor import ExecutorAgent
 from rubberduck.autogen.leader_executor.config import load_llm_config
 from rubberduck.autogen.leader_executor.models import SWEBenchVerifiedInstance
+from rubberduck.autogen.leader_executor.models.leader import (
+    LeaderReport,
+    LeaderTaskSpec,
+)
 from rubberduck.autogen.leader_executor.prompts import load_markdown_message
 from rubberduck.autogen.leader_executor.utils.helpers import is_termination_msg
 
@@ -21,7 +25,11 @@ class LeaderAgent:
         self.instance = instance
         config_list = load_llm_config(model_config)
 
-        system_message = load_markdown_message("leader_system_message.md", repo_name=instance.repo_subdir_name)
+        system_message = load_markdown_message(
+            "leader_system_message.md",
+            repo_name=instance.repo_subdir_name,
+            leader_report_schema=LeaderReport.model_json_schema(),
+        )
         termination_check = partial(is_termination_msg, termination_marker="TERMINATE")
 
         self.leader = AssistantAgent(
@@ -39,8 +47,8 @@ class LeaderAgent:
             llm_config=False,
         )
 
-        def perform_task_wrapper(task: str) -> None:
-            return self.executor_agent.perform_task(task)
+        def perform_task_wrapper(task_spec: LeaderTaskSpec) -> str:
+            return self.executor_agent.perform_task(task_spec.model_dump_json())
 
         register_function(
             perform_task_wrapper,
