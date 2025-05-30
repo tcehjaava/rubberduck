@@ -1,6 +1,15 @@
-from .executor import ExecutorOutput, ExecutorReport, ExecutorTaskSpec
-from .leader import LeaderOutput, LeaderReport, LeaderTaskSpec
+from typing import Any, Dict, Type
+
+from pydantic import BaseModel
+
+from .executor import ExecutorReport, ExecutorTaskSpec
+from .leader import LeaderReport, LeaderTaskSpec
 from .swebench import SWEBenchVerifiedInstance
+
+
+def build_schema(model: Type[BaseModel]) -> Dict[str, Any]:
+    return model.model_json_schema()
+
 
 __all__ = [
     "SWEBenchVerifiedInstance",
@@ -8,6 +17,5 @@ __all__ = [
     "LeaderReport",
     "ExecutorTaskSpec",
     "ExecutorReport",
-    "LeaderOutput",
-    "ExecutorOutput",
+    "build_schema",
 ]

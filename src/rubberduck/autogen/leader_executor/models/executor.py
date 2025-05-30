@@ -1,18 +1,17 @@
 from __future__ import annotations
 
-from typing import Annotated, List, Literal, Optional, Union
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
 
 class ExecutorTaskSpec(BaseModel):
-    type: Literal["executor_task"] = Field(
-        default="executor_task",
-        description="Discriminator identifying an ExecutorTaskSpec object.",
-    )
     reasoning: Optional[str] = Field(
         default=None,
-        description="Detailed rationale and analysis for the approach being taken.",
+        description=(
+            "Detailed rationale and analysis for the approach being taken. ",
+            "Make sure the reasoning has at least 100 words.",
+        ),
     )
     operations: List[str] = Field(
         default_factory=list,
@@ -33,10 +32,6 @@ grep -C 5 "_explicit_tearDown" /workspace/pytest/src/_pytest/unittest.py
 
 
 class ExecutorReport(BaseModel):
-    type: Literal["executor_report"] = Field(
-        default="executor_report",
-        description="Discriminator identifying an ExecutorReport object.",
-    )
     status: Literal["success", "failure", "partial", "terminated"] = Field(
         ...,
         description="Overall status of the task execution.",
@@ -57,9 +52,3 @@ class ExecutorReport(BaseModel):
         default=None,
         description="Reason for early termination, if applicable.",
     )
-
-
-ExecutorOutput = Annotated[
-    Union[ExecutorTaskSpec, ExecutorReport],
-    Field(discriminator="type"),
-]
