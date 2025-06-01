@@ -48,6 +48,6 @@ class ExecutorAgent:
         )
 
     def perform_task(self, task: str) -> None:
-        logger.info("ExecutorAgent received task: %s", task)
+        logger.info("ExecutorAgent started a task...")
         chat_result = self.proxy.initiate_chat(self.executor, message=task, max_turns=100)
         return chat_result.summary if hasattr(chat_result, "summary") else "Task executed, No summary to return."
