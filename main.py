@@ -8,20 +8,35 @@ from rubberduck.autogen.leader_executor.utils.logger import setup_logger
 from rubberduck.autogen.leader_executor.utils.repo_cloner import RepoCloner
 
 SETUP_TASK = """
-Initialize the runtime by probing the entire environment—including the helpers directory—and
-automatically repair or replace any missing or out-of-range tools.
+Initialize the runtime by probing the entire environment—and automatically install or repair any missing tools.
 
-Required checklist (install / verify each):
+* **Checklist (perform in this exact order)**
 
-  • python                      – record interpreter version (python --version)
-  • ripgrep                     – fast file-search utility
-  • importlib-metadata          – std-lib back-port needed on Python < 3.8
-  • helpers/ast_helper.py ensure_deps
-      – run:  python helpers/ast_helper.py --ensure-deps
-        (installs astunparse, pyflakes, and any other pinned wheels)
+  1. **python**
+     * Probe `python --version`
+     * No installation ever needed; just record the version string.
+  2. **ripgrep**
+     * Probe `rg --version`
+     * If the probe fails, install with
+       ```bash
+       apt-get -qq update && apt-get -qq install -y ripgrep
+       ```
+  3. **ast-grep CLI**
+     * Probe `ast-grep --version`
+     * Install / upgrade **if** the command is missing **or** the version is lower than `0.37`.
+       Try each command in sequence; stop after the first one that succeeds.
+       ```bash
+       pip install --quiet --upgrade ast-grep-cli
+       ```
+  4. **ast_grep_rules directory**
+     * Probe `test -d /workspace/ast_grep_rules`
+     * If absent, create it:
+       ```bash
+       mkdir -p /workspace/ast_grep_rules
+       ```
 
-After completing the checklist, output one compact **status report** that lists
-*every* verified component and its version in the format:
+After completing the checklist, output one compact **status report** listing every
+verified component and its version in the format:
 
 <component-1>: <version>
 <component-2>: <version>
@@ -31,39 +46,42 @@ The report must contain only this list followed by TERMINATE; add nothing else.M
 instructions carefully.
 """
 
-PROBLEM_STATEMET = """
-### 🛠  Task — **“Mini AST Workout”**
 
-> **Goal:** show that the agent’s AST helper can
->
+PROBLEM_STATEMENT = """
+### 🛠  Task — **“Mini AST-grep Workout”**
+
+> **Goal:** demonstrate that the agent can use **ast-grep** rules to
 > 1. **insert** new code,
 > 2. **rename** an identifier within a file, and
 > 3. **modify** a literal inside a function-call argument—
->    all while keeping the repo syntactically sound.
+> …while keeping the repo syntactically sound.
+
+All edits **must** be performed through ast-grep YAML rules stored in
+`/workspace/ast_grep_rules/` and applied with the `ast-grep` CLI.
 
 ---
 
 #### 1 · Add a helper function
 
-File: `pylint/__init__.py`  (create it if missing)
+Target file: `pylint/__init__.py` (create it if missing).
 
-Insert **immediately after imports** —or at top if there are none:
+Insert **immediately after the last import**—or at top if there are none:
 
 ```python
 def _ast_test_ping() -> str:
     "Return a static string confirming AST edits ran."
     return "pong"
-```
+````
 
 ---
 
 #### 2 · Rename a constant inside one module
 
-1. Locate the **first** file whose name starts with `format` in the `pylint/` tree
-   (e.g. `pylint/format.py`, `pylint/checkers/format.py`, etc.).
+1. Locate the **first** file whose name begins with `format` in the `pylint/` tree
+   (e.g. `pylint/format.py`, `pylint/checkers/format.py`, …).
 2. If that file already defines `DEFAULT_INDENT_SIZE`, **rename** it to
    `DEFAULT_TAB_SIZE` and update every reference *inside that same file only*.
-3. If the constant is absent, just inject
+3. If the constant is absent, inject
 
 ```python
 DEFAULT_TAB_SIZE: int = 4
@@ -75,10 +93,11 @@ at module level.
 
 #### 3 · Change a literal in a function call
 
-Search that same file for any call like `json.dumps(..., indent=4 …)`.
+In that same `format*` file, search for any call resembling
+`json.dumps(..., indent=4 …)`.
 
 * If found, change the keyword argument to `indent=2`.
-* If none exist, append:
+* If not found, append:
 
 ```python
 def _ast_json_sanity() -> str:
