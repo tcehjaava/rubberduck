@@ -26,7 +26,7 @@ class LeaderAgent:
         config_list = load_llm_config(model_config)
 
         system_message = load_markdown_message(
-            "leader_system_message.md",
+            "leader.md",
             repo_name=instance.repo_subdir_name,
             leader_report_schema=LeaderReport.model_json_schema(),
         )
