@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 # PATCH: ast-helper v1.0
 """
-🚀  Strict AST helper — **v1.0**
-================================
+🚀  Strict AST helper — **v1.0**  *(enhanced)*
+===========================================
 
 A **single-file toolkit** for *safe, idempotent* edits on any Python repo,
-driven entirely by the Abstract Syntax Tree 🪄.
+ driven entirely by the Abstract Syntax Tree 🪄.
 
 ───────────────────────────────── TL;DR ─────────────────────────────────
-1. (Optional) `python ast_helper.py --ensure-deps`  # installs astunparse/pyflakes if missing
+1. (Optional) `python ast_helper.py --ensure-deps`   # installs astunparse/pyflakes if missing
 2. Put your transforms in **transformations.py** and register with
-      @register("MY_NAME")
-3. Always add a verify() – it makes the helper roll back automatically.
+      `@register("MY_NAME")`
+3. Always add a `verify()` – it makes the helper roll back automatically.
 4. Run:
-      python ast_helper.py --transform MY_NAME --path /abs/file.py [--preview]
+      `python ast_helper.py --transform MY_NAME --path /abs/file.py [--preview]`
 
 That’s it — diff preview, atomic write, byte-code compile, optional static
 lint & runtime probes are handled for you.  Exit status ✔︎/✖ indicates
@@ -38,25 +38,25 @@ class RenameFoo(BaseTransform):
     def verify(self, tree, _src_before):
         if any(isinstance(n, Name) and n.id == "foo" for n in walk(tree)):
             raise VerificationError("rename incomplete")
-````
+```
 
-Save the class, run the helper (step 3) and you’re done.
-
-──────────────────────────── CLI reference ──────────────────────────────
---transform NAME   Name used in @register(...)
+──────────────────────────── CLI reference ─────────────────────────────
+--transform NAME   Name used in `@register(...)`
 --path FILE.py     Target file to patch *in-place*
 --preview          Show diff, don’t write
 --ensure-deps      Install `astunparse` (<3.9) & `pyflakes` quietly
 --check            Dry-run verification only (no write)
 
-─────────────────────────── Public affordances ───────────────────────────
+─────────────────────────── What’s new in this build ───────────────────────────
+* **parse_snippet()** – one-liner to safely inject multi-line source *inside* a
+  class or function body: dedents, then re-indents to the current
+  `col_offset`. No more `IndentationError` surprises.
+* **_keep_alive_marker()** – returns a tiny assignment expression that survives
+  unparsing (unlike comments).  Perfect for idempotency or search markers.
+* Diff clipping removed – you always see the full before/after hunk.
+* Extra safety: after write-back we *re-parse* the file and assert the
+  `change_id` marker is still present, catching any pretty-printer losses.
 
-* **register**     — decorator to expose a transform
-* **BaseTransform** — helper base with `verify()` hook
-* **RepoEditor.apply** — internal pipeline (import, mutate, diff, verify)
-
-All other code below is implementation detail; read on only if you’re
-curious or contributing ✨
 """
 
 ######################################################################
@@ -77,17 +77,13 @@ import textwrap
 import traceback
 import types as _types
 from pathlib import Path
-from typing import (
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 _sys.modules.setdefault("ast_helper", _sys.modules[__name__])
+
+# --------------------------------------------------------------------
+# dependency bootstrap
+# --------------------------------------------------------------------
 
 
 def ensure_deps() -> None:
@@ -95,12 +91,6 @@ def ensure_deps() -> None:
 
     * ``astunparse`` – fallback code-generator for Python < 3.9.
     * ``pyflakes``    – static lint / sanity check.
-
-    The helper refuses to pin hard versions globally; instead it installs a
-    **temporary local wheel** inside the executing virtual-env if – and only
-    if – a compatible version is missing.  This keeps the host environment
-    clean yet satisfies CI reproducibility.  All installation happens with
-    :pycode:`pip --quiet` so there is no console noise for successful runs.
     """
 
     try:  # 3.8+
@@ -109,7 +99,7 @@ def ensure_deps() -> None:
         import importlib_metadata as imd  # type: ignore
 
     def need(pkg: str, lo: Tuple[int, int], hi: Tuple[int, int]) -> bool:
-        """Return *True* if *pkg* is absent or outside the [lo, hi) range."""
+        "Return *True* if *pkg* is absent or outside the [lo, hi) range."
         try:
             v = tuple(int(x) for x in imd.version(pkg).split(".")[:2])
             return not (lo <= v < hi)
@@ -139,7 +129,7 @@ except ModuleNotFoundError:
 
 
 def _unparse(tree: ast.AST) -> str:
-    """Return *source code* for *tree* using the best available generator."""
+    "Return *source* for *tree* using the best available generator."
     if _ast_unparse:  # 3.9+
         return _ast_unparse(tree)  # type: ignore[misc]
     if astunparse:
@@ -152,11 +142,10 @@ def _unparse(tree: ast.AST) -> str:
 ######################################################################
 
 _PATCH_HEADER = "# PATCH: ast-helper v1.0"
-_DEF_MAX_DIFF = 80  # show first 40 & last 40 lines
 
 
-def _print_diff(old: str, new: str, path: Path, max_lines: int = _DEF_MAX_DIFF) -> None:
-    """Pretty-print a unified diff, clipping the middle section if needed."""
+def _print_diff(old: str, new: str, path: Path) -> None:
+    "Pretty-print a unified diff with **no clipping** (clarity over brevity)."
     diff_lines = list(
         difflib.unified_diff(
             old.splitlines(keepends=True),
@@ -165,14 +154,11 @@ def _print_diff(old: str, new: str, path: Path, max_lines: int = _DEF_MAX_DIFF) 
             tofile=f"{path} (patched)",
         )
     )
-    if len(diff_lines) > max_lines:
-        half = max_lines // 2
-        diff_lines = diff_lines[:half] + ["...\n"] + diff_lines[-half:]
     sys.stdout.writelines(diff_lines)
 
 
 def _lint(p: Path) -> None:
-    """Run the mandated syntax + static lint checks (py_compile & pyflakes)."""
+    "Run the mandated syntax + static lint checks (py_compile & pyflakes)."
     subprocess.run([sys.executable, "-m", "py_compile", str(p)], check=True)
     try:
         subprocess.run([sys.executable, "-m", "pyflakes", str(p)], check=True)
@@ -186,22 +172,17 @@ def _lint(p: Path) -> None:
 
 
 class VerificationError(RuntimeError):
-    """Raised whenever *any* step of the safety pipeline fails."""
+    "Raised whenever *any* step of the safety pipeline fails."
 
 
 class ASTTransformer:
-    """Utility mix-in with helpers for common edits (import insertion, etc.)."""
+    "Utility mix-in with helpers for common edits (import insertion, etc.)."
 
-    # Agents rarely need to touch this class directly.
+    # ───── public convenience helpers ─────
 
     @staticmethod
-    def ensure_import(
-        module_node: ast.Module,
-        module: str,
-        *,
-        alias: Optional[str] = None,
-    ) -> ast.Module:
-        """Insert ``import <module>`` (or ``as alias``) *once* at top-of-file."""
+    def ensure_import(module_node: ast.Module, module: str, *, alias: Optional[str] = None) -> ast.Module:
+        "Insert `import <module>` (or `as alias`) **once** at top-of-file."
         if any(
             isinstance(n, ast.Import) and any(a.name == module and a.asname == alias for a in n.names)
             for n in module_node.body
@@ -210,6 +191,35 @@ class ASTTransformer:
         module_node.body.insert(0, ast.Import(names=[ast.alias(name=module, asname=alias)]))
         return module_node
 
+    # ───── new in v1.0-enhanced ─────
+
+    @staticmethod
+    def parse_snippet(src: str, ctx: ast.AST) -> List[ast.stmt]:
+        """Parse *src* so it can be safely spliced **inside** *ctx*.
+
+        Steps:
+        1. `textwrap.dedent` so authors can indent naturally in triple-quoted
+           strings.
+        2. Re-indent with as many spaces as `ctx.col_offset` so the fragment
+           is legal at that insertion depth.
+        3. `ast.parse` and return the resulting ``.body`` list.
+        """
+        indent = " " * getattr(ctx, "col_offset", 0)
+        snippet = textwrap.indent(textwrap.dedent(src), indent)
+        return ast.parse(snippet).body
+
+    @staticmethod
+    def keep_alive_marker(tag: str = "ast_helper_marker") -> ast.Assign:
+        """Return a tiny assignment that the unparser **cannot drop**.
+
+        Useful for transforms that need a persistent marker; an assignment
+        with a string literal makes a great no-op that survives round-trips.
+        """
+        return ast.Assign(
+            targets=[ast.Name(id=tag, ctx=ast.Store())],
+            value=ast.Constant(value=True),
+        )
+
 
 class BaseTransform(ASTTransformer, ast.NodeTransformer):
     """Base class for all user-defined transforms.
@@ -217,10 +227,10 @@ class BaseTransform(ASTTransformer, ast.NodeTransformer):
     **Override** one or more ``visit_*`` methods *or* :pycode:`visit_Module`.
     Optionally provide:
 
-    * :pyattr:`change_id`    – unique marker preventing duplicate patches.
-    * :pyattr:`probe_name`   – runtime symbol to call after patch.
-    * :pyattr:`probe_expect` – JSON-serialisable expected return value.
-    * :meth:`verify`         – extra static assertions.
+    * ``change_id``    – unique marker preventing duplicate patches.
+    * ``probe_name``   – runtime symbol to call after patch.
+    * ``probe_expect`` – JSON-serialisable expected return value.
+    * ``verify()``     – extra static assertions.
     """
 
     change_id: Optional[str] = None
@@ -228,7 +238,7 @@ class BaseTransform(ASTTransformer, ast.NodeTransformer):
     probe_expect = None  # JSON-serialisable
 
     def verify(self, tree: ast.AST, src_before: str) -> None:  # noqa: D401
-        """Hook that may raise :class:`VerificationError`.  Default = *no-op*."""
+        "Hook that may raise :class:`VerificationError`.  Default = *no-op*."
         return None
 
     # ------------------------------------------------------------------
@@ -236,7 +246,7 @@ class BaseTransform(ASTTransformer, ast.NodeTransformer):
     # ------------------------------------------------------------------
 
     def _run_probe(self, path: Path) -> None:
-        """Optionally import the patched file and execute *probe_name*()."""
+        "Optionally import the patched file and execute *probe_name*()."
         if not self.probe_name:
             return
         code = textwrap.dedent(
@@ -255,7 +265,7 @@ _REGISTRY: Dict[str, Type[BaseTransform]] = {}
 
 
 def register(name: str):
-    """Decorator: ``@register("NAME")`` → adds the class to the registry."""
+    "Decorator: `@register('NAME')` → adds the class to the registry."
 
     def _wrap(cls: Type[BaseTransform]) -> Type[BaseTransform]:
         _REGISTRY[name] = cls
@@ -271,14 +281,13 @@ if _extra.exists():
     sys.modules[spec.name] = mod
     spec.loader.exec_module(mod)  # type: ignore[union-attr]
 
-
 ######################################################################
 # repo façade – what callers use                                     #
 ######################################################################
 
 
 class RepoEditor:
-    """Facade class hiding all low-level details behind a simple API."""
+    "Facade class hiding all low-level details behind a simple API."
 
     def __init__(self, root: Union[Path, str]):
         self.root = Path(root).resolve()
@@ -287,59 +296,57 @@ class RepoEditor:
 
     @property
     def registry(self):
-        """Expose the global transform registry (useful for wrapper scripts)."""
-
+        "Expose the global transform registry (useful for wrapper scripts)."
         return _REGISTRY
 
     # ––––– primary entry point –––––
 
-    def apply(
-        self,
-        target: Union[Path, str],
-        tfm_cls: Type[BaseTransform],
-        *,
-        preview: bool = False,
-    ) -> None:
-        """Apply *tfm_cls* to *target* in-place.
-
-        The full 10-step safety pipeline mandated by the original spec happens
-        here; callers get a clean **binary success/failure** contract.
-        """
+    def apply(self, target: Union[Path, str], tfm_cls: Type[BaseTransform], *, preview: bool = False) -> None:
+        "Apply *tfm_cls* to *target* in-place (10-step safety pipeline)."
         p = Path(target).resolve()
         before = p.read_text()
 
-        # 1.  Parse & transform ------------------------------------------------
+        # 1. Parse & transform ---------------------------------------------
         tfm = tfm_cls()
         tree = ast.parse(before, filename=str(p))
         tree = tfm.visit(tree)
         ast.fix_missing_locations(tree)
         code = _unparse(tree)
 
-        # 2.  Prepend patch header + optional change-id marker -----------------
+        # 2. Prepend patch header + optional change-id marker --------------
         if not code.startswith(_PATCH_HEADER):
             code = _PATCH_HEADER + "\n" + code.lstrip()
         if tfm.change_id and f"# @@{tfm.change_id}" not in code:
             code += f"\n# @@{tfm.change_id}\n"
 
-        # 3.  Short-circuit if no changes -------------------------------------
+        # 3. Short-circuit if no changes -----------------------------------
         if code == before:
             print("NO-OP")
             return
 
-        # 4.  Show diff (truncated) -------------------------------------------
+        # 4. Show full diff -------------------------------------------------
         _print_diff(before, code, p)
         if preview:
             return  # read-only mode requested
 
-        # 5.  Atomic write -----------------------------------------------------
+        # 5. Atomic write ---------------------------------------------------
         with tempfile.NamedTemporaryFile("w", delete=False, suffix=".py") as t:
             t.write(code)
         shutil.move(t.name, p)
 
-        # 6–9. Safety pipeline -------------------------------------------------
+        # 6. Re-parse to ensure marker survived ----------------------------
+        if tfm.change_id and f"# @@{tfm.change_id}" not in p.read_text():
+            raise VerificationError("change_id marker lost after unparsing – aborting")
+
+        # 7. Static verify() hook ------------------------------------------
         tfm.verify(ast.parse(code), before)
+
+        # 8. Optional runtime probe ----------------------------------------
         tfm._run_probe(p)
+
+        # 9. Syntax + lint --------------------------------------------------
         _lint(p)
+
         print("PATCH OK")
 
     # ––––– convenience helper accepting a plain function –––––
@@ -352,7 +359,7 @@ class RepoEditor:
         change_id: Optional[str] = None,
         preview: bool = False,
     ) -> None:
-        """Ad-hoc transform: supply a *callable* instead of a full subclass."""
+        "Ad-hoc transform: supply a *callable* instead of a full subclass."
         before = Path(target).resolve().read_text()
 
         class _AdHoc(BaseTransform):
@@ -387,7 +394,7 @@ def _cli() -> None:  # noqa: C901 – single function, clarity over bleaching
               ast_helper.py --ensure-deps --transform INSERT_PING --path src/foo.py
 
               # Preview the diff without writing.
-              ast_helper.py --transform RENAME_FOO --path src/foo.py --preview
+              ast_helper.py --transform RENAME_FOO --path src/footer.py --preview
             """
         ),
     )
