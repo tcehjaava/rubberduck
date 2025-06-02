@@ -1,0 +1,7 @@
+[
+    {
+        "model": "claude-sonnet-4-0",
+        "api_type": "anthropic",
+        "base_url": "https://api.anthropic.com"
+    }
+]
