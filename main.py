@@ -129,11 +129,13 @@ def main(instance_id: str, logger):
     repo_cloner.clone(instance)
     logger.info(f"Cloned repository {instance.repo}")
 
-    executor_agent_setup = ExecutorAgent(repo_executor=repo_executor, instance=instance)
-    executor_agent = ExecutorAgent(repo_executor=repo_executor, instance=instance)
+    executor_agent_setup = ExecutorAgent(
+        repo_executor=repo_executor, instance=instance, model_config="executor_gpt-4.1"
+    )
+    executor_agent = ExecutorAgent(repo_executor=repo_executor, instance=instance, model_config="executor_gpt-4.1")
     logger.info(f"Initialized ExecutorAgent for {instance.repo}")
 
-    # leader_agent = LeaderAgent(executor_agent=executor_agent, instance=instance)
+    # leader_agent = LeaderAgent(executor_agent=executor_agent, instance=instance, model_config="leader_gpt-4.1")
     logger.info(f"Initialized LeaderAgent for {instance.repo}")
 
     # resolution = leader_agent.solve_issue(instance.problem_statement)
@@ -145,7 +147,7 @@ def main(instance_id: str, logger):
 {setup_report}
 
 # 2. Problem Statement
-{instance.problem_statement}
+{PROBLEM_STATEMENT}
 """
 
     resolution = executor_agent.perform_task(task)
