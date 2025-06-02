@@ -42,8 +42,8 @@ verified component and its version in the format:
 <component-2>: <version>
 ...
 
-The report must contain only this list followed by TERMINATE; add nothing else.Make sure to follow all the
-instructions carefully.
+After validating all the items are completed. Generate report must contain only the above list followed by TERMINATE;
+add nothing else. Make sure to follow all the instructions carefully.
 """
 
 
@@ -129,8 +129,10 @@ def main(instance_id: str, logger):
     repo_cloner.clone(instance)
     logger.info(f"Cloned repository {instance.repo}")
 
-    executor_agent_setup = ExecutorAgent(repo_executor=repo_executor, instance=instance, model_config="gpt-4.1")
-    executor_agent = ExecutorAgent(repo_executor=repo_executor, instance=instance, model_config="gpt-4.1")
+    executor_agent_setup = ExecutorAgent(
+        repo_executor=repo_executor, instance=instance, model_config="gpt-4.1-2025-04-14"
+    )
+    executor_agent = ExecutorAgent(repo_executor=repo_executor, instance=instance, model_config="gpt-4.1-2025-04-14")
     logger.info(f"Initialized ExecutorAgent for {instance.repo}")
 
     # leader_agent = LeaderAgent(executor_agent=executor_agent, instance=instance, model_config="gpt-4.1")
@@ -145,7 +147,7 @@ def main(instance_id: str, logger):
 {setup_report}
 
 # 2. Problem Statement
-{PROBLEM_STATEMENT}
+{instance.problem_statement}
 """
 
     resolution = executor_agent.perform_task(task)
