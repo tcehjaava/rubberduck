@@ -28,7 +28,7 @@ class ExecutorAgent:
         self.executor = AssistantAgent(
             name="EXECUTOR",
             system_message=load_markdown_message(
-                "executor_system_message.md",
+                "executor.md",
                 repo_name=instance.repo_subdir_name,
                 executor_report_schema=ExecutorReport.model_json_schema(),
             ),
