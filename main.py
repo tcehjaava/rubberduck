@@ -47,77 +47,6 @@ add nothing else. Make sure to follow all the instructions carefully.
 """
 
 
-PROBLEM_STATEMENT = """
-### 🛠  Task — **“Mini AST-grep Workout”**
-
-> **Goal:** demonstrate that the agent can use **ast-grep** rules to
-> 1. **insert** new code,
-> 2. **rename** an identifier within a file, and
-> 3. **modify** a literal inside a function-call argument—
-> …while keeping the repo syntactically sound.
-
-All edits **must** be performed through ast-grep YAML rules stored in
-`/workspace/ast_grep_rules/` and applied with the `ast-grep` CLI.
-
----
-
-#### 1 · Add a helper function
-
-Target file: `pylint/__init__.py` (create it if missing).
-
-Insert **immediately after the last import**—or at top if there are none:
-
-```python
-def _ast_test_ping() -> str:
-    "Return a static string confirming AST edits ran."
-    return "pong"
-````
-
----
-
-#### 2 · Rename a constant inside one module
-
-1. Locate the **first** file whose name begins with `format` in the `pylint/` tree
-   (e.g. `pylint/format.py`, `pylint/checkers/format.py`, …).
-2. If that file already defines `DEFAULT_INDENT_SIZE`, **rename** it to
-   `DEFAULT_TAB_SIZE` and update every reference *inside that same file only*.
-3. If the constant is absent, inject
-
-```python
-DEFAULT_TAB_SIZE: int = 4
-```
-
-at module level.
-
----
-
-#### 3 · Change a literal in a function call
-
-In that same `format*` file, search for any call resembling
-`json.dumps(..., indent=4 …)`.
-
-* If found, change the keyword argument to `indent=2`.
-* If not found, append:
-
-```python
-def _ast_json_sanity() -> str:
-    import json
-    return json.dumps({}, indent=2)
-```
-
----
-
-### ✅ Acceptance checklist
-
-| Check                | Condition                                                |
-| -------------------- | -------------------------------------------------------- |
-| **Repo parses**      | `python -m py_compile $(git ls-files '*.py')` passes     |
-| **Ping present**     | The string `"pong"` appears **once** in the repo         |
-| **Constant renamed** | `DEFAULT_INDENT_SIZE` is gone; `DEFAULT_TAB_SIZE` exists |
-| **Indent updated**   | At least one `json.dumps(` call uses `indent=2`          |
-"""
-
-
 def main(instance_id: str, logger):
     instance = DatasetUtils.load_instance(instance_id)
     logger.info(f"Loaded instance {instance_id} for repository {instance.repo}")
@@ -148,6 +77,13 @@ def main(instance_id: str, logger):
 
 # 2. Problem Statement
 {instance.problem_statement}
+
+# 3. Test Requirements
+**FAIL_TO_PASS** (must turn green):
+{chr(10).join(f'- {test}' for test in instance.fail_to_pass)}
+
+**PASS_TO_PASS** (must stay green):
+{chr(10).join(f'- {test}' for test in instance.pass_to_pass)}
 """
 
     resolution = executor_agent.perform_task(task)
