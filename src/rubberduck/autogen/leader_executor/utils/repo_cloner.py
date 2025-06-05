@@ -1,4 +1,4 @@
-from autogen.coding import DockerCommandLineCodeExecutor
+from autogen.coding import CodeBlock, DockerCommandLineCodeExecutor
 
 from rubberduck.autogen.leader_executor.models.swebench import SWEBenchVerifiedInstance
 
@@ -19,6 +19,7 @@ class RepoCloner:
 
         cd "{self._container_workdir}"
 
+        rm -rf "ast_grep_rules"
         rm -rf "{repo_subdir_name}"
         git clone --depth 1 "https://github.com/{instance.repo}.git" "{repo_subdir_name}"
 
@@ -27,11 +28,10 @@ class RepoCloner:
         git checkout -b "{instance.instance_id}" "{instance.base_commit}"
         """
 
-        result = self.executor._container.exec_run(cmd=["sh", "-c", script], workdir=self._container_workdir)
-
-        output_log = result.output.decode(errors="replace")
+        block = CodeBlock(language="bash", code=script)
+        result = self.executor.execute_code_blocks([block])
 
         if result.exit_code != 0:
-            raise RuntimeError(f"Failed to clone repo '{instance.repo}'.\nOutput:\n{output_log}")
+            raise RuntimeError(f"Failed to clone repo '{instance.repo}'.\nOutput:\n{result.output}")
 
-        return output_log
+        return result.output

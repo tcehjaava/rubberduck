@@ -3,7 +3,7 @@ from typing import Any, Dict, Type
 from pydantic import BaseModel
 
 from .executor import ExecutorReport, ExecutorTaskSpec
-from .leader import LeaderReport, LeaderTaskSpec
+from .leader import LeaderReviewResponse
 from .swebench import SWEBenchVerifiedInstance
 
 
@@ -13,8 +13,7 @@ def build_schema(model: Type[BaseModel]) -> Dict[str, Any]:
 
 __all__ = [
     "SWEBenchVerifiedInstance",
-    "LeaderTaskSpec",
-    "LeaderReport",
+    "LeaderReviewResponse",
     "ExecutorTaskSpec",
     "ExecutorReport",
     "build_schema",

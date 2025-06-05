@@ -1,32 +1,21 @@
-from __future__ import annotations
-
-from typing import Literal, Optional
+from typing import List, Literal
 
 from pydantic import BaseModel, Field
 
 
-class LeaderTaskSpec(BaseModel):
-    reasoning: Optional[str] = Field(
-        default=None,
-        description="Detailed Explanation of why the Leader produced this task.",
-    )
-    task: str = Field(
-        ...,
-        description="A single task to be delegated.",
-        example="List all files in /workspace/project/src and extract TODOs",
+class LeaderReviewResponse(BaseModel):
+    reasoning: str = Field(description="Detailed analysis of executor performance and decision rationale")
+
+    decision: Literal["RETRY", "SOLVED"] = Field(
+        description="Whether to continue with another iteration or if problem is solved"
     )
 
+    what_executor_did_well: List[str] = Field(
+        default_factory=list, description="Specific things executor did correctly"
+    )
 
-class LeaderReport(BaseModel):
-    status: Literal["success", "failure", "partial", "terminated"] = Field(
-        ...,
-        description="Overall status of the task execution.",
-    )
-    summary: str = Field(
-        ...,
-        description="Concise summary of the overall outcome.",
-    )
-    diff: str = Field(
-        ...,
-        description="This is the output of the `git diff` command.",
+    what_executor_did_poorly: List[str] = Field(default_factory=list, description="Specific mistakes or missed issues")
+
+    recommendations_for_next_run: List[str] = Field(
+        default_factory=list, description="Specific, actionable steps for next iteration (for RETRY only)"
     )

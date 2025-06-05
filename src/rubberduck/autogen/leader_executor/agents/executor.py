@@ -5,9 +5,6 @@ from loguru import logger
 
 from rubberduck.autogen.leader_executor.config import load_llm_config
 from rubberduck.autogen.leader_executor.models import SWEBenchVerifiedInstance
-from rubberduck.autogen.leader_executor.models.executor import (
-    ExecutorReport,
-)
 from rubberduck.autogen.leader_executor.prompts import load_markdown_message
 from rubberduck.autogen.leader_executor.tools import RepoDockerExecutor
 from rubberduck.autogen.leader_executor.utils.helpers import is_termination_msg
@@ -27,11 +24,7 @@ class ExecutorAgent:
 
         self.executor = AssistantAgent(
             name="EXECUTOR",
-            system_message=load_markdown_message(
-                "executor.md",
-                repo_name=instance.repo_subdir_name,
-                executor_report_schema=ExecutorReport.model_json_schema(),
-            ),
+            system_message=load_markdown_message("executor.md", repo_name=instance.repo_subdir_name),
             llm_config={"config_list": config_list, "temperature": 0},
             is_termination_msg=termination_check,
             human_input_mode="NEVER",
@@ -47,7 +40,7 @@ class ExecutorAgent:
             is_termination_msg=termination_check,
         )
 
-    def perform_task(self, task: str) -> None:
+    def perform_task(self, task: str):
         logger.info("ExecutorAgent started a task...")
         chat_result = self.proxy.initiate_chat(self.executor, message=task, max_turns=100)
-        return chat_result.summary if hasattr(chat_result, "summary") else "Task executed, No summary to return."
+        return chat_result

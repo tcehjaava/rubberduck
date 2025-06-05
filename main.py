@@ -1,50 +1,76 @@
 import argparse
 import uuid
+from typing import Iterable, List
 
 from rubberduck.autogen.leader_executor.agents.executor import ExecutorAgent
+from rubberduck.autogen.leader_executor.agents.leader import LeaderAgent
+from rubberduck.autogen.leader_executor.models.leader import LeaderReviewResponse
+from rubberduck.autogen.leader_executor.prompts import load_markdown_message
 from rubberduck.autogen.leader_executor.tools import RepoDockerExecutor
 from rubberduck.autogen.leader_executor.utils.dataset_utils import DatasetUtils
+from rubberduck.autogen.leader_executor.utils.json_extract import parse_leader_response
 from rubberduck.autogen.leader_executor.utils.logger import setup_logger
 from rubberduck.autogen.leader_executor.utils.repo_cloner import RepoCloner
 
-SETUP_TASK = """
-Initialize the runtime by probing the entire environment—and automatically install or repair any missing tools.
 
-* **Checklist (perform in this exact order)**
+def build_previous_context(feedbacks: Iterable[str]) -> str:
+    feedbacks = list(feedbacks)
+    if not feedbacks:
+        return "This is the first iteration. No feedback."
 
-  1. **python**
-     * Probe `python --version`
-     * No installation ever needed; just record the version string.
-  2. **ripgrep**
-     * Probe `rg --version`
-     * If the probe fails, install with
-       ```bash
-       apt-get -qq update && apt-get -qq install -y ripgrep
-       ```
-  3. **ast-grep CLI**
-     * Probe `ast-grep --version`
-     * Install / upgrade **if** the command is missing **or** the version is lower than `0.37`.
-       Try each command in sequence; stop after the first one that succeeds.
-       ```bash
-       pip install --quiet --upgrade ast-grep-cli
-       ```
-  4. **ast_grep_rules directory**
-     * Probe `test -d /workspace/ast_grep_rules`
-     * If absent, create it:
-       ```bash
-       mkdir -p /workspace/ast_grep_rules
-       ```
+    lines: List[str] = ["=== Previous Feedbacks from Leader ==="]
+    for i, feedback in enumerate(feedbacks, 1):
+        lines.append(f"=== Feedback of attempt {i}: ===")
+        lines.append(feedback)
 
-After completing the checklist, output one compact **status report** listing every
-verified component and its version in the format:
+    return "\n".join(lines)
 
-<component-1>: <version>
-<component-2>: <version>
-...
 
-After validating all the items are completed. Generate report must contain only the above list followed by TERMINATE;
-add nothing else. Make sure to follow all the instructions carefully.
-"""
+def format_chat_history(chat_result) -> str:
+    if not chat_result or not hasattr(chat_result, "chat_history"):
+        return "No conversation history available."
+
+    chat_history = chat_result.chat_history
+    if not chat_history:
+        return "No conversation history available."
+
+    formatted_lines = []
+
+    for i, message in enumerate(chat_history):
+        role = message.get("role", "unknown")
+        name = message.get("name", role)
+        content = message.get("content", "")
+
+        formatted_lines.append(f"=== Message {i+1}: {name.upper()} ===")
+        formatted_lines.append(content)
+        formatted_lines.append("")
+
+    return "\n".join(formatted_lines)
+
+
+def extract_leader_feedback(leader_response: LeaderReviewResponse) -> str:
+    feedback_sections = []
+
+    if leader_response.what_executor_did_well:
+        feedback_sections.append(
+            "**What you did well:**\n" + "\n".join(f"- {item}" for item in leader_response.what_executor_did_well)
+        )
+
+    if leader_response.what_executor_did_poorly:
+        feedback_sections.append(
+            "**What to improve:**\n" + "\n".join(f"- {item}" for item in leader_response.what_executor_did_poorly)
+        )
+
+    if leader_response.recommendations_for_next_run:
+        feedback_sections.append(
+            "**Recommendations for this run:**\n"
+            + "\n".join(f"- {item}" for item in leader_response.recommendations_for_next_run)
+        )
+
+    if leader_response.reasoning:
+        feedback_sections.append(f"**Analysis:**\n{leader_response.reasoning}")
+
+    return "\n\n".join(feedback_sections)
 
 
 def main(instance_id: str, logger):
@@ -55,41 +81,64 @@ def main(instance_id: str, logger):
     logger.info(f"Initialized Docker executor for repository {instance.repo}")
 
     repo_cloner = RepoCloner(repo_executor)
-    repo_cloner.clone(instance)
-    logger.info(f"Cloned repository {instance.repo}")
 
-    executor_agent_setup = ExecutorAgent(
-        repo_executor=repo_executor, instance=instance, model_config="gpt-4.1-2025-04-14"
-    )
     executor_agent = ExecutorAgent(repo_executor=repo_executor, instance=instance, model_config="gpt-4.1-2025-04-14")
-    logger.info(f"Initialized ExecutorAgent for {instance.repo}")
+    leader_agent = LeaderAgent(executor_agent=executor_agent, instance=instance, model_config="o3-2025-04-16")
+    logger.info(f"Initialized ExecutorAgent and LeaderAgent for {instance.repo}")
 
-    # leader_agent = LeaderAgent(executor_agent=executor_agent, instance=instance, model_config="gpt-4.1")
-    logger.info(f"Initialized LeaderAgent for {instance.repo}")
+    max_iterations = 3
+    previous_feedbacks = []
 
-    # resolution = leader_agent.solve_issue(instance.problem_statement)
+    for iteration in range(1, max_iterations + 1):
+        logger.info(f"Starting iteration {iteration}/{max_iterations}")
 
-    setup_report = executor_agent_setup.perform_task(SETUP_TASK)
+        logger.info("Resetting repository to clean state...")
+        repo_cloner.clone(instance)
+        logger.info(f"Cloned repository {instance.repo}")
 
-    task = f"""
-# 1. Environment Summary
-{setup_report}
+        setup_chat = executor_agent.perform_task(load_markdown_message("setup_task.md"))
+        logger.info("Completed environment setup")
 
-# 2. Problem Statement
-{instance.problem_statement}
+        previous_context = build_previous_context(previous_feedbacks)
 
-# 3. Test Requirements
-**FAIL_TO_PASS** (must turn green):
-{chr(10).join(f'- {test}' for test in instance.fail_to_pass)}
+        executor_task = load_markdown_message(
+            "executor_task.md",
+            iteration=iteration,
+            max_iterations=max_iterations,
+            setup_report=getattr(setup_chat, "summary", "No setup result available."),
+            problem_statement=instance.problem_statement,
+            fail_to_pass_tests="\n".join(f"- {test}" for test in instance.fail_to_pass),
+            pass_to_pass_tests="\n".join(f"- {test}" for test in instance.pass_to_pass),
+            previous_context=previous_context,
+        )
 
-**PASS_TO_PASS** (must stay green):
-{chr(10).join(f'- {test}' for test in instance.pass_to_pass)}
-"""
+        logger.info(f"Executing task for iteration {iteration}")
+        executor_result = executor_agent.perform_task(executor_task)
 
-    resolution = executor_agent.perform_task(task)
+        leader_task = load_markdown_message(
+            "leader_task.md",
+            iteration=iteration,
+            max_iterations=max_iterations,
+            executor_messages=format_chat_history(executor_result),
+        )
+
+        logger.info(f"Sending results to leader for review (iteration {iteration})")
+        leader_chat = leader_agent.solve_issue(leader_task)
+        leader_response = parse_leader_response(leader_chat)
+
+        if leader_response.decision == "SOLVED":
+            logger.info(f"Leader determined success after iteration {iteration}")
+            break
+        elif iteration == max_iterations:
+            logger.info(f"Maximum iterations reached after iteration {iteration}")
+            break
+        else:
+            logger.info(f"Leader decided to retry after iteration {iteration}")
+
+            current_feedback = extract_leader_feedback(leader_response)
+            previous_feedbacks.append(current_feedback)
 
     logger.info(f"Correct solution: {instance.model_dump_json(indent=2)}")
-    return resolution
 
 
 if __name__ == "__main__":
