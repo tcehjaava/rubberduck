@@ -10,7 +10,7 @@ from rubberduck.autogen.leader_executor.models import SWEBenchVerifiedInstance
 
 
 class RepoDockerExecutor(DockerCommandLineCodeExecutor):
-    def __init__(self, instance: SWEBenchVerifiedInstance, image: str = "python:3.6-slim"):
+    def __init__(self, instance: SWEBenchVerifiedInstance, image: str = "python:3.11-slim"):
         self.instance = instance
         sanitized_repo_name = self.instance.repo.replace("/", "_").replace(":", "_")
         self.container_name = f"swebench-{sanitized_repo_name}-{self.instance.instance_id}"
@@ -20,16 +20,16 @@ class RepoDockerExecutor(DockerCommandLineCodeExecutor):
         ).resolve()
 
         logger.info(
-            f"Initialized RepoDockerExecutor for instance {self.instance.instance_id} "
-            f"from repo {self.instance.repo}. "
-            f"Host execution directory {self.host_code_execution_dir} (mounted to '/workspace' in container)"
+            f"Initialized RepoDockerExecutor at directory {self.host_code_execution_dir} (mounted to '/workspace' in"
+            "container)"
         )
 
         try:
             client = docker.from_env()
             container = client.containers.get(self.container_name)
-            logger.info(f"Stopping pre-existing container: {self.container_name}")
-            container.stop()
+            logger.info(f"Removing pre-existing container: {self.container_name}")
+            container.stop(timeout=5)
+            container.remove(force=True)
         except DockerNotFound:
             logger.debug(f"No pre-existing container named {self.container_name} found.")
         except Exception as e:
