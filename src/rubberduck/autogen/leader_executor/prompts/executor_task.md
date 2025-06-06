@@ -4,7 +4,7 @@
 {setup_report}
 
 ═══ Problem Statement ═══
-Test if the "Test Command Instructions" provided are valid, and can the tests be run using them.
+{problem_statement}
 
 ═══ Previous Iteration Context ═══
 {previous_context}
