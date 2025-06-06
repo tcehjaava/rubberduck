@@ -1,3 +1,5 @@
+import shlex
+
 from autogen.coding import CodeBlock, DockerCommandLineCodeExecutor
 
 from rubberduck.autogen.leader_executor.models.swebench import SWEBenchVerifiedInstance
@@ -11,22 +13,30 @@ class RepoCloner:
     def clone(self, instance: SWEBenchVerifiedInstance) -> str:
         repo_subdir_name = instance.repo_subdir_name
 
-        script = f"""
-        set -e
+        fail_nodes_array = "(" + " ".join(shlex.quote(n) for n in instance.fail_to_pass) + ")"
+        pass_nodes_array = "(" + " ".join(shlex.quote(n) for n in instance.pass_to_pass) + ")"
 
-        apt-get update -q -y
-        DEBIAN_FRONTEND=noninteractive apt-get install -q -y git
+        script = f"""\
+set -e
 
-        cd "{self._container_workdir}"
+apt-get update -q -y
+DEBIAN_FRONTEND=noninteractive apt-get install -q -y git
 
-        rm -rf "ast_grep_rules"
-        rm -rf "{repo_subdir_name}"
-        git clone --depth 1 "https://github.com/{instance.repo}.git" "{repo_subdir_name}"
+cd {self._container_workdir}
 
-        cd "{repo_subdir_name}"
-        git fetch --unshallow
-        git checkout -b "{instance.instance_id}" "{instance.base_commit}"
-        """
+rm -rf ast_grep_rules && mkdir ast_grep_rules
+rm -rf {repo_subdir_name}
+git clone --depth 1 "https://github.com/{instance.repo}.git" "{repo_subdir_name}"
+
+cd {repo_subdir_name}
+git fetch --unshallow
+git checkout -b "{instance.instance_id}" "{instance.base_commit}"
+
+cat > tests.env <<'EOF'
+FAIL_TO_PASS_NODES={fail_nodes_array}
+PASS_TO_PASS_NODES={pass_nodes_array}
+EOF
+"""
 
         block = CodeBlock(language="bash", code=script)
         result = self.executor.execute_code_blocks([block])
