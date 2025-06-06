@@ -10,7 +10,7 @@ from rubberduck.autogen.leader_executor.models import SWEBenchVerifiedInstance
 
 
 class RepoDockerExecutor(DockerCommandLineCodeExecutor):
-    def __init__(self, instance: SWEBenchVerifiedInstance, image: str = "python:3.11-slim"):
+    def __init__(self, instance: SWEBenchVerifiedInstance, image: str = "python:3.10-slim"):
         self.instance = instance
         sanitized_repo_name = self.instance.repo.replace("/", "_").replace(":", "_")
         self.container_name = f"swebench-{sanitized_repo_name}-{self.instance.instance_id}"

@@ -6,5 +6,5 @@
 ═══ Problem Statement ═══
 {problem_statement}
 
-═══ Previous Iteration Context ═══
+═══ Previous Iterations Context ═══
 {previous_context}

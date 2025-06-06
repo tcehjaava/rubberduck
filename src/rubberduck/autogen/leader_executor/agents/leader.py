@@ -3,6 +3,7 @@ from functools import partial
 
 from autogen import AssistantAgent, UserProxyAgent
 from loguru import logger
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from rubberduck.autogen.leader_executor.agents.executor import ExecutorAgent
 from rubberduck.autogen.leader_executor.config import load_llm_config
@@ -46,6 +47,7 @@ class LeaderAgent:
             llm_config=False,
         )
 
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=5), reraise=True)
     def solve_issue(self, problem_statement: str) -> str:
         logger.info(f"LeaderAgent solving issue for {self.instance.repo_subdir_name}")
         chat_result = self.leader_proxy.initiate_chat(recipient=self.leader, message=problem_statement, max_turns=25)

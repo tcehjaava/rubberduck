@@ -1,6 +1,7 @@
 import shlex
 
 from autogen.coding import CodeBlock, DockerCommandLineCodeExecutor
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from rubberduck.autogen.leader_executor.models.swebench import SWEBenchVerifiedInstance
 
@@ -10,6 +11,7 @@ class RepoCloner:
         self.executor = executor
         self._container_workdir = "/workspace"
 
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=5), reraise=True)
     def clone(self, instance: SWEBenchVerifiedInstance) -> str:
         repo_subdir_name = instance.repo_subdir_name
 
