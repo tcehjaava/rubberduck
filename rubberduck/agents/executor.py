@@ -1,8 +1,8 @@
-import traceback
 from functools import partial
 
-from autogen import AssistantAgent, ChatResult, UserProxyAgent
+from autogen import AssistantAgent, UserProxyAgent
 from loguru import logger
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from rubberduck.autogen.leader_executor.config import load_llm_config
 from rubberduck.autogen.leader_executor.models import SWEBenchVerifiedInstance
@@ -41,26 +41,8 @@ class ExecutorAgent:
             is_termination_msg=termination_check,
         )
 
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=5), reraise=True)
     def perform_task(self, task: str):
         logger.info("ExecutorAgent started a task...")
-        try:
-            chat_result = self.proxy.initiate_chat(self.executor, message=task, max_turns=1)
-            return chat_result
-        except Exception as e:
-            logger.error(f"ExecutorAgent encountered an exception: {str(e)}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
-
-            error_message = f"EXECUTION FAILED: {str(e)}\n\nTraceback:\n{traceback.format_exc()}"
-
-            error_chat_result = ChatResult(
-                chat_id=None,
-                summary=f"Task failed due to exception: {str(e)}",
-                chat_history=[
-                    {"role": "user", "name": "EXECUTOR_PROXY", "content": task},
-                    {"role": "assistant", "name": "EXECUTOR", "content": error_message},
-                ],
-                cost=None,
-                human_input=None,
-            )
-
-            return error_chat_result
+        chat_result = self.proxy.initiate_chat(self.executor, message=task, max_turns=100)
+        return chat_result

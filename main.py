@@ -8,7 +8,6 @@ from rubberduck.autogen.leader_executor.models.leader import LeaderReviewRespons
 from rubberduck.autogen.leader_executor.prompts import load_markdown_message
 from rubberduck.autogen.leader_executor.tools import RepoDockerExecutor
 from rubberduck.autogen.leader_executor.utils.dataset_utils import DatasetUtils
-from rubberduck.autogen.leader_executor.utils.json_extract import parse_leader_response
 from rubberduck.autogen.leader_executor.utils.logger import setup_logger
 from rubberduck.autogen.leader_executor.utils.repo_cloner import RepoCloner
 
@@ -86,7 +85,7 @@ def main(instance_id: str, logger):
     leader_agent = LeaderAgent(executor_agent=executor_agent, instance=instance, model_config="o3-2025-04-16")
     logger.info(f"Initialized ExecutorAgent and LeaderAgent for {instance.repo}")
 
-    max_iterations = 3
+    max_iterations = 5
     previous_feedbacks = []
 
     for iteration in range(1, max_iterations + 1):
@@ -124,9 +123,9 @@ def main(instance_id: str, logger):
 
         logger.info(f"Sending results to leader for review (iteration {iteration})")
         leader_chat = leader_agent.solve_issue(leader_task)
-        leader_response = parse_leader_response(leader_chat)
+        leader_summary = getattr(leader_chat, "summary", "No leader response.")
 
-        if leader_response.decision == "SOLVED":
+        if "SOLVED" in leader_summary:
             logger.info(f"Leader determined success after iteration {iteration}")
             break
         elif iteration == max_iterations:
@@ -134,9 +133,7 @@ def main(instance_id: str, logger):
             break
         else:
             logger.info(f"Leader decided to retry after iteration {iteration}")
-
-            current_feedback = extract_leader_feedback(leader_response)
-            previous_feedbacks.append(current_feedback)
+            previous_feedbacks.append(leader_summary)
 
     logger.info(f"Correct solution: {instance.model_dump_json(indent=2)}")
 
