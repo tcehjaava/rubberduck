@@ -35,7 +35,7 @@ class LeaderAgent:
             name="LEADER",
             system_message=system_message,
             llm_config={"config_list": config_list, "temperature": 1},
-            is_termination_msg=termination_check,
+            is_termination_msg=None,
             human_input_mode="NEVER",
         )
 

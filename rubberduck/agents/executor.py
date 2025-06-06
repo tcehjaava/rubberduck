@@ -26,7 +26,7 @@ class ExecutorAgent:
             name="EXECUTOR",
             system_message=load_markdown_message("executor.md", repo_name=instance.repo_subdir_name),
             llm_config={"config_list": config_list, "temperature": 0},
-            is_termination_msg=termination_check,
+            is_termination_msg=None,
             human_input_mode="NEVER",
         )
 

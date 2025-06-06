@@ -9,7 +9,7 @@ from rubberduck.autogen.leader_executor.models.leader import LeaderReviewRespons
 
 
 def parse_leader_response(chat_result: Any) -> LeaderReviewResponse:
-    raw = getattr(chat_result, "summary", str(chat_result))
+    raw = getattr(chat_result, "summary", "No leader response.")
 
     fenced = re.search(r"```json\s*(\{.*?\})\s*```", raw, re.S)
     blob = fenced.group(1) if fenced else raw
@@ -22,7 +22,4 @@ def parse_leader_response(chat_result: Any) -> LeaderReviewResponse:
         data = json.loads(blob)
         return LeaderReviewResponse(**data)
     except (JSONDecodeError, ValidationError) as exc:
-        raise RuntimeError(
-            "Leader returned invalid or unparsable JSON. "
-            f"Snippet:\n{blob[:400]}…"  # trim huge messages
-        ) from exc
+        raise RuntimeError(f"Leader returned invalid or unparsable JSON. Leader Response:\n{blob}…") from exc

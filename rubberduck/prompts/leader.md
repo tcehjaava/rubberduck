@@ -27,7 +27,7 @@ You are **LeaderAgent**, responsible for **evaluating ExecutorAgent's performanc
 
 ## **Output Format**
 
-Respond **only** with the structured JSON matching this schema:
+**⚠️ CRITICAL:** Respond **only** with the structured JSON matching this schema:
 
 ```json
 {response_schema}
