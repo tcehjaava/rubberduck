@@ -1,4 +1,5 @@
 import shlex
+from pathlib import Path
 
 from autogen.coding import CodeBlock, DockerCommandLineCodeExecutor
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -10,6 +11,13 @@ class RepoCloner:
     def __init__(self, executor: DockerCommandLineCodeExecutor):
         self.executor = executor
         self._container_workdir = "/workspace"
+        self._resources_dir = Path(__file__).parent.parent / "resources"
+
+    def _get_script_content(self, script_name: str) -> str:
+        script_path = self._resources_dir / script_name
+        if not script_path.exists():
+            raise FileNotFoundError(f"Script not found: {script_path}")
+        return script_path.read_text()
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=5), reraise=True)
     def clone(self, instance: SWEBenchVerifiedInstance) -> str:
@@ -17,6 +25,9 @@ class RepoCloner:
 
         fail_nodes_array = "(" + " ".join(shlex.quote(n) for n in instance.fail_to_pass) + ")"
         pass_nodes_array = "(" + " ".join(shlex.quote(n) for n in instance.pass_to_pass) + ")"
+
+        run_collect_content = self._get_script_content("run_collect.sh")
+        run_tests_content = self._get_script_content("run_tests.sh")
 
         script = f"""\
 set -e
@@ -38,6 +49,16 @@ cat > tests.env <<'EOF'
 FAIL_TO_PASS_NODES={fail_nodes_array}
 PASS_TO_PASS_NODES={pass_nodes_array}
 EOF
+
+cat > run_collect.sh <<'EOF'
+{run_collect_content}
+EOF
+chmod +x run_collect.sh
+
+cat > run_tests.sh <<'EOF'
+{run_tests_content}
+EOF
+chmod +x run_tests.sh
 """
 
         block = CodeBlock(language="bash", code=script)
