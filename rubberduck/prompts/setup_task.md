@@ -37,18 +37,18 @@ Initialize the runtime by probing the entire environment—and automatically ins
       * **Verify test collection**
          * Run collection script to ensure all tests can be discovered:
            ```bash
-           /workspace/<repo_name>/run_collect.sh
+           cd /workspace/<repo_name> && ./run_collect.sh
            ```
          * Confirm that **every** node named in `PASS_TO_PASS_NODES` and `FAIL_TO_PASS_NODES` appears in the collected list
          * If any node is missing or collection fails, treat as blocking issue and investigate
       * **Establish baseline behavior**
          * Run PASS_TO_PASS baseline - should show passes:
            ```bash
-           /workspace/<repo_name>/run_tests.sh -p | head -10
+           cd /workspace/<repo_name> && ./run_tests.sh -p | head -10
            ```
          * Run FAIL_TO_PASS tests - should show failures:
            ```bash
-           /workspace/<repo_name>/run_tests.sh -f | head -20
+           cd /workspace/<repo_name> && ./run_tests.sh -f | head -20
            ```
       * **Verify expected pass/fail split**
          * Execute all *PASS_TO_PASS* nodes and verify they **pass**, and all *FAIL_TO_PASS* nodes and verify they **fail**
