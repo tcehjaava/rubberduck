@@ -211,10 +211,10 @@ class SWEBenchWorkflow:
 
             instance = state["instance"]
             docker_executor = bundle.docker
-            repo_cloner = RepoCloner(docker_executor)
 
-            logger.info("Resetting repository to clean state...")
+            repo_cloner = RepoCloner(docker_executor)
             repo_cloner.clone(instance)
+
             logger.info(f"Successfully cloned repository {instance.repo}")
 
             return {
