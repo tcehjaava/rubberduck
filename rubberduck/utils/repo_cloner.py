@@ -4,7 +4,9 @@ from pathlib import Path
 from autogen.coding import CodeBlock, DockerCommandLineCodeExecutor
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from rubberduck.autogen.leader_executor.models.swebench import SWEBenchVerifiedInstance
+from rubberduck.autogen.leader_executor.models.swebench_instance import (
+    SWEBenchVerifiedInstance,
+)
 
 
 class RepoCloner:

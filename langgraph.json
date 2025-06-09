@@ -1,0 +1,22 @@
+{
+    "graphs": {
+        "swebench": "rubberduck.autogen.leader_executor.workflows.swebench:get_graph"
+    },
+    "dependencies": [
+        "src"
+    ],
+    "env": "src/rubberduck/autogen/leader_executor/config/.env",
+    "config_schema": {
+        "title": "SweBench Config",
+        "type": "object",
+        "properties": {
+            "instance_id": {
+                "type": "string",
+                "title": "Dataset instance ID"
+            }
+        },
+        "required": [
+            "instance_id"
+        ]
+    }
+}

@@ -28,3 +28,8 @@ Rubberduck leverages AutoGen and LangGraph to implement a powerful, flexible sys
 - Workflow orchestration
 - Containerized execution environment
 - Repository context management
+
+## Langgraph Studio Command
+
+- `docker run -d --name langgraph-db -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:16`
+- https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024
