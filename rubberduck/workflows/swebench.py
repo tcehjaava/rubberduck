@@ -1,7 +1,6 @@
 import atexit
 from contextlib import ExitStack
 from typing import Any, Dict, Union
-from uuid import uuid4
 
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.postgres import PostgresSaver
@@ -103,6 +102,8 @@ def close_bundle(thread_id: str):
 
 atexit.register(_close_all_bundles)
 
+_MAX_ATTEMPTS = 5
+
 
 class SWEBenchWorkflow:
     def __init__(self):
@@ -193,7 +194,7 @@ class SWEBenchWorkflow:
             return {
                 **state,
                 "current_attempt": state.get("current_attempt", 1),
-                "max_attempts": state.get("max_attempts", 3),
+                "max_attempts": state.get("max_attempts", _MAX_ATTEMPTS),
                 "instance": instance,
                 "result": "Initialization complete",
                 "error_message": "",
@@ -319,8 +320,7 @@ class SWEBenchWorkflow:
             return "complete"
         return "continue"
 
-    def run(self, instance_id: str) -> Dict[str, Any]:
-        thread_id = str(uuid4())
+    def run(self, instance_id: str, thread_id: str) -> Dict[str, Any]:
         logger.info(f"Starting SWEBenchWorkflow with thread_id: {thread_id}")
         final = self.workflow.invoke(
             {},
