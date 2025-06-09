@@ -1,4 +1,63 @@
-"""Helper functions for agent-related functionality."""
+import json
+import re
+from json import JSONDecodeError
+from typing import Any, Iterable, List
+
+from pydantic import ValidationError
+
+from rubberduck.autogen.leader_executor.models.leader import LeaderReviewResponse
+
+
+def build_previous_context(feedbacks: Iterable[str]) -> str:
+    feedbacks = list(feedbacks)
+    if not feedbacks:
+        return "This is the first iteration. No feedback."
+
+    lines: List[str] = ["=== Previous Feedbacks from Leader ==="]
+    for i, feedback in enumerate(feedbacks, 1):
+        lines.append(f"=== Feedback of attempt {i}: ===")
+        lines.append(feedback)
+
+    return "\n".join(lines)
+
+
+def format_chat_history(chat_result) -> str:
+    if not chat_result or not hasattr(chat_result, "chat_history"):
+        return "No conversation history available."
+
+    chat_history = chat_result.chat_history
+    if not chat_history:
+        return "No conversation history available."
+
+    formatted_lines = []
+
+    for i, message in enumerate(chat_history):
+        role = message.get("role", "unknown")
+        name = message.get("name", role)
+        content = message.get("content", "")
+
+        formatted_lines.append(f"=== Message {i+1}: {name.upper()} ===")
+        formatted_lines.append(content)
+        formatted_lines.append("")
+
+    return "\n".join(formatted_lines)
+
+
+def parse_leader_response(chat_result: Any) -> LeaderReviewResponse:
+    raw = getattr(chat_result, "summary", "No leader response.")
+
+    fenced = re.search(r"```json\s*(\{.*?\})\s*```", raw, re.S)
+    blob = fenced.group(1) if fenced else raw
+
+    if fenced is None:
+        start, end = blob.find("{"), blob.rfind("}") + 1
+        blob = blob[start:end]
+
+    try:
+        data = json.loads(blob)
+        return LeaderReviewResponse(**data)
+    except (JSONDecodeError, ValidationError) as exc:
+        raise RuntimeError(f"Leader returned invalid or unparsable JSON. Leader Response:\n{blob}…") from exc
 
 
 def is_termination_msg(msg: dict, termination_marker: str = "TERMINATE") -> bool:

@@ -8,7 +8,9 @@ from typing import Iterable, List, Optional
 from datasets import load_dataset
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from rubberduck.autogen.leader_executor.models import SWEBenchVerifiedInstance
+from rubberduck.autogen.leader_executor.models.swebench_instance import (
+    SWEBenchVerifiedInstance,
+)
 
 _BRACKET_MISMATCH = re.compile(r"\[[^\]]*$")
 

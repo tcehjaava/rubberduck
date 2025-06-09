@@ -6,10 +6,11 @@ from rubberduck.autogen.leader_executor.agents.executor import ExecutorAgent
 from rubberduck.autogen.leader_executor.agents.leader import LeaderAgent
 from rubberduck.autogen.leader_executor.models.leader import LeaderReviewResponse
 from rubberduck.autogen.leader_executor.prompts import load_markdown_message
-from rubberduck.autogen.leader_executor.tools import RepoDockerExecutor
+from rubberduck.autogen.leader_executor.tools.docker_executor import RepoDockerExecutor
 from rubberduck.autogen.leader_executor.utils.dataset_utils import DatasetUtils
 from rubberduck.autogen.leader_executor.utils.logger import setup_logger
 from rubberduck.autogen.leader_executor.utils.repo_cloner import RepoCloner
+from rubberduck.autogen.leader_executor.workflows.swebench import SWEBenchWorkflow
 
 
 def build_previous_context(feedbacks: Iterable[str]) -> str:
@@ -146,7 +147,12 @@ if __name__ == "__main__":
 
     run_id = str(uuid.uuid4())
     logger, log_path = setup_logger(run_id=run_id)
-    logger.info("Starting Leader-Executor agent system...")
+    logger.info(f"Starting Leader-Executor agent system... 📋 Run ID: {run_id}")
 
-    main(args.instance_id, logger)
+    SWEBenchWorkflow().run(args.instance_id)
     logger.info(f"Completed processing for {args.instance_id}")
+
+    logger.info(
+        "🎯  Open Studio at https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024 "
+        "(after running  `langgraph dev` in this project)"
+    )

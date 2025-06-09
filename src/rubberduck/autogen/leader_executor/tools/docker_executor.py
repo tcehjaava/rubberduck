@@ -6,7 +6,9 @@ from autogen.coding import DockerCommandLineCodeExecutor
 from docker.errors import NotFound as DockerNotFound
 from loguru import logger
 
-from rubberduck.autogen.leader_executor.models import SWEBenchVerifiedInstance
+from rubberduck.autogen.leader_executor.models.swebench_instance import (
+    SWEBenchVerifiedInstance,
+)
 
 
 class RepoDockerExecutor(DockerCommandLineCodeExecutor):

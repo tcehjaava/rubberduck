@@ -5,9 +5,11 @@ from loguru import logger
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from rubberduck.autogen.leader_executor.config import load_llm_config
-from rubberduck.autogen.leader_executor.models import SWEBenchVerifiedInstance
+from rubberduck.autogen.leader_executor.models.swebench_instance import (
+    SWEBenchVerifiedInstance,
+)
 from rubberduck.autogen.leader_executor.prompts import load_markdown_message
-from rubberduck.autogen.leader_executor.tools import RepoDockerExecutor
+from rubberduck.autogen.leader_executor.tools.docker_executor import RepoDockerExecutor
 from rubberduck.autogen.leader_executor.utils.helpers import is_termination_msg
 
 
