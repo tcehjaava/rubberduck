@@ -31,11 +31,11 @@ class RepoCloner:
         run_collect_content = self._get_script_content("run_collect.sh")
         run_tests_content = self._get_script_content("run_tests.sh")
 
-        cherry_pick_snippet = ""
-        if instance.environment_setup_commit and instance.environment_setup_commit != instance.base_commit:
-            cherry_pick_snippet = (
-                f'git cherry-pick --allow-empty --keep-redundant-commits "{instance.environment_setup_commit}"'
-            )
+        # cherry_pick_snippet = ""
+        # if instance.environment_setup_commit and instance.environment_setup_commit != instance.base_commit:
+        #     cherry_pick_snippet = (
+        #         f'git cherry-pick --allow-empty --keep-redundant-commits "{instance.environment_setup_commit}"'
+        #     )
 
         script = f"""\
 set -e
@@ -55,7 +55,6 @@ git clone --depth 1 "https://github.com/{instance.repo}.git" "{repo_subdir_name}
 cd {repo_subdir_name}
 git fetch --unshallow
 git checkout -b "{instance.instance_id}" "{instance.base_commit}"
-{cherry_pick_snippet}
 
 cat > tests.env <<'EOF'
 FAIL_TO_PASS_NODES={fail_nodes_array}

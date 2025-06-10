@@ -49,3 +49,10 @@ repo_files.db
 repo_files.db.backup
 
 **/.claude/settings.local.json
+.langgraph_api/.langgraph_checkpoint.1.pckl
+.langgraph_api/.langgraph_checkpoint.2.pckl
+.langgraph_api/.langgraph_checkpoint.3.pckl
+.langgraph_api/.langgraph_ops.pckl
+.langgraph_api/.langgraph_retry_counter.pckl
+.langgraph_api/store.pckl
+.langgraph_api/store.vectors.pckl

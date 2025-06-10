@@ -5,27 +5,23 @@ Initialize the runtime by probing the entire environment—and automatically ins
       * Probe `python --version`
       * No installation ever needed; just record the version string.
    2. **ripgrep**
-      * Probe `rg --version`
-      * If the probe fails, install with
+      * Install ripgrep
          ```bash
          apt-get -qq update && apt-get -qq install -y ripgrep
          ```
    3. **ast-grep CLI**
-      * Probe `ast-grep --version`
-      * Install / upgrade **if** the command is missing **or** the version is lower than `0.37`.
-         Try each command in sequence; stop after the first one that succeeds.
+      * Install `ast-grep` CLI
          ```bash
          pip install --quiet --upgrade ast-grep-cli
          ```
    4. **ast_grep_rules directory**
-      * Probe `test -d /workspace/ast_grep_rules`
-      * If absent, create it:
+      * Create `/workspace/ast_grep_rules` directory:
          ```bash
          mkdir -p /workspace/ast_grep_rules
          ```
    5. **tests — baseline sanity check**
       * **Install test dependencies first**
-         * Probe for test requirements files in this order: `requirements_test.txt`, `requirements-test.txt`, `test-requirements.txt`, `requirements/test.txt` etc..
+         * Look for test requirements files like `requirements_test.txt`, `requirements-test.txt`, `test-requirements.txt`, `requirements/test.txt` etc..
          * If any requirements file exists, install it:
            ```bash
            cd /workspace/<repo_name> && pip install -q -r <requirements-file>
@@ -39,8 +35,7 @@ Initialize the runtime by probing the entire environment—and automatically ins
            ```bash
            cd /workspace/<repo_name> && ./run_collect.sh
            ```
-         * Confirm that **every** node named in `PASS_TO_PASS_NODES` and `FAIL_TO_PASS_NODES` appears in the collected list
-         * If any node is missing or collection fails, treat as blocking issue and investigate
+         * If `pytest --collect-only` reports "ERROR collecting", strip parameter suffix (e.g. `[param]`) and retry. If now collectible, use the stripped test for testing. If still un-collectible, mark as *intentionally skipped* and move on.
       * **Establish baseline behavior**
          * Run PASS_TO_PASS baseline - should show passes:
            ```bash
@@ -69,4 +64,4 @@ After completing the checklist and validating all the items are completed, outpu
 <exact-command-to-run-tests>
 ```
 
-**Generated report must contain only the above list followed by the test command instructions**, then TERMINATE; **add nothing else.** Make sure to follow all the instructions carefully.
+**Generated final report must only start with the version list followed by the test command instructions**, then TERMINATE; **add nothing else.** Make sure to follow all the instructions carefully.

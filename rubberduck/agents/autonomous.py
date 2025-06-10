@@ -38,6 +38,8 @@ class AutonomousAgent:
 
         if self.config.code_execution_config:
             proxy_kwargs["code_execution_config"] = self.config.code_execution_config
+        else:
+            proxy_kwargs["code_execution_config"] = False
 
         self.proxy = UserProxyAgent(**proxy_kwargs)
 
