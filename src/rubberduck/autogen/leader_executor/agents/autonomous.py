@@ -8,6 +8,10 @@ from rubberduck.autogen.leader_executor.config import load_llm_config
 from rubberduck.autogen.leader_executor.models.autonomous_config import (
     AutonomousAgentConfig,
 )
+from rubberduck.autogen.leader_executor.tools.apply_patch import (
+    create_patch_reply,
+    prepend_patch_status,
+)
 from rubberduck.autogen.leader_executor.utils.helpers import (
     clean_message_content,
     is_termination_msg,
@@ -40,6 +44,14 @@ class AutonomousAgent:
         }
 
         self.proxy = UserProxyAgent(**proxy_kwargs)
+
+        if self.config.code_execution_config and "executor" in self.config.code_execution_config:
+            self.proxy.register_reply(
+                trigger=self.assistant,
+                reply_func=create_patch_reply(self.config.code_execution_config["executor"]),
+                position=0,
+            )
+            self.proxy.register_hook("process_message_before_send", prepend_patch_status)
 
         self.proxy.register_hook(hookable_method="process_last_received_message", hook=clean_message_content)
         # self.proxy.register_hook(hookable_method="process_message_before_send", hook=truncate_on_send())
