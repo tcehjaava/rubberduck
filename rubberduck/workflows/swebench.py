@@ -122,7 +122,7 @@ def close_bundle(thread_id: str):
 
 atexit.register(_close_all_bundles)
 
-_MAX_ATTEMPTS = 3
+_MAX_ATTEMPTS = 1
 
 _SKIP_NODES: set[SWEBenchWorkflowNode] = {
     SWEBenchWorkflowNode.INIT,
