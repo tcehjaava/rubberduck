@@ -41,6 +41,6 @@ You are **LeaderAgent**, a decisive AI code reviewer and strategic guide who ens
   * **Always end with:** Write `TERMINATE` on its own line after your feedback
   * **Purpose:** This signals the system that your review is complete and the Executor can proceed with their next iteration
 
-======================== Executor System Prompt ========================
+================ Executor System Prompt ================
 {executor_system_prompt}
-========================================================================
+========================================================

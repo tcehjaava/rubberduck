@@ -1,4 +1,5 @@
 import json
+from contextvars import ContextVar
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Sequence
@@ -7,6 +8,8 @@ from autogen import ChatResult
 from loguru import logger
 
 from rubberduck.autogen.leader_executor.utils.helpers import format_chat_history
+
+_CURRENT_LOG_DIR: ContextVar[Path] = ContextVar("_CURRENT_LOG_DIR")
 
 
 def setup_logger(run_id: str = None):
@@ -40,26 +43,33 @@ def setup_logger(run_id: str = None):
         level="INFO",
     )
 
+    _CURRENT_LOG_DIR.set(log_dir)
     return logger, log_dir
+
+
+def get_log_dir() -> Path:
+    return _CURRENT_LOG_DIR.get()
+
+
+def dump_single_entry(node_name: str, entry: Any, idx: int, log_dir: Path) -> None:
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    if isinstance(entry, ChatResult):
+        (log_dir / f"{node_name}_{idx}.txt").write_text(
+            format_chat_history(entry, indent_response=False), encoding="utf-8"
+        )
+    elif isinstance(entry, str):
+        (log_dir / f"{node_name}_{idx}.txt").write_text(entry, encoding="utf-8")
+    else:
+        with (log_dir / f"{node_name}_{idx}.json").open("w", encoding="utf-8") as fh:
+            json.dump(entry, fh, default=str, indent=2)
 
 
 def dump_memory(memory: Dict[str, Any], log_dir: Path, skip_keys: Sequence[str] = ()) -> None:
     log_dir.mkdir(parents=True, exist_ok=True)
+
     for node_name, entries in memory.items():
         if node_name in skip_keys or not isinstance(entries, list):
             continue
         for idx, entry in enumerate(entries, 1):
-            if isinstance(entry, ChatResult):
-                (log_dir / f"{node_name}_{idx}.txt").write_text(
-                    format_chat_history(entry),
-                    encoding="utf-8",
-                )
-                continue
-            if isinstance(entry, str):
-                (log_dir / f"{node_name}_{idx}.txt").write_text(
-                    entry,
-                    encoding="utf-8",
-                )
-                continue
-            with (log_dir / f"{node_name}_{idx}.json").open("w", encoding="utf-8") as fh:
-                json.dump(entry, fh, default=str, indent=2)
+            dump_single_entry(node_name, entry, idx, log_dir)

@@ -8,7 +8,10 @@ from rubberduck.autogen.leader_executor.config import load_llm_config
 from rubberduck.autogen.leader_executor.models.autonomous_config import (
     AutonomousAgentConfig,
 )
-from rubberduck.autogen.leader_executor.utils.helpers import is_termination_msg
+from rubberduck.autogen.leader_executor.utils.helpers import (
+    clean_message_content,
+    is_termination_msg,
+)
 
 
 class AutonomousAgent:
@@ -18,7 +21,6 @@ class AutonomousAgent:
 
     def _setup_agents(self):
         config_list = load_llm_config(self.config.model_config)
-
         termination_check = partial(is_termination_msg, termination_marker=self.config.termination_marker)
 
         self.assistant = AssistantAgent(
@@ -34,25 +36,22 @@ class AutonomousAgent:
             "human_input_mode": "NEVER",
             "is_termination_msg": termination_check,
             "llm_config": False,
+            "code_execution_config": self.config.code_execution_config or False,
         }
 
-        if self.config.code_execution_config:
-            proxy_kwargs["code_execution_config"] = self.config.code_execution_config
-        else:
-            proxy_kwargs["code_execution_config"] = False
-
         self.proxy = UserProxyAgent(**proxy_kwargs)
+
+        self.proxy.register_hook(hookable_method="process_last_received_message", hook=clean_message_content)
+        # self.proxy.register_hook(hookable_method="process_message_before_send", hook=truncate_on_send())
 
     def execute_task(self, task: str, custom_max_turns: Optional[int] = None):
         max_turns = custom_max_turns or self.config.max_turns
 
-        retry_decorator = retry(
+        @retry(
             stop=stop_after_attempt(self.config.retry_attempts),
             wait=wait_exponential(multiplier=self.config.retry_wait_multiplier),
             reraise=True,
         )
-
-        @retry_decorator
         def _execute():
             return self.proxy.initiate_chat(recipient=self.assistant, message=task, max_turns=max_turns)
 
