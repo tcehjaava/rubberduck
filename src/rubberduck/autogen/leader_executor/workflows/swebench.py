@@ -26,6 +26,11 @@ from rubberduck.autogen.leader_executor.utils.dataset_utils import DatasetUtils
 from rubberduck.autogen.leader_executor.utils.helpers import (
     build_previous_context,
     format_chat_history,
+    format_content_with_indent,
+)
+from rubberduck.autogen.leader_executor.utils.logger import (
+    dump_single_entry,
+    get_log_dir,
 )
 from rubberduck.autogen.leader_executor.utils.repo_cloner import RepoCloner
 
@@ -80,7 +85,7 @@ def ensure_bundle(
             proxy_name=f"{SWEBenchWorkflowNode.LEADER.value.upper()}_PROXY",
             system_message=load_markdown_message("leader.md", executor_system_prompt=executor_system_prompt),
             model_config=model_leader,
-            temperature=1,
+            temperature=0,
             max_turns=5,
         )
     )
@@ -117,7 +122,13 @@ def close_bundle(thread_id: str):
 
 atexit.register(_close_all_bundles)
 
-_MAX_ATTEMPTS = 2
+_MAX_ATTEMPTS = 3
+
+_SKIP_NODES: set[SWEBenchWorkflowNode] = {
+    SWEBenchWorkflowNode.INIT,
+    SWEBenchWorkflowNode.REPO_CLONE,
+    SWEBenchWorkflowNode.CLEANUP,
+}
 
 
 class SWEBenchWorkflow:
@@ -136,6 +147,9 @@ class SWEBenchWorkflow:
         key = node_key if isinstance(node_key, str) else node_key.value
         mem = {**state.get("memory", {})}
         mem.setdefault(key, []).append(copy.deepcopy(result))
+
+        if node_key not in _SKIP_NODES:
+            dump_single_entry(key, mem[key][-1], len(mem[key]), get_log_dir())
         return mem
 
     @staticmethod
@@ -212,7 +226,7 @@ class SWEBenchWorkflow:
 
         try:
             instance = DatasetUtils.load_instance(instance_id)
-            ensure_bundle(tid, instance, "claude-sonnet-4-0", "gpt-4.1-2025-04-14")
+            ensure_bundle(tid, instance, "claude-3-7-sonnet-latest", "gpt-4.1-2025-04-14")
             logger.info("INIT – heavy objects created")
 
             memory = {**state.get("memory", {})}
@@ -289,9 +303,11 @@ class SWEBenchWorkflow:
                     "executor_task.md",
                     iteration=state["current_attempt"],
                     max_iterations=state["max_attempts"],
-                    setup_report=getattr(state.get("result"), "summary", "No setup result available."),
-                    problem_statement=state["instance"].problem_statement,
-                    previous_context=previous_context,
+                    setup_report=format_content_with_indent(
+                        getattr(state.get("result"), "summary", "No setup result available.")
+                    ),
+                    problem_statement=format_content_with_indent(state["instance"].problem_statement),
+                    previous_context=format_content_with_indent(previous_context),
                 )
             )
 

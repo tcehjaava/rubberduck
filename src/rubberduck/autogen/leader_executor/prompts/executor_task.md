@@ -1,10 +1,14 @@
-═══ Iteration {iteration}/{max_iterations} ═══
+🚀 ITERATION {iteration}/{max_iterations}
+════════════════════════════════════════
 
-═══ Environment Summary ═══
+🔧 Environment Summary:
+
 {setup_report}
 
-═══ Problem Statement ═══
+📋 Problem Statement:
+
 {problem_statement}
 
-═══ Previous Iterations Context ═══
+📚 Previous Iterations Context:
+
 {previous_context}
