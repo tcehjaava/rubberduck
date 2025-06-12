@@ -12,12 +12,6 @@ Your task is to initialize the runtime by probing the entire environment—and a
   apt-get -qq update && apt-get -qq install -y ripgrep
   ```
 
-- [ ] **Install: patch tool for code modifications**
-  - Install patch utility (required for patch-based workflow)
-  ```bash
-  apt-get -qq install -y patch
-  ```
-
 - [ ] **Probe: Test requirements files**
   - Search for test dependencies in repository
   ```bash
