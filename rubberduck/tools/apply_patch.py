@@ -43,18 +43,26 @@ cat >"$PATCH_FILE" <<'{delim}'
 {delim}
 
 if ! apply_patch <"$PATCH_FILE"; then
-  echo "ERROR: apply_patch rejected the diff" >&2; exit 1
+  echo "ERROR: apply_patch rejected the diff" >&2
+  exit 1
 fi
 
 if command -v git >/dev/null 2>&1; then
   git add -u
 fi
 
-PYLIST=$(grep -E '\\.py$' "$PATCH_FILE" | sed 's|^[ab]/||' | sort -u)
-if [ -n "$PYLIST" ]; then
-  python3.11 -m py_compile $PYLIST || {{ echo "PYCOMPILE_FAILED" >&2; exit 2; }}
+PYLIST=""
+if command -v git >/dev/null 2>&1; then
+  PYLIST=$(git diff --name-only --cached -- '*.py')
 fi
-echo "Patch + syntax check OK"
+
+if [ -n "$PYLIST" ]; then
+  if ! python -m py_compile $PYLIST 2>/tmp/pycompile_error.log; then
+    echo "SYNTAX_ERROR: Python compilation failed:" >&2
+    cat /tmp/pycompile_error.log >&2
+    exit 2
+  fi
+fi
 """
     result = executor.execute_code_blocks([CodeBlock(language="bash", code=script)])
 
@@ -62,8 +70,10 @@ echo "Patch + syntax check OK"
         return
     elif result.exit_code == 2:
         raise PatchApplyError("Patch applied but syntax errors detected:\n" + result.output)
+    elif result.exit_code == 1:
+        raise PatchApplyError("Patch application failed:\n" + result.output)
     else:
-        raise PatchApplyError(result.output)
+        raise PatchApplyError(f"Unexpected error (exit code {result.exit_code}):\n" + result.output)
 
 
 def create_patch_reply(executor: DockerCommandLineCodeExecutor, repo_name: str):
