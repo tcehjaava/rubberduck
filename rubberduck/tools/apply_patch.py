@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import re
 import shlex
-import textwrap
 import uuid
-from typing import List
 
 from autogen.coding import CodeBlock, DockerCommandLineCodeExecutor
 
@@ -16,23 +14,20 @@ class PatchApplyError(RuntimeError):
     pass
 
 
-def _extract_blocks(payload: str) -> List[str]:
-    blocks: List[str] = []
-    for m in _PATCH_BEGIN.finditer(payload):
-        n = _PATCH_END.search(payload, m.end())
-        if not n:
-            raise PatchApplyError("Unterminated *** Begin Patch block")
-        content = payload[m.end() : n.start()].strip()
-        if content:
-            blocks.append(content)
-    if not blocks:
-        raise PatchApplyError("No valid patch content found")
-    return blocks
+def _extract_complete_patch(payload: str) -> str:
+    m = _PATCH_BEGIN.search(payload)
+    if not m:
+        raise PatchApplyError("No *** Begin Patch found")
+
+    n = _PATCH_END.search(payload, m.end())
+    if not n:
+        raise PatchApplyError("Unterminated *** Begin Patch block")
+
+    return payload[m.start() : n.end()].lstrip()
 
 
 def apply_patch_via_executor(executor, patch_payload, repo_name, workspace_mount="/workspace"):
-    blocks = _extract_blocks(patch_payload)
-    patch_text = "\n".join(textwrap.dedent(b).lstrip("\n") for b in blocks)
+    patch_text = _extract_complete_patch(patch_payload)
 
     delim = f"PATCH_{uuid.uuid4().hex.upper()}"
     safe_patch = patch_text.replace(delim, f"{delim}_X")
