@@ -48,7 +48,7 @@ class AutonomousAgent:
         if self.config.code_execution_config and "executor" in self.config.code_execution_config:
             self.proxy.register_reply(
                 trigger=self.assistant,
-                reply_func=create_patch_reply(self.config.code_execution_config["executor"]),
+                reply_func=create_patch_reply(self.config.code_execution_config["executor"], "pylint"),
                 position=0,
             )
             self.proxy.register_hook("process_message_before_send", prepend_patch_status)

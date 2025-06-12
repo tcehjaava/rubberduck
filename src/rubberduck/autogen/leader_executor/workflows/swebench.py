@@ -333,7 +333,9 @@ class SWEBenchWorkflow:
             )
 
             updated_memory = self._update_memory(state, result, SWEBenchWorkflowNode.LEADER)
-            updated_memory["leader_feedback"].append(getattr(result, "summary", "No leader response."))
+            updated_memory = self._update_memory(
+                {"memory": updated_memory}, getattr(result, "summary", "No leader response."), "leader_feedback"
+            )
 
             return {
                 **state,

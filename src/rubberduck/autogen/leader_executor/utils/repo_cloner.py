@@ -30,6 +30,7 @@ class RepoCloner:
 
         run_collect_content = self._get_script_content("run_collect.sh")
         run_tests_content = self._get_script_content("run_tests.sh")
+        apply_patch_content = self._get_script_content("apply_patch.py")
 
         # cherry_pick_snippet = ""
         # if instance.environment_setup_commit and instance.environment_setup_commit != instance.base_commit:
@@ -40,8 +41,16 @@ class RepoCloner:
         script = f"""\
 set -e
 
-apt-get update -q -y
-DEBIAN_FRONTEND=noninteractive apt-get install -q -y git
+apt-get -qq update
+DEBIAN_FRONTEND=noninteractive apt-get install -q -y git python3.11 python3.11-distutils python3.11-venv
+
+python3.11 -m venv /opt/py311env
+/opt/py311env/bin/pip install -q --no-cache-dir --upgrade pip
+
+cat > /usr/local/bin/apply_patch <<'AP_EOF'
+{apply_patch_content}
+AP_EOF
+chmod +x /usr/local/bin/apply_patch
 
 git config --global user.name  "tejachava80"
 git config --global user.email "tejachava80@gmail.com"
