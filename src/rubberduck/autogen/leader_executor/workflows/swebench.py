@@ -85,7 +85,7 @@ def ensure_bundle(
             proxy_name=f"{SWEBenchWorkflowNode.LEADER.value.upper()}_PROXY",
             system_message=load_markdown_message("leader.md", executor_system_prompt=executor_system_prompt),
             model_config=model_leader,
-            temperature=0,
+            temperature=1,
             max_turns=5,
         )
     )
@@ -226,7 +226,7 @@ class SWEBenchWorkflow:
 
         try:
             instance = DatasetUtils.load_instance(instance_id)
-            ensure_bundle(tid, instance, "claude-3-7-sonnet-latest", "gpt-4.1-2025-04-14")
+            ensure_bundle(tid, instance, "o3-2025-04-16", "gpt-4.1-2025-04-14")
             logger.info("INIT – heavy objects created")
 
             memory = {**state.get("memory", {})}

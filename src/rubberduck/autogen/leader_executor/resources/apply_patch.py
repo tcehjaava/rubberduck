@@ -483,13 +483,16 @@ def main() -> None:
     patch_text = sys.stdin.read()
     if not patch_text:
         print("Please pass patch text through stdin", file=sys.stderr)
-        return
+        sys.exit(1)
     try:
         result = process_patch(patch_text, open_file, write_file, remove_file)
+        print(result)
     except DiffError as exc:
         print(exc, file=sys.stderr)
-        return
-    print(result)
+        sys.exit(1)
+    except Exception as exc:
+        print(f"Unexpected error: {exc}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

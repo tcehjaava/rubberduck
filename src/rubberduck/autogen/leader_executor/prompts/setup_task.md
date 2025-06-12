@@ -24,6 +24,12 @@ Your task is to initialize the runtime by probing the entire environment—and a
   cd /workspace/<repo_name> && pip install -q -r <requirements-file> || echo "Warning: Failed to install from <requirements-file>"
   ```
 
+- [ ] **Install: pytest testing framework**
+  - Install pytest for running tests
+  ```bash
+  pip install -q pytest || echo "Warning: Failed to install pytest"
+  ```
+
 - [ ] **Install: Package in editable mode**
   - Install repository package for development
   ```bash
