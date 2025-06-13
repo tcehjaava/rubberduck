@@ -45,17 +45,4 @@ class RepoDockerExecutor(DockerCommandLineCodeExecutor):
             work_dir=self.host_code_execution_dir,
             bind_dir=self.host_code_execution_dir,
             timeout=1800,
-            execution_policies={
-                "python": False,
-                "bash": True,
-                "shell": False,
-                "sh": False,
-                "pwsh": False,
-                "powershell": False,
-                "ps1": False,
-                "javascript": False,
-                "html": False,
-                "css": False,
-                "": False,
-            },
         )
