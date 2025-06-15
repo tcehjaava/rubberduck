@@ -28,7 +28,7 @@ class AutonomousAgent:
         self.assistant = AssistantAgent(
             name=self.config.assistant_name,
             system_message=self.config.system_message,
-            llm_config={"config_list": load_llm_config(self.config.model_config)},
+            llm_config=load_llm_config(self.config.model_config),
             is_termination_msg=None,
             human_input_mode="NEVER",
         )

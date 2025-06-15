@@ -1,8 +1,10 @@
-[
-    {
-        "model": "claude-sonnet-4-0",
-        "api_type": "anthropic",
-        "base_url": "https://api.anthropic.com",
-        "temperature": 0
-    }
-]
+{
+    "temperature": 0,
+    "config_list": [
+        {
+            "model": "claude-sonnet-4-0",
+            "api_type": "anthropic",
+            "base_url": "https://api.anthropic.com"
+        }
+    ]
+}
