@@ -46,27 +46,14 @@ def _dedup(nodes: Iterable[str]) -> List[str]:
     return out
 
 
-def prune_and_write_env(
+def prune_env(
     container,
     fail_nodes: Iterable[str],
     pass_nodes: Iterable[str],
     *,
-    env_path: str | Path = _TESTBED / "tests.env",
     workdir: str | Path = _TESTBED,
-    write: bool = True,
 ) -> Tuple[List[str], List[str]]:
     workdir = str(workdir)
     fail_final = sorted(_dedup(_first_pass(container, fail_nodes, workdir)))
     pass_final = sorted(_dedup(_first_pass(container, pass_nodes, workdir)))
-
-    if write:
-        env_text = (
-            "FAIL_TO_PASS_NODES=(" + " ".join(shlex.quote(n) for n in fail_final) + ")\n"
-            "PASS_TO_PASS_NODES=(" + " ".join(shlex.quote(n) for n in pass_final) + ")\n"
-        )
-        container.exec_run(
-            ["bash", "-lc", f"printf %s {shlex.quote(env_text)} > {shlex.quote(str(env_path))}"],
-            user="root",
-            workdir=workdir,
-        )
     return fail_final, pass_final

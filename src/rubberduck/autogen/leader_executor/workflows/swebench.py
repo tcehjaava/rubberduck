@@ -21,25 +21,25 @@ from rubberduck.autogen.leader_executor.models.swebench_workflow import (
     SWEBenchWorkflowState,
 )
 from rubberduck.autogen.leader_executor.prompts import load_markdown_message
-from rubberduck.autogen.leader_executor.tools.docker_runner import (
+from rubberduck.autogen.leader_executor.tools.container_management import (
     cleanup_container,
     create_container,
 )
 from rubberduck.autogen.leader_executor.utils.dataset_utils import DatasetUtils
-from rubberduck.autogen.leader_executor.utils.helpers import (
-    build_previous_context,
-    format_chat_history,
-    format_content_with_indent,
-)
 from rubberduck.autogen.leader_executor.utils.logger import (
     dump_single_entry,
     get_log_dir,
 )
+from rubberduck.autogen.leader_executor.utils.message_helpers import (
+    build_previous_context,
+    format_chat_history,
+    format_content_with_indent,
+)
 
 
 class BundleContainer:
-    def __init__(self, docker, leader_agent, executor_agent, leader_should_continue_agent):
-        self.docker = docker
+    def __init__(self, docker_runner, leader_agent, executor_agent, leader_should_continue_agent):
+        self.docker_runner = docker_runner
         self.leader_agent = leader_agent
         self.executor_agent = executor_agent
         self.leader_should_continue_agent = leader_should_continue_agent
@@ -64,8 +64,8 @@ def ensure_bundle(
     assert model_leader is not None, "model_leader must not be None"
     assert model_exec is not None, "model_exec must not be None"
 
-    container = create_container(instance)
-    stack.callback(lambda: cleanup_container(container))
+    docker_runner = create_container(instance)
+    stack.callback(lambda: cleanup_container(docker_runner))
 
     executor_system_prompt = load_markdown_message("executor.md", repo_name=instance.repo_subdir_name)
 
@@ -76,7 +76,7 @@ def ensure_bundle(
             system_message=executor_system_prompt,
             model_config=model_exec,
             temperature=0,
-            docker_runner=container,
+            docker_runner=docker_runner,
             max_turns=100,
         )
     )
@@ -103,7 +103,7 @@ def ensure_bundle(
         )
     )
 
-    bundle = BundleContainer(container, leader_agent, executor_agent, leader_should_continue_agent)
+    bundle = BundleContainer(docker_runner, leader_agent, executor_agent, leader_should_continue_agent)
     _REG[thread_id] = bundle
     return bundle
 

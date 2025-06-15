@@ -95,29 +95,3 @@ def clean_message_content(content: str | list) -> str:
     content = inline.sub(r"\1", content)
 
     return content
-
-
-def truncate_on_send(max_chars=12000, head_lines=10, tail_lines=10):
-    def _hook(*, sender, message, recipient, silent):
-        def truncate_if_large(text: str) -> str:
-            if len(text) <= max_chars:
-                return text
-
-            lines = text.splitlines()
-
-            if len(lines) <= head_lines + tail_lines:
-                half = max_chars // 2
-                return f"{text[:half]}\n" f"<Message truncated – {len(text)} chars total>\n" f"{text[-half:]}"
-
-            snippet = lines[:head_lines] + [f"<Message truncated – {len(lines)} lines total>"] + lines[-tail_lines:]
-            return "\n".join(snippet)
-
-        msg = message.copy() if isinstance(message, dict) else {"content": str(message)}
-        content = msg.get("content")
-
-        if isinstance(content, str) and content.strip():
-            msg["content"] = truncate_if_large(content)
-
-        return msg
-
-    return _hook

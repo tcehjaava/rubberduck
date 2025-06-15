@@ -1,6 +1,6 @@
 import pytest
 
-from rubberduck.autogen.leader_executor.utils.helpers import is_termination_msg
+from rubberduck.autogen.leader_executor.utils.message_helpers import is_termination_msg
 
 
 @pytest.mark.parametrize(
