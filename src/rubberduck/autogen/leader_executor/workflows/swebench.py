@@ -80,7 +80,6 @@ def ensure_bundle(
             proxy_name=f"{SWEBenchWorkflowNode.EXECUTOR.value.upper()}_PROXY",
             system_message=executor_system_prompt,
             model_config=model_exec,
-            temperature=0,
             docker_runner=docker_runner,
             max_turns=_EXECUTOR_MAX_TURNS,
         )
@@ -92,7 +91,6 @@ def ensure_bundle(
             proxy_name=f"{SWEBenchWorkflowNode.LEADER.value.upper()}_PROXY",
             system_message=load_markdown_message("leader.md", executor_system_prompt=executor_system_prompt),
             model_config=model_leader,
-            temperature=1,
             max_turns=_LEADER_MAX_TURNS,
         )
     )
@@ -103,7 +101,6 @@ def ensure_bundle(
             proxy_name=f"{SWEBenchWorkflowNode.LEADER_SHOULD_CONTINUE.value.upper()}_PROXY",
             system_message=load_markdown_message("leader_should_continue.md"),
             model_config=model_exec,
-            temperature=0,
             max_turns=_LEADER_MAX_TURNS,
         )
     )
