@@ -26,84 +26,41 @@ def _sanitize_node_ids(raw_ids: Iterable[str]) -> List[str]:
 
 
 _TEST_PROBLEM_STATEMENT = r"""
+**Problem: Test Collection Script Improvements**
 
-**Patch-task problem statement**
+The `run_collect.sh` script in our pylint repo currently shows how many tests are collected and prints which tests
+ cannot be collected.
 
-Pylint’s *recursive* mode (`--recursive=y`) is ignoring all skip-lists, breaking several tests.
+Instead, I want to make these changes:
 
----
+1. **Handle tests with parameters**: If a test with parameters cannot be collected, remove the parameters and try
+ collecting the plain test. If the plain test works, replace the parameterized test with the plain version.
 
-### Bug
+2. **Remove uncollectable tests**: If a test with parameters still cannot be collected, remove it from the list
+ completely.
 
-When Pylint is run with `--recursive=y`, it still lints files and directories that should be skipped by
+3. **Follow the correct format**: Tests come from `tests.env`, where parameterized tests are enclosed in quotes. Make
+ sure to maintain this format when updating `tests.env`.
 
-* `--ignore`  (base-name list),
-* `--ignore-patterns`  (regex on base-name), and
-* `--ignore-paths`  (regex on full path).
+4. **Remove duplicates**: If both a plain test and its parameterized version exist, keep only the plain test and remove
+ the parameterized one.
 
-Consequently the following tests fail:
+5. **Create a backup**: Keep a copy of the original `tests.env` file for recovery and comparison purposes.
 
-```
-tests/lint/unittest_lint.py::test_recursive_ignore[--ignore-ignored_subdirectory]
-tests/lint/unittest_lint.py::test_recursive_ignore[--ignore-patterns-ignored_*]
-tests/test_self.py::TestRunTC::test_ignore_recursive
-tests/test_self.py::TestRunTC::test_ignore_pattern_recursive
-```
+6. **Focus on existing tests**: Only work with tests listed in `tests.env`. Trying to collect all possible tests takes
+ too much time.
 
----
+7. **Target goal**: Start by running the existing run_collect.sh script and after implementing all the new features the
+ script should collect the same number of tests.
 
-### Required fix
+8. **Ensure consistency**: Running `run_collect` multiple times should give the same number of collected tests.
 
-1. **Apply ignore logic inside `_discover_files`**
-   File: `pylint/lint/pylinter.py`
+9. **Handle edge cases**: Account for scenarios like empty lists by writing appropriate empty lists to the file.
 
-   * `_discover_files(files_or_modules, ignore_list, ignore_list_re, ignore_paths_re)` must:
+10. **Test thoroughly**: Run the script multiple times to verify it works as expected.
 
-     * Skip a path if
-
-       * its basename is in `ignore_list`, **or**
-       * any regex in `ignore_list_re` matches its basename, **or**
-       * any regex in `ignore_paths_re` matches the whole path.
-     * Apply those checks both to every **starting argument** and to every directory / file seen
-     while walking with `os.walk`.
-     * When a directory is skipped, prevent descent into it by clearing `dirs[:]`.
-
-2. **Pass the lists/regexes into `_discover_files`** from `PyLinter.check()`:
-
-```python
-if self.config.recursive:
-    files_or_modules = tuple(
-        self._discover_files(
-            files_or_modules,
-            self.config.ignore,
-            self.config.ignore_patterns,
-            self._ignore_paths,
-        )
-    )
-```
-
-3. **Add dot-directory skipping by default**
-   In `pylint/lint/base_options.py`, extend the default for `ignore-patterns` to include dot-dirs:
-
-```python
-"default": (re.compile(r"^\.#"), re.compile(r"^\.")),
-```
-
-4. **Acceptance criteria**
-
-   * All unit tests pass (`pytest` → zero failures).
-   * Manual checks such as
-
-     ```bash
-     pylint --recursive=y .
-     pylint --recursive=y --ignore=.a .
-     pylint --recursive=y --ignore-patterns="^ignored_.*" .
-     ```
-
-     respect the ignore options and skip dot-directories out-of-the-box.
-
-No other behaviour should change.
-
+11. **Show changes**: Print the differences between old and new files, then explain why these changes will improve the
+ collection process.
 """
 
 

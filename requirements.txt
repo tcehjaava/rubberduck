@@ -1,5 +1,5 @@
 datasets
-pyautogen
+ag2[openai]
 pydantic
 python-dotenv
 requests

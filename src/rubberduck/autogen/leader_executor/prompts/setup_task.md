@@ -12,28 +12,15 @@ Your task is to initialize the runtime by probing the entire environment—and a
   apt-get -qq update && apt-get -qq install -y ripgrep
   ```
 
-- [ ] **Probe: Test requirements files**
-  - Search for test dependencies in repository
-  ```bash
-  cd /workspace/<repo_name> && find . -name "*requirements*test*" -o -name "*test*requirements*" -o -name "requirements*.txt" | grep -E "(test|dev)" | head -5
+- [ ] **Run the below command and see what's already available**
+  ```
+  pip list | grep pytest
+  python -c "import pytest; print(pytest.__version__)"
   ```
 
-- [ ] **Install: Test dependencies (if found)**
-  - Install test requirements (handle failures gracefully)
-  ```bash
-  cd /workspace/<repo_name> && pip install -q -r <requirements-file> || echo "Warning: Failed to install from <requirements-file>"
+- [ ] **Run the below command and see if there are any uncollected tests**
   ```
-
-- [ ] **Install: pytest testing framework**
-  - Install pytest for running tests
-  ```bash
-  pip install -q pytest || echo "Warning: Failed to install pytest"
-  ```
-
-- [ ] **Install: Package in editable mode**
-  - Install repository package for development
-  ```bash
-  cd /workspace/<repo_name> && pip install -q -e . || (pip install -q --upgrade setuptools wheel && pip install -q -e .)
+  ./run_collect.sh
   ```
 
 ## **Completion Report**

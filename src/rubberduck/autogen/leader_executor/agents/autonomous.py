@@ -40,15 +40,15 @@ class AutonomousAgent:
             "human_input_mode": "NEVER",
             "is_termination_msg": termination_check,
             "llm_config": False,
-            "code_execution_config": self.config.code_execution_config or False,
+            "code_execution_config": False,
         }
 
         self.proxy = UserProxyAgent(**proxy_kwargs)
 
-        if self.config.code_execution_config and "executor" in self.config.code_execution_config:
+        if self.config.docker_runner:
             self.proxy.register_reply(
                 trigger=self.assistant,
-                reply_func=create_patch_reply(self.config.code_execution_config["executor"], "pylint"),
+                reply_func=create_patch_reply(self.config.docker_runner),
                 position=0,
             )
             self.proxy.register_hook("process_message_before_send", prepend_patch_status)
