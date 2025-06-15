@@ -49,6 +49,11 @@ _REG: Dict[str, BundleContainer] = {}
 _EXIT_STACKS: dict[str, ExitStack] = {}
 
 
+_MAX_ATTEMPTS = 1
+_EXECUTOR_MAX_TURNS = 1
+_LEADER_MAX_TURNS = 1
+
+
 def ensure_bundle(
     thread_id: str,
     instance: SWEBenchVerifiedInstance,
@@ -77,7 +82,7 @@ def ensure_bundle(
             model_config=model_exec,
             temperature=0,
             docker_runner=docker_runner,
-            max_turns=100,
+            max_turns=_EXECUTOR_MAX_TURNS,
         )
     )
 
@@ -88,7 +93,7 @@ def ensure_bundle(
             system_message=load_markdown_message("leader.md", executor_system_prompt=executor_system_prompt),
             model_config=model_leader,
             temperature=1,
-            max_turns=5,
+            max_turns=_LEADER_MAX_TURNS,
         )
     )
 
@@ -99,7 +104,7 @@ def ensure_bundle(
             system_message=load_markdown_message("leader_should_continue.md"),
             model_config=model_exec,
             temperature=0,
-            max_turns=5,
+            max_turns=_LEADER_MAX_TURNS,
         )
     )
 
@@ -123,8 +128,6 @@ def close_bundle(thread_id: str):
 
 
 atexit.register(_close_all_bundles)
-
-_MAX_ATTEMPTS = 5
 
 _SKIP_NODES: set[SWEBenchWorkflowNode] = {
     SWEBenchWorkflowNode.INIT,

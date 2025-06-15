@@ -1,5 +1,6 @@
 datasets
-ag2[openai]
+ag2[openai]==0.9.2
+autogen==0.9.2
 pydantic
 python-dotenv
 requests
