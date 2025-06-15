@@ -79,7 +79,7 @@ class DatasetUtils:
 
     @staticmethod
     @lru_cache(maxsize=None)
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=5), reraise=True)
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=10), reraise=True)
     def load_instance(
         instance_id: str, *, split: str = _DEFAULT_SPLIT, force_download: bool = False
     ) -> Optional[SWEBenchVerifiedInstance]:
