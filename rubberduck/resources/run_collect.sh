@@ -1,17 +1,12 @@
 #!/bin/bash
 
-# Parse flags
-run_fail=1; run_pass=1
-[[ "$*" == *"-f"* ]] && { run_fail=1; run_pass=0; }
-[[ "$*" == *"-p"* ]] && { run_fail=0; run_pass=1; }
-
 # Load environment
 source tests.env
 
 # Build node list
 nodes=()
-(( run_fail )) && nodes+=("${FAIL_TO_PASS_NODES[@]}")
-(( run_pass )) && nodes+=("${PASS_TO_PASS_NODES[@]}")
+nodes+=("${FAIL_TO_PASS_NODES[@]}")
+nodes+=("${PASS_TO_PASS_NODES[@]}")
 
 # Collect tests
 total=0; failed=()

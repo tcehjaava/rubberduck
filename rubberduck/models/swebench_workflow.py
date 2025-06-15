@@ -20,7 +20,6 @@ class SWEBenchWorkflowNode(Enum):
     EXECUTOR = "executor"
     LEADER = "leader"
     LEADER_SHOULD_CONTINUE = "leader_should_continue"
-    REPO_CLONE = "repo_clone"
     SETUP = "setup"
     CLEANUP = "cleanup"
 

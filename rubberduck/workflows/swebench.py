@@ -21,7 +21,10 @@ from rubberduck.autogen.leader_executor.models.swebench_workflow import (
     SWEBenchWorkflowState,
 )
 from rubberduck.autogen.leader_executor.prompts import load_markdown_message
-from rubberduck.autogen.leader_executor.tools.docker_executor import RepoDockerExecutor
+from rubberduck.autogen.leader_executor.tools.docker_runner import (
+    cleanup_container,
+    create_container,
+)
 from rubberduck.autogen.leader_executor.utils.dataset_utils import DatasetUtils
 from rubberduck.autogen.leader_executor.utils.helpers import (
     build_previous_context,
@@ -32,7 +35,6 @@ from rubberduck.autogen.leader_executor.utils.logger import (
     dump_single_entry,
     get_log_dir,
 )
-from rubberduck.autogen.leader_executor.utils.repo_cloner import RepoCloner
 
 
 class BundleContainer:
@@ -62,8 +64,8 @@ def ensure_bundle(
     assert model_leader is not None, "model_leader must not be None"
     assert model_exec is not None, "model_exec must not be None"
 
-    docker_exec = RepoDockerExecutor(instance)
-    stack.callback(docker_exec.stop)
+    container = create_container(instance)
+    stack.callback(lambda: cleanup_container(container))
 
     executor_system_prompt = load_markdown_message("executor.md", repo_name=instance.repo_subdir_name)
 
@@ -74,7 +76,7 @@ def ensure_bundle(
             system_message=executor_system_prompt,
             model_config=model_exec,
             temperature=0,
-            code_execution_config={"executor": docker_exec},
+            docker_runner=container,
             max_turns=100,
         )
     )
@@ -101,7 +103,7 @@ def ensure_bundle(
         )
     )
 
-    bundle = BundleContainer(docker_exec, leader_agent, executor_agent, leader_should_continue_agent)
+    bundle = BundleContainer(container, leader_agent, executor_agent, leader_should_continue_agent)
     _REG[thread_id] = bundle
     return bundle
 
@@ -122,11 +124,10 @@ def close_bundle(thread_id: str):
 
 atexit.register(_close_all_bundles)
 
-_MAX_ATTEMPTS = 1
+_MAX_ATTEMPTS = 5
 
 _SKIP_NODES: set[SWEBenchWorkflowNode] = {
     SWEBenchWorkflowNode.INIT,
-    SWEBenchWorkflowNode.REPO_CLONE,
     SWEBenchWorkflowNode.CLEANUP,
 }
 
@@ -164,7 +165,6 @@ class SWEBenchWorkflow:
         workflow = StateGraph(SWEBenchWorkflowState, config_schema=SWEBenchWorkflowConfig)
 
         workflow.add_node(SWEBenchWorkflowNode.INIT.value, self._init_node)
-        workflow.add_node(SWEBenchWorkflowNode.REPO_CLONE.value, self._repo_clone_node)
         workflow.add_node(SWEBenchWorkflowNode.SETUP.value, self._setup_node)
         workflow.add_node(SWEBenchWorkflowNode.EXECUTOR.value, self._executor_node)
         workflow.add_node(SWEBenchWorkflowNode.LEADER.value, self._leader_node)
@@ -173,12 +173,6 @@ class SWEBenchWorkflow:
 
         workflow.add_conditional_edges(
             SWEBenchWorkflowNode.INIT.value,
-            self._should_continue,
-            {"continue": SWEBenchWorkflowNode.REPO_CLONE.value, "complete": SWEBenchWorkflowNode.CLEANUP.value},
-        )
-
-        workflow.add_conditional_edges(
-            SWEBenchWorkflowNode.REPO_CLONE.value,
             self._should_continue,
             {"continue": SWEBenchWorkflowNode.SETUP.value, "complete": SWEBenchWorkflowNode.CLEANUP.value},
         )
@@ -208,7 +202,7 @@ class SWEBenchWorkflow:
             SWEBenchWorkflowNode.LEADER_SHOULD_CONTINUE.value,
             self._should_leader_continue,
             {
-                "continue": SWEBenchWorkflowNode.REPO_CLONE.value,
+                "continue": SWEBenchWorkflowNode.INIT.value,
                 "complete": SWEBenchWorkflowNode.CLEANUP.value,
             },
         )
@@ -225,6 +219,8 @@ class SWEBenchWorkflow:
         logger.info(f"INIT – loading instance {instance_id}")
 
         try:
+            state = self._cleanup_node(state, config=config)
+
             instance = DatasetUtils.load_instance(instance_id)
             ensure_bundle(tid, instance, "o3-2025-04-16", "gpt-4.1-2025-04-14")
             logger.info("INIT – heavy objects created")
@@ -244,31 +240,6 @@ class SWEBenchWorkflow:
             }
         except Exception as e:
             return self._handle_node_exception(state, e, SWEBenchWorkflowNode.INIT)
-
-    def _repo_clone_node(self, state: SWEBenchWorkflowState, *, config: RunnableConfig) -> SWEBenchWorkflowState:
-        try:
-            tid = config["configurable"]["thread_id"]
-            bundle = ensure_bundle(tid, state["instance"])
-
-            logger.info(f"Cloning repository for attempt {state['current_attempt']}/{state['max_attempts']}")
-
-            instance = state["instance"]
-            docker_executor = bundle.docker
-
-            repo_cloner = RepoCloner(docker_executor)
-            repo_cloner.clone(instance)
-
-            logger.info(f"Successfully cloned repository {instance.repo}")
-
-            return {
-                **state,
-                "result": "Repository cloned successfully",
-                "error_message": "",
-                "memory": self._update_memory(state, "Repository cloned", SWEBenchWorkflowNode.REPO_CLONE),
-            }
-
-        except Exception as e:
-            return self._handle_node_exception(state, e, SWEBenchWorkflowNode.REPO_CLONE)
 
     def _setup_node(self, state: SWEBenchWorkflowState, *, config: RunnableConfig) -> SWEBenchWorkflowState:
         try:
@@ -378,10 +349,15 @@ class SWEBenchWorkflow:
     @staticmethod
     def _should_leader_continue(state: SWEBenchWorkflowState) -> str:
         if state.get("error_message"):
+            logger.info("Error message found, stopping execution.")
             return "complete"
         if state.get("result") and "solved" in str(state["result"]).lower():
+            logger.info("Problem solved, stopping execution.")
             return "complete"
         if state["current_attempt"] > state["max_attempts"]:
+            logger.info(
+                f"Max attempts reached, stopping execution: {state['current_attempt']} > {state['max_attempts']}"
+            )
             return "complete"
         return "continue"
 

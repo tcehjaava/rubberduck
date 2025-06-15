@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
+from docker.models.containers import Container
+
 
 @dataclass
 class AutonomousAgentConfig:
@@ -12,5 +14,6 @@ class AutonomousAgentConfig:
     termination_marker: str = "TERMINATE"
     max_turns: int = 100
     code_execution_config: Optional[Dict[str, Any]] = None
+    docker_runner: Optional[Container] = None
     retry_attempts: int = 3
     retry_wait_multiplier: int = 5

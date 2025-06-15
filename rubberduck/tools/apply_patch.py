@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import re
-import shlex
 import uuid
 
-from autogen.coding import CodeBlock, DockerCommandLineCodeExecutor
+from docker.models.containers import Container
+
+from rubberduck.autogen.leader_executor.tools.docker_runner import (
+    run_script_in_container,
+)
 
 _PATCH_BEGIN = re.compile(r"^\s*\*\*\*\s*Begin Patch", re.MULTILINE)
 _PATCH_END = re.compile(r"^\s*\*\*\*\s*End Patch", re.MULTILINE)
@@ -26,16 +29,14 @@ def _extract_complete_patch(payload: str) -> str:
     return payload[m.start() : n.end()].lstrip()
 
 
-def apply_patch_via_executor(executor, patch_payload, repo_name, workspace_mount="/workspace"):
+def apply_patch_in_container(container: Container, patch_payload: str) -> None:
     patch_text = _extract_complete_patch(patch_payload)
 
     delim = f"PATCH_{uuid.uuid4().hex.upper()}"
     safe_patch = patch_text.replace(delim, f"{delim}_X")
-    ws_repo = shlex.quote(f"{workspace_mount.rstrip('/')}/{repo_name}")
 
     script = rf"""#!/bin/bash
 set -euo pipefail
-cd {ws_repo}
 
 PATCH_FILE=$(mktemp /tmp/patch.XXXXXX)
 cat >"$PATCH_FILE" <<'{delim}'
@@ -64,26 +65,26 @@ if [ -n "$PYLIST" ]; then
   fi
 fi
 """
-    result = executor.execute_code_blocks([CodeBlock(language="bash", code=script)])
+    exit_code, output = run_script_in_container(container, script)
 
-    if result.exit_code == 0:
+    if exit_code == 0:
         return
-    elif result.exit_code == 2:
-        raise PatchApplyError("Patch applied but syntax errors detected:\n" + result.output)
-    elif result.exit_code == 1:
-        raise PatchApplyError("Patch application failed:\n" + result.output)
+    elif exit_code == 2:
+        raise PatchApplyError("Patch applied but syntax errors detected:\n" + output)
+    elif exit_code == 1:
+        raise PatchApplyError("Patch application failed:\n" + output)
     else:
-        raise PatchApplyError(f"Unexpected error (exit code {result.exit_code}):\n" + result.output)
+        raise PatchApplyError(f"Unexpected error (exit code {exit_code}):\n" + output)
 
 
-def create_patch_reply(executor: DockerCommandLineCodeExecutor, repo_name: str):
+def create_patch_reply(container: Container):
     def _handle(recipient, messages=None, **_):
         text = messages[-1].get("content", "")
         if "*** Begin Patch" not in text:
             return False, None
 
         try:
-            apply_patch_via_executor(executor, text, repo_name)
+            apply_patch_in_container(container, text)
             recipient._last_patch_status = "✅ Patch applied & py_compile succeeded."
         except PatchApplyError as err:
             recipient._last_patch_status = f"❌ {err}"
