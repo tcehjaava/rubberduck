@@ -25,13 +25,10 @@ class AutonomousAgent:
         self._setup_agents()
 
     def _setup_agents(self):
-        config_list = load_llm_config(self.config.model_config)
-        termination_check = partial(is_termination_msg, termination_marker=self.config.termination_marker)
-
         self.assistant = AssistantAgent(
             name=self.config.assistant_name,
             system_message=self.config.system_message,
-            llm_config={"config_list": config_list, "temperature": self.config.temperature},
+            llm_config={"config_list": load_llm_config(self.config.model_config)},
             is_termination_msg=None,
             human_input_mode="NEVER",
         )
@@ -39,7 +36,7 @@ class AutonomousAgent:
         proxy_kwargs = {
             "name": self.config.proxy_name,
             "human_input_mode": "NEVER",
-            "is_termination_msg": termination_check,
+            "is_termination_msg": partial(is_termination_msg, termination_marker=self.config.termination_marker),
             "llm_config": False,
             "code_execution_config": False,
         }

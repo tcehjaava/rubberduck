@@ -118,11 +118,6 @@ git apply --recount --whitespace=nowarn "{ws_repo}/test.patch"
 # Install dependencies
 echo "Installing GitPython..."
 pip install --no-cache-dir GitPython
-
-# Run tests
-echo "Running tests..."
-pytest --collect-only tests/test_self.py::TestRunTC::test_stdin -q
-pytest -q "tests/lint/unittest_lint.py::test_recursive_ignore[--ignore-ignored_subdirectory]"
 """
 
 
@@ -185,6 +180,7 @@ def create_container(
         "PASS_TO_PASS_NODES=(" + " ".join(shlex.quote(n) for n in pass_final) + ")\n"
     )
 
+    logger.info("Writing tests.env...")
     container.exec_run(
         ["bash", "-lc", f"printf %s {shlex.quote(env_text)} > {shlex.quote('/testbed/tests.env')}"],
         user="root",
