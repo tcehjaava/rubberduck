@@ -16,4 +16,4 @@ class AutonomousAgentConfig:
     code_execution_config: Optional[Dict[str, Any]] = None
     docker_runner: Optional[Container] = None
     retry_attempts: int = 3
-    retry_wait_multiplier: int = 5
+    retry_wait_multiplier: int = 10
