@@ -72,6 +72,12 @@ class AutonomousAgent:
             reraise=True,
         )
         def _execute():
-            return self.proxy.initiate_chat(recipient=self.assistant, message=task, max_turns=max_turns)
+            attempt = _execute.retry.statistics.get("attempt_number", 1)
+            return self.proxy.initiate_chat(
+                recipient=self.assistant,
+                message=task if attempt == 1 else None,
+                clear_history=(attempt == 1),
+                max_turns=max_turns,
+            )
 
         return _execute()
