@@ -5,7 +5,7 @@ import uuid
 
 from docker.models.containers import Container
 
-from rubberduck.autogen.leader_executor.tools.container_management import (
+from rubberduck.autogen.leader_executor.tools.container_manager import (
     run_script_in_container,
 )
 
