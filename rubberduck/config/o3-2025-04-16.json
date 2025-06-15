@@ -1,9 +1,11 @@
-[
-    {
-        "model": "o3-2025-04-16",
-        "base_url": "https://api.openai.com/v1",
-        "extra_body": {
-            "reasoning_effort": "high"
+{
+    "config_list": [
+        {
+            "model": "o3-2025-04-16",
+            "base_url": "https://api.openai.com/v1",
+            "extra_body": {
+                "reasoning_effort": "high"
+            }
         }
-    }
-]
+    ]
+}

@@ -117,7 +117,7 @@ git apply --recount --whitespace=nowarn "{ws_repo}/test.patch"
 
 # Install dependencies
 echo "Installing GitPython..."
-pip install --no-cache-dir GitPython
+pip install --no-cache-dir GitPython --root-user-action=ignore
 """
 
 

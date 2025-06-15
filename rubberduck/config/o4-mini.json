@@ -1,9 +1,11 @@
-[
-    {
-        "model": "o4-mini",
-        "base_url": "https://api.openai.com/v1",
-        "extra_body": {
-            "reasoning_effort": "high"
+{
+    "config_list": [
+        {
+            "model": "o4-mini",
+            "base_url": "https://api.openai.com/v1",
+            "extra_body": {
+                "reasoning_effort": "high"
+            }
         }
-    }
-]
+    ]
+}
