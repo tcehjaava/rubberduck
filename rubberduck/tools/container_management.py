@@ -1,4 +1,5 @@
 import io
+import shlex
 import tarfile
 import uuid
 from pathlib import Path
@@ -14,7 +15,9 @@ from swebench.harness.test_spec.test_spec import make_test_spec
 from rubberduck.autogen.leader_executor.models.swebench_instance import (
     SWEBenchVerifiedInstance,
 )
-from rubberduck.autogen.leader_executor.tools.tests_env import prune_and_write_env
+from rubberduck.autogen.leader_executor.utils.tests_env import (
+    prune_env,
+)
 
 
 def _get_file_content(file_name: str) -> str:
@@ -175,7 +178,18 @@ def create_container(
     exit_code, output = run_script_in_container(container, bootstrap_script(instance=instance))
     logger.info(f"Runner finished (exit={exit_code})\n{output}")
 
-    prune_and_write_env(container, instance.fail_to_pass, instance.pass_to_pass)
+    fail_final, pass_final = prune_env(container, instance.fail_to_pass, instance.pass_to_pass)
+
+    env_text = (
+        "FAIL_TO_PASS_NODES=(" + " ".join(shlex.quote(n) for n in fail_final) + ")\n"
+        "PASS_TO_PASS_NODES=(" + " ".join(shlex.quote(n) for n in pass_final) + ")\n"
+    )
+
+    container.exec_run(
+        ["bash", "-lc", f"printf %s {shlex.quote(env_text)} > {shlex.quote('/testbed/tests.env')}"],
+        user="root",
+        workdir="/testbed",
+    )
     logger.info("tests.env updated")
 
     return container
