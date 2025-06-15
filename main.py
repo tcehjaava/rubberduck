@@ -1,6 +1,7 @@
 import argparse
 import uuid
 
+from rubberduck.autogen.leader_executor.utils.dataset_utils import DatasetUtils
 from rubberduck.autogen.leader_executor.utils.logger import setup_logger
 from rubberduck.autogen.leader_executor.workflows.swebench import SWEBenchWorkflow
 
@@ -17,5 +18,5 @@ if __name__ == "__main__":
     final_state = SWEBenchWorkflow().run(args.instance_id, thread_id=run_id)
     logger.info(f"Completed processing for {args.instance_id}")
 
-    # instance = DatasetUtils.load_instance(instance_id=args.instance_id)
-    # logger.info(f"Actual SWEBench dataset entry: {instance.model_dump_json(indent=4)}")
+    instance = DatasetUtils.load_instance(instance_id=args.instance_id)
+    logger.info(f"Actual SWEBench dataset entry: {instance.model_dump_json(indent=4)}")
