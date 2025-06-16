@@ -94,6 +94,6 @@ class DatasetUtils:
         row["PASS_TO_PASS"] = json.loads(row["PASS_TO_PASS"])
         row["FAIL_TO_PASS"] = _sanitize_node_ids(row["FAIL_TO_PASS"])
         row["PASS_TO_PASS"] = _sanitize_node_ids(row["PASS_TO_PASS"])
-        row["problem_statement"] = _TEST_PROBLEM_STATEMENT.strip()
+        # row["problem_statement"] = _TEST_PROBLEM_STATEMENT.strip()
 
         return SWEBenchVerifiedInstance(**row)
