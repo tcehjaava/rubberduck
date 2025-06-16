@@ -49,9 +49,9 @@ _REG: Dict[str, BundleContainer] = {}
 _EXIT_STACKS: dict[str, ExitStack] = {}
 
 
-_MAX_ATTEMPTS = 1
-_EXECUTOR_MAX_TURNS = 1
-_LEADER_MAX_TURNS = 1
+_MAX_ATTEMPTS = 5
+_EXECUTOR_MAX_TURNS = 100
+_LEADER_MAX_TURNS = 3
 
 
 def ensure_bundle(
