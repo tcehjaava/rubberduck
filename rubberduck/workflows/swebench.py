@@ -366,10 +366,11 @@ class SWEBenchWorkflow:
         final = self.workflow.invoke(
             {},
             config={
+                "recursion_limit": 1000,
                 "configurable": {
                     "thread_id": thread_id,
                     "instance_id": instance_id,
-                }
+                },
             },
         )
         return final
