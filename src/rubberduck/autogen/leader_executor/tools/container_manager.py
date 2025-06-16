@@ -19,6 +19,8 @@ from rubberduck.autogen.leader_executor.utils.tests_env import (
     prune_env,
 )
 
+_TESTBED = "/testbed"
+
 
 def _get_file_content(file_name: str) -> str:
     script_path = Path(__file__).parent.parent / "resources" / file_name
@@ -43,21 +45,21 @@ def run_script_in_container(
 ):
     script_name = f"script-{uuid.uuid4().hex[:8]}.sh"
     archive = tar_bytes(script_name, script_text.encode())
-    container.put_archive("/testbed", archive)
+    container.put_archive(_TESTBED, archive)
 
-    container.exec_run(["chmod", "+x", f"/testbed/{script_name}"], user="root")
+    container.exec_run(["chmod", "+x", f"{_TESTBED}/{script_name}"], user="root")
 
     if conda_neutral:
         env = {"CONDA_PREFIX": "", "CONDA_DEFAULT_ENV": "", "PYTHONPATH": ""}
-        cmd = [f"/testbed/{script_name}"]
+        cmd = [f"{_TESTBED}/{script_name}"]
     else:
-        cmd = ["bash", "-lc", f"/testbed/{script_name}"]
+        cmd = ["bash", "-lc", f"{_TESTBED}/{script_name}"]
         env = None
 
     exit_code, output = container.exec_run(
         cmd,
         user="root",
-        workdir="/testbed",
+        workdir=_TESTBED,
         tty=True,
         environment=env,
     )
@@ -88,7 +90,7 @@ chmod +x /usr/local/bin/apply_patch
 """
 
 
-def bootstrap_script(instance: SWEBenchVerifiedInstance, ws_repo: str = "/testbed") -> str:
+def bootstrap_script(instance: SWEBenchVerifiedInstance, ws_repo: str = _TESTBED) -> str:
     run_collect_content = _get_file_content("run_collect.sh")
     run_tests_content = _get_file_content("run_tests.sh")
 
@@ -167,13 +169,13 @@ def create_container(
     logger.info(f"apply_patch phase finished successfully: {output}")
 
     patch_bytes = tar_bytes("test.patch", instance.test_patch.encode())
-    container.put_archive("/testbed", patch_bytes)
+    container.put_archive(_TESTBED, patch_bytes)
     logger.info("Patch uploaded")
 
     exit_code, output = run_script_in_container(container, bootstrap_script(instance=instance))
     logger.info(f"Runner finished (exit={exit_code})\n{output}")
 
-    fail_final, pass_final = prune_env(container, instance.fail_to_pass, instance.pass_to_pass)
+    fail_final, pass_final = prune_env(container, instance.fail_to_pass, instance.pass_to_pass, _TESTBED)
 
     env_text = (
         "FAIL_TO_PASS_NODES=(" + " ".join(shlex.quote(n) for n in fail_final) + ")\n"
@@ -182,9 +184,9 @@ def create_container(
 
     logger.info("Writing tests.env...")
     container.exec_run(
-        ["bash", "-lc", f"printf %s {shlex.quote(env_text)} > {shlex.quote('/testbed/tests.env')}"],
+        ["bash", "-lc", f"printf %s {shlex.quote(env_text)} > {shlex.quote(f'{_TESTBED}/tests.env')}"],
         user="root",
-        workdir="/testbed",
+        workdir=_TESTBED,
     )
     logger.info("tests.env updated")
 

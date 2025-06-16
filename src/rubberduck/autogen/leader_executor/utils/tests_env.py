@@ -3,10 +3,8 @@ from __future__ import annotations
 import concurrent
 import re
 import shlex
-from pathlib import Path, PurePosixPath
 from typing import Iterable, List, Tuple
 
-_TESTBED = PurePosixPath("/testbed")
 _PARAM_RE = re.compile(r"^(?P<base>[^\[]+)\[.*\]$")
 
 
@@ -47,11 +45,7 @@ def _dedup(nodes: Iterable[str]) -> List[str]:
 
 
 def prune_env(
-    container,
-    fail_nodes: Iterable[str],
-    pass_nodes: Iterable[str],
-    *,
-    workdir: str | Path = _TESTBED,
+    container, fail_nodes: Iterable[str], pass_nodes: Iterable[str], workdir: str
 ) -> Tuple[List[str], List[str]]:
     workdir = str(workdir)
     fail_final = sorted(_dedup(_first_pass(container, fail_nodes, workdir)))
