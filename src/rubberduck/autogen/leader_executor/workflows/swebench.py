@@ -51,7 +51,7 @@ _EXIT_STACKS: dict[str, ExitStack] = {}
 
 _MAX_ATTEMPTS = 5
 _EXECUTOR_MAX_TURNS = 100
-_LEADER_MAX_TURNS = 3
+_LEADER_MAX_TURNS = 5
 
 
 def ensure_bundle(
@@ -329,10 +329,14 @@ class SWEBenchWorkflow:
 
             return {
                 **state,
-                "result": result,
+                "result": getattr(result, "summary", "No leader response."),
                 "error_message": "",
                 "current_attempt": state["current_attempt"] + 1,
-                "memory": self._update_memory(state, result, SWEBenchWorkflowNode.LEADER_SHOULD_CONTINUE),
+                "memory": self._update_memory(
+                    state,
+                    getattr(result, "summary", "No leader should continue response."),
+                    SWEBenchWorkflowNode.LEADER_SHOULD_CONTINUE,
+                ),
             }
 
         except Exception as e:
