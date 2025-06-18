@@ -31,6 +31,7 @@ from rubberduck.autogen.leader_executor.utils.logger import (
     get_log_dir,
 )
 from rubberduck.autogen.leader_executor.utils.message_helpers import (
+    build_all_iteration_logs,
     build_previous_context,
     format_chat_history,
     format_content_with_indent,
@@ -38,10 +39,11 @@ from rubberduck.autogen.leader_executor.utils.message_helpers import (
 
 
 class BundleContainer:
-    def __init__(self, docker_runner, leader_agent, executor_agent, leader_should_continue_agent):
+    def __init__(self, docker_runner, leader_agent, executor_agent, logger_agent, leader_should_continue_agent):
         self.docker_runner = docker_runner
         self.leader_agent = leader_agent
         self.executor_agent = executor_agent
+        self.logger_agent = logger_agent
         self.leader_should_continue_agent = leader_should_continue_agent
 
 
@@ -49,14 +51,14 @@ _REG: Dict[str, BundleContainer] = {}
 _EXIT_STACKS: dict[str, ExitStack] = {}
 
 
-_MAX_ATTEMPTS = 5
-_EXECUTOR_MAX_TURNS = 100
-_LEADER_MAX_TURNS = 5
+_MAX_ATTEMPTS = 1
+_EXECUTOR_MAX_TURNS = 1
+_LEADER_MAX_TURNS = 1
 
 
 def ensure_bundle(
     thread_id: str,
-    instance: SWEBenchVerifiedInstance,
+    instance: SWEBenchVerifiedInstance | None = None,
     model_leader: str | None = None,
     model_exec: str | None = None,
 ) -> BundleContainer:
@@ -66,6 +68,7 @@ def ensure_bundle(
     stack = ExitStack()
     _EXIT_STACKS[thread_id] = stack
 
+    assert instance is not None, "instance must not be None"
     assert model_leader is not None, "model_leader must not be None"
     assert model_exec is not None, "model_exec must not be None"
 
@@ -95,6 +98,16 @@ def ensure_bundle(
         )
     )
 
+    logger_agent = AutonomousAgent(
+        AutonomousAgentConfig(
+            assistant_name=SWEBenchWorkflowNode.LOGGER.value.upper(),
+            proxy_name=f"{SWEBenchWorkflowNode.LOGGER.value.upper()}_PROXY",
+            system_message=load_markdown_message("log_extractor.md"),
+            model_config="o3-2025-04-16",
+            max_turns=_LEADER_MAX_TURNS,
+        )
+    )
+
     leader_should_continue_agent = AutonomousAgent(
         AutonomousAgentConfig(
             assistant_name=SWEBenchWorkflowNode.LEADER_SHOULD_CONTINUE.value.upper(),
@@ -105,7 +118,7 @@ def ensure_bundle(
         )
     )
 
-    bundle = BundleContainer(docker_runner, leader_agent, executor_agent, leader_should_continue_agent)
+    bundle = BundleContainer(docker_runner, leader_agent, executor_agent, logger_agent, leader_should_continue_agent)
     _REG[thread_id] = bundle
     return bundle
 
@@ -167,6 +180,7 @@ class SWEBenchWorkflow:
         workflow.add_node(SWEBenchWorkflowNode.INIT.value, self._init_node)
         workflow.add_node(SWEBenchWorkflowNode.SETUP.value, self._setup_node)
         workflow.add_node(SWEBenchWorkflowNode.EXECUTOR.value, self._executor_node)
+        workflow.add_node(SWEBenchWorkflowNode.LOGGER.value, self._logger_node)
         workflow.add_node(SWEBenchWorkflowNode.LEADER.value, self._leader_node)
         workflow.add_node(SWEBenchWorkflowNode.LEADER_SHOULD_CONTINUE.value, self._leader_should_continue_node)
         workflow.add_node(SWEBenchWorkflowNode.CLEANUP.value, self._cleanup_node)
@@ -186,7 +200,16 @@ class SWEBenchWorkflow:
         workflow.add_conditional_edges(
             SWEBenchWorkflowNode.EXECUTOR.value,
             self._should_continue,
-            {"continue": SWEBenchWorkflowNode.LEADER.value, "complete": SWEBenchWorkflowNode.CLEANUP.value},
+            {"continue": SWEBenchWorkflowNode.LOGGER.value, "complete": SWEBenchWorkflowNode.CLEANUP.value},
+        )
+
+        workflow.add_conditional_edges(
+            SWEBenchWorkflowNode.LOGGER.value,
+            self._should_continue,
+            {
+                "continue": SWEBenchWorkflowNode.LEADER.value,
+                "complete": SWEBenchWorkflowNode.CLEANUP.value,
+            },
         )
 
         workflow.add_conditional_edges(
@@ -202,7 +225,7 @@ class SWEBenchWorkflow:
             SWEBenchWorkflowNode.LEADER_SHOULD_CONTINUE.value,
             self._should_leader_continue,
             {
-                "continue": SWEBenchWorkflowNode.INIT.value,
+                "continue": SWEBenchWorkflowNode.EXECUTOR.value,
                 "complete": SWEBenchWorkflowNode.CLEANUP.value,
             },
         )
@@ -244,7 +267,7 @@ class SWEBenchWorkflow:
     def _setup_node(self, state: SWEBenchWorkflowState, *, config: RunnableConfig) -> SWEBenchWorkflowState:
         try:
             tid = config["configurable"]["thread_id"]
-            bundle = ensure_bundle(tid, state["instance"])
+            bundle = ensure_bundle(tid)
 
             logger.info(f"Setting up environment for attempt {state['current_attempt']}")
             setup_result = bundle.executor_agent.execute_task(load_markdown_message("setup_task.md"))
@@ -265,20 +288,24 @@ class SWEBenchWorkflow:
 
         try:
             tid = config["configurable"]["thread_id"]
-            bundle = ensure_bundle(tid, state["instance"])
+            bundle = ensure_bundle(tid)
 
-            previous_context = build_previous_context(state["memory"]["leader_feedback"])
+            previous_context = build_previous_context(
+                state["memory"].get("leader_feedback", []), state["memory"].get(SWEBenchWorkflowNode.LOGGER.value, [])
+            )
+
+            setup_report = format_content_with_indent(
+                state["memory"].get(SWEBenchWorkflowNode.SETUP.value, ["No setup result available."])[-1]
+            )
 
             result = bundle.executor_agent.execute_task(
                 load_markdown_message(
                     "executor_task.md",
                     iteration=state["current_attempt"],
                     max_iterations=state["max_attempts"],
-                    setup_report=format_content_with_indent(
-                        getattr(state.get("result"), "summary", "No setup result available.")
-                    ),
+                    setup_report=setup_report,
                     problem_statement=format_content_with_indent(state["instance"].problem_statement),
-                    previous_context=format_content_with_indent(previous_context),
+                    previous_context=previous_context,
                 )
             )
 
@@ -292,15 +319,48 @@ class SWEBenchWorkflow:
         except Exception as e:
             return self._handle_node_exception(state, e, SWEBenchWorkflowNode.EXECUTOR)
 
+    def _logger_node(self, state: SWEBenchWorkflowState, *, config: RunnableConfig) -> SWEBenchWorkflowState:
+        logger.info(f"Logger extracting technical details from attempt {state['current_attempt']}")
+
+        try:
+            tid = config["configurable"]["thread_id"]
+            bundle = ensure_bundle(tid)
+
+            executor_memory = state["memory"].get(SWEBenchWorkflowNode.EXECUTOR.value, [])
+            assert len(executor_memory) > 0, "Executor doesn't have any memory"
+
+            result = bundle.logger_agent.execute_task(format_chat_history(executor_memory[-1]))
+
+            return {
+                **state,
+                "result": result,
+                "error_message": "",
+                "memory": self._update_memory(
+                    state, getattr(result, "summary", "No logger response."), SWEBenchWorkflowNode.LOGGER
+                ),
+            }
+
+        except Exception as e:
+            return self._handle_node_exception(state, e, SWEBenchWorkflowNode.LOGGER)
+
     def _leader_node(self, state: SWEBenchWorkflowState, *, config: RunnableConfig) -> SWEBenchWorkflowState:
         logger.info(f"Leader reviewing attempt {state['current_attempt']}")
 
         try:
             tid = config["configurable"]["thread_id"]
-            bundle = ensure_bundle(tid, state["instance"])
+            bundle = ensure_bundle(tid)
+
+            all_iteration_logs = build_all_iteration_logs(state["memory"].get(SWEBenchWorkflowNode.LOGGER.value, []))
+
+            executor_memory = state["memory"].get(SWEBenchWorkflowNode.EXECUTOR.value, [])
+            assert len(executor_memory) > 0, "Executor doesn't have any memory"
 
             result = bundle.leader_agent.execute_task(
-                load_markdown_message("leader_task.md", executor_messages=format_chat_history(state["result"]))
+                load_markdown_message(
+                    "leader_task.md",
+                    executor_messages=format_chat_history(executor_memory[-1]),
+                    all_iteration_logs=all_iteration_logs,
+                )
             )
 
             updated_memory = self._update_memory(state, result, SWEBenchWorkflowNode.LEADER)
@@ -323,7 +383,7 @@ class SWEBenchWorkflow:
     ) -> SWEBenchWorkflowState:
         try:
             tid = config["configurable"]["thread_id"]
-            bundle = ensure_bundle(tid, state["instance"])
+            bundle = ensure_bundle(tid)
 
             result = bundle.leader_should_continue_agent.execute_task(state["memory"]["leader_feedback"][-1])
 
