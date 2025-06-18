@@ -1,5 +1,5 @@
 import re
-from typing import Any, Iterable, List
+from typing import Any, List
 
 
 def format_content_with_indent(content: str, empty_message: str = "(Empty)", indent: str = "  ") -> str:
@@ -17,23 +17,6 @@ def format_content_with_indent(content: str, empty_message: str = "(Empty)", ind
         formatted_lines.append(f"{indent}{line}")
 
     return "\n".join(formatted_lines)
-
-
-def build_previous_context(feedbacks: Iterable[str]) -> str:
-    feedbacks = list(feedbacks)
-    if not feedbacks:
-        return "🔄 This is the first iteration. No feedback."
-
-    lines: List[str] = ["📋 PREVIOUS FEEDBACKS FROM LEADER"]
-    lines.append("─" * 50)
-
-    for i, feedback in enumerate(feedbacks, 1):
-        lines.append(f"\n📝 Feedback #{i}:")
-        lines.append("┄" * 30)
-        lines.append(format_content_with_indent(feedback, "(Empty feedback)"))
-        lines.append("")
-
-    return "\n".join(lines)
 
 
 def format_chat_history(chat_result: Any, indent_response: bool = True) -> str:
@@ -58,6 +41,53 @@ def format_chat_history(chat_result: Any, indent_response: bool = True) -> str:
         formatted_lines.append("")
 
     return format_content_with_indent("\n".join(formatted_lines)) if indent_response else "\n".join(formatted_lines)
+
+
+def build_all_iteration_logs(logger_memory: list) -> str:
+    if not logger_memory:
+        return "📄 No previous iterations logged yet."
+
+    lines: List[str] = []
+
+    for i, log_summary in enumerate(logger_memory, 1):
+        lines.append("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+        lines.append(f"📝 ITERATION {i} TECHNICAL LOG")
+        lines.append("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+        lines.append(format_content_with_indent(log_summary))
+        lines.append("")
+
+    return format_content_with_indent("\n".join(lines))
+
+
+def build_previous_context(leader_feedback: list, logger_memory: list) -> str:
+    if not leader_feedback and not logger_memory:
+        return "🔄 This is the first iteration. No previous context available."
+
+    lines: List[str] = []
+
+    # Combine feedback and logs by iteration
+    max_iterations = max(len(leader_feedback), len(logger_memory))
+
+    for i in range(max_iterations):
+        lines.append(f"\n{'═' * 60}")
+        lines.append(f"📊 ITERATION {i + 1} SUMMARY")
+        lines.append(f"{'═' * 60}")
+
+        # Add technical log if available
+        if i < len(logger_memory):
+            lines.append("\n🔧 Technical Log:")
+            lines.append("─" * 40)
+            lines.append(format_content_with_indent(logger_memory[i], "(No technical log)"))
+
+        # Add leader feedback if available
+        if i < len(leader_feedback):
+            lines.append("\n📋 Leader Feedback:")
+            lines.append("─" * 40)
+            lines.append(format_content_with_indent(leader_feedback[i], "(No leader feedback)"))
+
+        lines.append("")
+
+    return format_content_with_indent("\n".join(lines))
 
 
 def is_termination_msg(msg: dict, termination_marker: str = "TERMINATE") -> bool:
