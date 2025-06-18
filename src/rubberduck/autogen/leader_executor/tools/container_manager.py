@@ -42,6 +42,7 @@ def run_script_in_container(
     container: Container,
     script_text: str,
     conda_neutral: bool = False,
+    delete_after_run: bool = True,
 ):
     script_name = f"script-{uuid.uuid4().hex[:8]}.sh"
     archive = tar_bytes(script_name, script_text.encode())
@@ -63,6 +64,9 @@ def run_script_in_container(
         tty=True,
         environment=env,
     )
+
+    if delete_after_run:
+        container.exec_run(["rm", "-f", f"{_TESTBED}/{script_name}"], user="root")
 
     return exit_code, output.decode()
 
@@ -120,6 +124,18 @@ git apply --recount --whitespace=nowarn "{ws_repo}/test.patch"
 # Install dependencies
 echo "Installing GitPython..."
 pip install --no-cache-dir GitPython --root-user-action=ignore
+
+# Update .gitignore to exclude generated files
+echo "Updating .gitignore..."
+cat >> "{ws_repo}/.gitignore" <<'GITIGNORE_EOF'
+
+# SWEBench test files
+test.patch
+tests.env
+run_collect.sh
+run_tests.sh
+script-*.sh
+GITIGNORE_EOF
 """
 
 
