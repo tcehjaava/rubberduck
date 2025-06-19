@@ -7,7 +7,7 @@ from typing import Any, Dict, Sequence
 from autogen import ChatResult
 from loguru import logger
 
-from rubberduck.autogen.leader_executor.utils.message_helpers import format_chat_history
+from rubberduck.utils.message_helpers import format_chat_history
 
 _CURRENT_LOG_DIR: ContextVar[Path] = ContextVar("_CURRENT_LOG_DIR")
 

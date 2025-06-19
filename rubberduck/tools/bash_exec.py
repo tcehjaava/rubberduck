@@ -1,7 +1,7 @@
 from autogen.code_utils import extract_code
 from docker.models.containers import Container
 
-from rubberduck.autogen.leader_executor.tools.apply_patch import run_script_in_container
+from rubberduck.tools.apply_patch import run_script_in_container
 
 BASH_LANGS = {"bash", "sh", "shell"}
 

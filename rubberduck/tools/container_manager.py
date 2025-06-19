@@ -12,10 +12,10 @@ from loguru import logger
 from swebench.harness.docker_build import build_container, build_instance_images
 from swebench.harness.test_spec.test_spec import make_test_spec
 
-from rubberduck.autogen.leader_executor.models.swebench_instance import (
+from rubberduck.models.swebench_instance import (
     SWEBenchVerifiedInstance,
 )
-from rubberduck.autogen.leader_executor.utils.tests_env import (
+from rubberduck.utils.tests_env import (
     prune_env,
 )
 

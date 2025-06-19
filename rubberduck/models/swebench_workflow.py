@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Any, Dict, TypedDict
 
-from rubberduck.autogen.leader_executor.models.swebench_instance import (
+from rubberduck.models.swebench_instance import (
     SWEBenchVerifiedInstance,
 )
 

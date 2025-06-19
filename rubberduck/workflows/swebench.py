@@ -8,29 +8,29 @@ from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph.graph import END, StateGraph
 from loguru import logger
 
-from rubberduck.autogen.leader_executor.agents.autonomous import AutonomousAgent
-from rubberduck.autogen.leader_executor.models.autonomous_config import (
+from rubberduck.agents.autonomous import AutonomousAgent
+from rubberduck.models.autonomous_config import (
     AutonomousAgentConfig,
 )
-from rubberduck.autogen.leader_executor.models.swebench_instance import (
+from rubberduck.models.swebench_instance import (
     SWEBenchVerifiedInstance,
 )
-from rubberduck.autogen.leader_executor.models.swebench_workflow import (
+from rubberduck.models.swebench_workflow import (
     SWEBenchWorkflowConfig,
     SWEBenchWorkflowNode,
     SWEBenchWorkflowState,
 )
-from rubberduck.autogen.leader_executor.prompts import load_markdown_message
-from rubberduck.autogen.leader_executor.tools.container_manager import (
+from rubberduck.prompts import load_markdown_message
+from rubberduck.tools.container_manager import (
     cleanup_container,
     create_container,
 )
-from rubberduck.autogen.leader_executor.utils.dataset_utils import DatasetUtils
-from rubberduck.autogen.leader_executor.utils.logger import (
+from rubberduck.utils.dataset_utils import DatasetUtils
+from rubberduck.utils.logger import (
     dump_single_entry,
     get_log_dir,
 )
-from rubberduck.autogen.leader_executor.utils.message_helpers import (
+from rubberduck.utils.message_helpers import (
     build_all_iteration_logs,
     build_previous_context,
     format_chat_history,

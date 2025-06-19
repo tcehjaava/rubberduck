@@ -1,11 +1,11 @@
 {
     "graphs": {
-        "swebench": "rubberduck.autogen.leader_executor.workflows.swebench:get_graph"
+        "swebench": "rubberduck.workflows.swebench:get_graph"
     },
     "dependencies": [
         "src"
     ],
-    "env": "src/rubberduck/autogen/leader_executor/config/.env",
+    "env": "rubberduck/config/.env",
     "config_schema": {
         "title": "SweBench Config",
         "type": "object",

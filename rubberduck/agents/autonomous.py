@@ -4,16 +4,16 @@ from typing import Optional
 from autogen import AssistantAgent, UserProxyAgent
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from rubberduck.autogen.leader_executor.config import load_llm_config
-from rubberduck.autogen.leader_executor.models.autonomous_config import (
+from rubberduck.config import load_llm_config
+from rubberduck.models.autonomous_config import (
     AutonomousAgentConfig,
 )
-from rubberduck.autogen.leader_executor.tools.apply_patch import (
+from rubberduck.tools.apply_patch import (
     create_patch_reply,
     prepend_patch_status,
 )
-from rubberduck.autogen.leader_executor.tools.bash_exec import create_bash_reply
-from rubberduck.autogen.leader_executor.utils.message_helpers import (
+from rubberduck.tools.bash_exec import create_bash_reply
+from rubberduck.utils.message_helpers import (
     clean_message_content,
     is_termination_msg,
 )
