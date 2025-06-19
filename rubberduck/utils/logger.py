@@ -13,7 +13,7 @@ _CURRENT_LOG_DIR: ContextVar[Path] = ContextVar("_CURRENT_LOG_DIR")
 
 
 def setup_logger(run_id: str = None):
-    base_log_dir = Path(__file__).resolve().parents[5] / "logs"
+    base_log_dir = Path(__file__).resolve().parents[2] / "logs"
     date_folder = datetime.now().strftime("%Y-%m-%d")
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
