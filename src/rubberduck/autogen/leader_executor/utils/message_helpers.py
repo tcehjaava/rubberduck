@@ -2,12 +2,21 @@ import re
 from typing import Any, List
 
 
+def strip_ansi_codes(text: str) -> str:
+    if not isinstance(text, str):
+        return text
+    ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+    return ansi_escape.sub("", text)
+
+
 def format_content_with_indent(content: str, empty_message: str = "(Empty)", indent: str = "  ") -> str:
     if not content or not content.strip():
         return f"{indent}{empty_message}"
 
     if not isinstance(content, str):
         content = str(content)
+
+    content = strip_ansi_codes(content)
 
     lines = content.strip().split("\n")
     formatted_lines = []
