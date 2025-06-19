@@ -51,8 +51,8 @@ _REG: Dict[str, BundleContainer] = {}
 _EXIT_STACKS: dict[str, ExitStack] = {}
 
 
-_MAX_ATTEMPTS = 1
-_EXECUTOR_MAX_TURNS = 1
+_MAX_ATTEMPTS = 10
+_EXECUTOR_MAX_TURNS = 100
 _LEADER_MAX_TURNS = 1
 
 
@@ -75,7 +75,7 @@ def ensure_bundle(
     docker_runner = create_container(instance)
     stack.callback(lambda: cleanup_container(docker_runner))
 
-    executor_system_prompt = load_markdown_message("executor.md", repo_name=instance.repo_subdir_name)
+    executor_system_prompt = load_markdown_message("executor.md")
 
     executor_agent = AutonomousAgent(
         AutonomousAgentConfig(
@@ -294,8 +294,11 @@ class SWEBenchWorkflow:
                 state["memory"].get("leader_feedback", []), state["memory"].get(SWEBenchWorkflowNode.LOGGER.value, [])
             )
 
+            setup_memory = state["memory"].get(SWEBenchWorkflowNode.SETUP.value, [])
             setup_report = format_content_with_indent(
-                state["memory"].get(SWEBenchWorkflowNode.SETUP.value, ["No setup result available."])[-1]
+                getattr(setup_memory[-1], "summary", "No setup report available.")
+                if setup_memory
+                else "No setup report available."
             )
 
             result = bundle.executor_agent.execute_task(
