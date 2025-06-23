@@ -54,7 +54,7 @@ _EXIT_STACKS: dict[str, ExitStack] = {}
 
 _MAX_ATTEMPTS = 10
 _EXECUTOR_MAX_TURNS = 100
-_LEADER_MAX_TURNS = 3
+_LEADER_MAX_TURNS = 1
 
 
 def ensure_bundle(
