@@ -1,7 +1,17 @@
-Analyze the provided input text. If the text indicates that a problem or issue has been resolved/solved/completed, return "SOLVED". If the text indicates there are still remaining issues, problems, or work to be done, return "RETRY". 
+Analyze the provided input text for the explicit problem status indicator.
 
-Look for key indicators such as:
-- "SOLVED" indicators: "problem is solved", "issue resolved", "completed successfully", "all tests pass", "no errors found"
-- "RETRY" indicators: "issues remain", "failed", "errors", "problems", "not working", "incomplete"
+Look for the pattern:
+PROBLEM STATUS: [SOLVED/PARTIAL/BLOCKED]
+
+Return based on the status found:
+- If "PROBLEM STATUS: SOLVED" → return "SOLVED"  
+- If "PROBLEM STATUS: PARTIAL" → return "RETRY"
+- If "PROBLEM STATUS: BLOCKED" → return "RETRY"
+
+If no explicit status found, analyze the response content:
+- If suggesting next iteration/checkpoint → return "RETRY"
+  (e.g., "proceed with", "next checkpoint", "continue with", "next step")
+- If indicating completion → return "SOLVED"
+  (e.g., "problem fully solved", "all tests pass", "requirements met", "no remaining issues")
 
 **⚠️ CRITICAL** After your response (SOLVED or RETRY), always include the keyword TERMINATE in a new line.
