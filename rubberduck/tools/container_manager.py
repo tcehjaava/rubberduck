@@ -139,6 +139,26 @@ GITIGNORE_EOF
 """
 
 
+def get_final_diff(container: Container) -> str:
+    git_script = r"""#!/usr/bin/env bash
+set -euo pipefail
+
+echo "=== GIT STATUS ==="
+git --no-pager status --porcelain
+
+echo -e "\n=== GIT DIFF ==="
+git --no-pager diff HEAD --color=never
+"""
+
+    try:
+        exit_code, output = run_script_in_container(container, git_script)
+        if exit_code != 0:
+            return f"Git diff failed with exit code {exit_code}: {output}"
+        return output
+    except Exception as e:
+        return f"Failed to get git diff: {str(e)}"
+
+
 def create_container(
     instance: SWEBenchVerifiedInstance,
     run_id: str = "local",

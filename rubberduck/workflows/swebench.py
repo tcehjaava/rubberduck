@@ -24,6 +24,7 @@ from rubberduck.prompts import load_markdown_message
 from rubberduck.tools.container_manager import (
     cleanup_container,
     create_container,
+    get_final_diff,
 )
 from rubberduck.utils.dataset_utils import DatasetUtils
 from rubberduck.utils.logger import (
@@ -53,7 +54,7 @@ _EXIT_STACKS: dict[str, ExitStack] = {}
 
 _MAX_ATTEMPTS = 10
 _EXECUTOR_MAX_TURNS = 100
-_LEADER_MAX_TURNS = 1
+_LEADER_MAX_TURNS = 3
 
 
 def ensure_bundle(
@@ -141,7 +142,6 @@ atexit.register(_close_all_bundles)
 
 _SKIP_NODES: set[SWEBenchWorkflowNode] = {
     SWEBenchWorkflowNode.INIT,
-    SWEBenchWorkflowNode.CLEANUP,
 }
 
 
@@ -406,8 +406,29 @@ class SWEBenchWorkflow:
             return self._handle_node_exception(state, e, SWEBenchWorkflowNode.LEADER_SHOULD_CONTINUE)
 
     def _cleanup_node(self, state: SWEBenchWorkflowState, *, config: RunnableConfig) -> SWEBenchWorkflowState:
-        close_bundle(config["configurable"]["thread_id"])
-        return state
+        try:
+            tid = config["configurable"]["thread_id"]
+            bundle = _REG.get(tid)
+
+            if bundle and bundle.docker_runner:
+                diff_output = get_final_diff(bundle.docker_runner)
+
+                updated_state = {
+                    **state,
+                    "result": diff_output,
+                    "error_message": "",
+                    "memory": self._update_memory(state, diff_output, SWEBenchWorkflowNode.CLEANUP),
+                }
+            else:
+                updated_state = state
+
+            close_bundle(tid)
+            logger.info("Workflow completed")
+            return updated_state
+
+        except Exception as e:
+            close_bundle(config["configurable"]["thread_id"])
+            return self._handle_node_exception(state, e, SWEBenchWorkflowNode.CLEANUP)
 
     @staticmethod
     def _should_continue(state: SWEBenchWorkflowState) -> str:
