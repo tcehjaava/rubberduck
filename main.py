@@ -19,4 +19,4 @@ if __name__ == "__main__":
     logger.info(f"Completed processing for {args.instance_id}")
 
     instance = DatasetUtils.load_instance(instance_id=args.instance_id)
-    logger.info(f"Actual SWEBench dataset entry: {instance.model_dump_json(indent=4)}")
+    logger.info(f"Actual SWEBench dataset patch: {instance.patch}")
