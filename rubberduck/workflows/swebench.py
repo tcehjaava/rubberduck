@@ -103,7 +103,7 @@ def ensure_bundle(
         AutonomousAgentConfig(
             assistant_name=SWEBenchWorkflowNode.LOGGER.value.upper(),
             proxy_name=f"{SWEBenchWorkflowNode.LOGGER.value.upper()}_PROXY",
-            system_message=load_markdown_message("log_extractor.md"),
+            system_message=load_markdown_message("log_extractor.md", executor_system_prompt=executor_system_prompt),
             model_config="o3-2025-04-16",
             max_turns=_LEADER_MAX_TURNS,
         )
@@ -301,6 +301,8 @@ class SWEBenchWorkflow:
                 else "No setup report available."
             )
 
+            git_diff_output = get_final_diff(bundle.docker_runner)
+
             result = bundle.executor_agent.execute_task(
                 load_markdown_message(
                     "executor_task.md",
@@ -309,6 +311,7 @@ class SWEBenchWorkflow:
                     setup_report=setup_report,
                     problem_statement=format_content_with_indent(state["instance"].problem_statement),
                     previous_context=previous_context,
+                    git_diff_output=format_content_with_indent(git_diff_output),
                 )
             )
 
@@ -358,11 +361,14 @@ class SWEBenchWorkflow:
             executor_memory = state["memory"].get(SWEBenchWorkflowNode.EXECUTOR.value, [])
             assert len(executor_memory) > 0, "Executor doesn't have any memory"
 
+            git_diff_output = get_final_diff(bundle.docker_runner)
+
             result = bundle.leader_agent.execute_task(
                 load_markdown_message(
                     "leader_task.md",
                     executor_messages=format_chat_history(executor_memory[-1]),
                     all_iteration_logs=all_iteration_logs,
+                    git_diff_output=format_content_with_indent(git_diff_output),
                 )
             )
 

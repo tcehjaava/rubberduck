@@ -68,11 +68,17 @@ def build_all_iteration_logs(logger_memory: list) -> str:
     return format_content_with_indent("\n".join(lines))
 
 
-def build_previous_context(leader_feedback: list, logger_memory: list) -> str:
+def build_previous_context(leader_feedback: list, logger_memory: list, last_n_iterations: int = 2) -> str:
     if not leader_feedback and not logger_memory:
-        return "🔄 This is the first iteration. No previous context available."
+        return "  🔄 This is the first iteration. No previous context available."
 
     lines: List[str] = []
+
+    total_iterations = max(len(leader_feedback), len(logger_memory))
+    start_idx = max(0, total_iterations - last_n_iterations)
+
+    leader_feedback = leader_feedback[start_idx:] if leader_feedback else []
+    logger_memory = logger_memory[start_idx:] if logger_memory else []
 
     # Combine feedback and logs by iteration
     max_iterations = max(len(leader_feedback), len(logger_memory))

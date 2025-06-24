@@ -10,6 +10,10 @@
 
 {problem_statement}
 
-📚 Previous Iterations Context:
+📚 Previous Last 2 Iterations Context:
 
 {previous_context}
+
+📦 Current Repository State:
+
+{git_diff_output}

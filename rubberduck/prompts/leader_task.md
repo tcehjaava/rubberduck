@@ -9,3 +9,7 @@
 💬 Current Iteration Conversation:
 
 {executor_messages}
+
+📦 Current Repository State:
+
+{git_diff_output}
