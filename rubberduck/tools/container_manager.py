@@ -19,6 +19,7 @@ from rubberduck.utils.tests_env import (
     prune_env,
 )
 
+_COMMAND_TIMEOUT = 300
 _TESTBED = "/testbed"
 
 
@@ -56,6 +57,8 @@ def run_script_in_container(
     else:
         cmd = ["bash", "-lc", f"{_TESTBED}/{script_name}"]
         env = None
+
+    cmd = ["timeout", str(_COMMAND_TIMEOUT)] + cmd
 
     exit_code, output = container.exec_run(
         cmd,
