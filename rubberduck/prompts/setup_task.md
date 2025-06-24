@@ -13,13 +13,13 @@ Your task is to initialize the runtime by probing the entire environment—and a
   ```
 
 - [ ] **Run the below command and see what's already available**
-  ```
+  ```bash
   pip list | grep pytest
   python -c "import pytest; print(pytest.__version__)"
   ```
 
 - [ ] **Run the below command and see if there are any uncollected tests**
-  ```
+  ```bash
   ./run_collect.sh
   ```
 
