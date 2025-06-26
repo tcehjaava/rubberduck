@@ -120,7 +120,7 @@ def clean_message_content(content: str | list) -> str:
     if not isinstance(content, str):
         return content
 
-    RUNNABLE = {"bash"}
+    RUNNABLE = {"bash", "semantic_search"}
 
     # ── 1️⃣ multiline blocks ────────────────────────────────────────────
     multi = re.compile(

@@ -14,3 +14,11 @@ langgraph==0.4.8
 langgraph-checkpoint-postgres==2.0.21
 langgraph-cli[inmem]==0.2.12
 psycopg[binary]~=3.2
+
+langchain
+langchain-community
+langchain-chroma
+langchain-openai
+chromadb
+tree-sitter
+tree-sitter-python

@@ -47,6 +47,7 @@ logs/
 config.local.py
 repo_files.db
 repo_files.db.backup
+chroma_db
 
 **/.claude/settings.local.json
 .langgraph_api/.langgraph_checkpoint.1.pckl

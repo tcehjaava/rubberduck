@@ -12,6 +12,7 @@ from rubberduck.agents.autonomous import AutonomousAgent
 from rubberduck.models.autonomous_config import (
     AutonomousAgentConfig,
 )
+from rubberduck.models.semantic_search_config import SemanticSearchConfig
 from rubberduck.models.swebench_instance import (
     SWEBenchVerifiedInstance,
 )
@@ -26,6 +27,7 @@ from rubberduck.tools.container_manager import (
     create_container,
     get_final_diff,
 )
+from rubberduck.tools.semantic_search import SemanticSearch
 from rubberduck.utils.dataset_utils import DatasetUtils
 from rubberduck.utils.logger import (
     dump_single_entry,
@@ -76,6 +78,13 @@ def ensure_bundle(
     docker_runner = create_container(instance)
     stack.callback(lambda: cleanup_container(docker_runner))
 
+    # sleep(100000)
+
+    semantic_search = SemanticSearch(
+        config=SemanticSearchConfig(), instance_id=instance.instance_id, container=docker_runner
+    )
+    semantic_search.index_codebase()
+
     executor_system_prompt = load_markdown_message("executor.md")
 
     executor_agent = AutonomousAgent(
@@ -85,6 +94,7 @@ def ensure_bundle(
             system_message=executor_system_prompt,
             model_config=model_exec,
             docker_runner=docker_runner,
+            semantic_search=semantic_search,
             max_turns=_EXECUTOR_MAX_TURNS,
         )
     )

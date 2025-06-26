@@ -12,7 +12,7 @@ from rubberduck.tools.apply_patch import (
     create_patch_reply,
     prepend_patch_status,
 )
-from rubberduck.tools.bash_exec import create_bash_reply
+from rubberduck.tools.execution_reply import create_execution_reply
 from rubberduck.utils.message_helpers import (
     clean_message_content,
     is_termination_msg,
@@ -52,7 +52,9 @@ class AutonomousAgent:
 
             self.proxy.register_reply(
                 trigger=self.assistant,
-                reply_func=create_bash_reply(self.config.docker_runner),
+                reply_func=create_execution_reply(
+                    self.config.docker_runner, semantic_search=self.config.semantic_search
+                ),
                 position=1,
             )
 
