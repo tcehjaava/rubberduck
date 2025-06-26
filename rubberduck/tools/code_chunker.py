@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import List
 
 from langchain.text_splitter import Language, RecursiveCharacterTextSplitter
-from langchain_community.document_loaders.parsers.language.python import PythonSegmenter
 from langchain_core.documents import Document
 from loguru import logger
 
@@ -38,38 +37,17 @@ class CodeChunker:
         return "code"
 
     def chunk_python_file(self, file_path: Path, content: str) -> List[Document]:
-        segmenter = PythonSegmenter(content)
-        segments = segmenter.extract_functions_classes()
-        logger.info(f"Python AST parsing found {len(segments)} segments in {file_path}")
-
-        documents = []
-        for i, segment in enumerate(segments):
-            metadata = {
-                "id": f"{file_path.as_posix()}::{i}",
-                "source": str(file_path),
-                "file_type": file_path.suffix,
-                "chunk_index": i,
-                "total_chunks": len(segments),
-                "segment_type": self._extract_segment_type(segment),
-            }
-
-            documents.append(Document(page_content=segment, metadata=metadata))
-
-        if not documents and content.strip():
-            logger.info(f"No AST segments found in {file_path}, falling back to default splitter")
-            return self.python_splitter.create_documents(
-                [content],
-                metadatas=[
-                    {
-                        "id": f"{file_path.as_posix()}::0",
-                        "source": str(file_path),
-                        "file_type": file_path.suffix,
-                        "segment_type": "code",
-                    }
-                ],
-            )
-
-        return documents
+        return self.python_splitter.create_documents(
+            [content],
+            metadatas=[
+                {
+                    "id": f"{file_path.as_posix()}::0",
+                    "source": str(file_path),
+                    "file_type": file_path.suffix,
+                    "segment_type": "code",
+                }
+            ],
+        )
 
     def chunk_file(self, file_path: Path) -> List[Document]:
         try:
