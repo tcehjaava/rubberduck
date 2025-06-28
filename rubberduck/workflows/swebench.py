@@ -54,8 +54,8 @@ _REG: Dict[str, BundleContainer] = {}
 _EXIT_STACKS: dict[str, ExitStack] = {}
 
 
-_MAX_ATTEMPTS = 10
-_EXECUTOR_MAX_TURNS = 100
+_MAX_ATTEMPTS = 2
+_EXECUTOR_MAX_TURNS = 3
 _LEADER_MAX_TURNS = 1
 
 
@@ -376,6 +376,7 @@ class SWEBenchWorkflow:
             result = bundle.leader_agent.execute_task(
                 load_markdown_message(
                     "leader_task.md",
+                    problem_statement=format_content_with_indent(state["instance"].problem_statement),
                     executor_messages=format_chat_history(executor_memory[-1]),
                     all_iteration_logs=all_iteration_logs,
                     git_diff_output=format_content_with_indent(git_diff_output),

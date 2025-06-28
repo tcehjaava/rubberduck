@@ -2,6 +2,10 @@
 
 ════════════════════════════
 
+📋 Problem Statement:
+
+{problem_statement}
+
 📚 Iteration History:
 
 {all_iteration_logs}
