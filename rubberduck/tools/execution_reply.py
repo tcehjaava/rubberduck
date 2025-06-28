@@ -70,6 +70,6 @@ def create_execution_reply(container: Container, semantic_search: Optional[Seman
                     except Exception as e:
                         logs.append(f"❌ Search failed for '{query}': {str(e)}")
 
-        return True, _truncate("✅ Execution completed:\n\n" + "\n\n" + "=" * 60 + "\n\n".join(logs))
+        return True, _truncate("✅ Execution completed:\n\n" + "\n\n".join(logs))
 
     return _execution_reply

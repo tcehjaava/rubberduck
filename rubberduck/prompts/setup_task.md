@@ -1,6 +1,8 @@
 Your task is to initialize the runtime by probing the entire environment—and automatically install or repair any missing tools. **Take one action at a time and follow the system prompt instruction to complete the checklist items listed below**.
 
-## **Setup Checklist**
+**Note: When running a command use the correct pattern, Without fences the commands are not collected.**
+
+## **Complete the below checklist**
 
 - [ ] **Probe: Python version available**
   - Probe `python --version`
@@ -8,20 +10,14 @@ Your task is to initialize the runtime by probing the entire environment—and a
 
 - [ ] **Install: ripgrep for fast code search**
   - Install ripgrep package
-  ```bash
-  apt-get -qq update && apt-get -qq install -y ripgrep
-  ```
+    - `apt-get -qq update && apt-get -qq install -y ripgrep`
 
 - [ ] **Run the below command and see what's already available**
-  ```bash
-  pip list | grep pytest
-  python -c "import pytest; print(pytest.__version__)"
-  ```
+  - `pip list | grep pytest`
+  - `python -c "import pytest; print(pytest.__version__)"`
 
 - [ ] **Run the below command and see if there are any uncollected tests**
-  ```bash
-  ./run_collect.sh
-  ```
+  - `./run_collect.sh`
 
 ## **Completion Report**
 
