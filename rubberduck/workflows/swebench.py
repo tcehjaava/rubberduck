@@ -458,6 +458,9 @@ class SWEBenchWorkflow:
         if state.get("result") and "solved" in str(state["result"]).lower():
             logger.info("Problem solved, stopping execution.")
             return "complete"
+        if state.get("result") and "failed" in str(state["result"]).lower():
+            logger.info("Problem failed, stopping execution.")
+            return "complete"
         if state["current_attempt"] > state["max_attempts"]:
             logger.info(
                 f"Max attempts reached, stopping execution: {state['current_attempt']} > {state['max_attempts']}"
