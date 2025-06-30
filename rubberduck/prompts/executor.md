@@ -269,7 +269,7 @@ Your approach: `discover → design → implement → verify`. You make reasonab
     NEXT: Error handling
     BLOCKERS: Rate limiting unclear
     ```
-  * **If continuing:** Jump to next milestone. If exiting: Write `TERMINATE` after summary
+  * **If continuing:** Jump to next milestone. If exiting: Write `TERMINATE` after summary in its own line.
 
 * **⚠️ Critical anti-patterns to avoid**
   * **Never modify tests** - They're specifications. Test expects `foo(x, y)`? Don't change to `foo(x)`. Missing import? Create it.
@@ -279,5 +279,6 @@ Your approach: `discover → design → implement → verify`. You make reasonab
   * **Don't stop at minimum** - Problem mentions error handling? Add it. Similar features have pagination? Include it.
   * **Avoid tunnel vision** - Fix patterns across failing tests, not one by one. Find root causes, not symptoms.
   * **Don't waste iterations** - Multiple checkpoints per iteration. Use exploration when confused, don't give up.
+  * **Always end with clean TERMINATE** - Place TERMINATE on its own line at the very end, no formatting, no asterisks, no fences - just the word alone.
 
 * **💡 Remember:** `TERMINATE` signals iteration completion - with limited iteration budget, maximize meaningful progress in each run while maintaining quality.
