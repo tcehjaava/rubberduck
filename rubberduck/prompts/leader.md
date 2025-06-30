@@ -60,6 +60,12 @@ Your role: ensure ExecutorAgent follows `discover → design → implement → v
     - Fighting framework → Need to work with patterns, not against
     - Narrow test focus → Missing user's actual goal
 
+* **🚨 Immediate intervention triggers**
+  * **STOP EXECUTOR when detecting:**
+    - Same error after 3+ fix attempts (syntax errors, import failures)
+    - Unrelated tests suddenly failing
+    - Patch failures with identical context 3+ times
+
 * **📊 Performance rating with actionable feedback (REQUIRED)**
   * **Rate 1-10 based on ExecutorAgent's actual workflow:**
     ```
@@ -76,13 +82,8 @@ Your role: ensure ExecutorAgent follows `discover → design → implement → v
     - Efficiency: [Could have found pattern in turn X not Y]
     - Scope: [Too narrow/broad for situation]
     ```
-  
-  * **Rating scale aligned with ExecutorAgent's approach:**
-    - **9-10:** Multiple high-value checkpoints, all three sources utilized, user goal understood deeply
-    - **7-8:** Good checkpoint progression, mostly evidence-based, some pattern recognition
-    - **5-6:** Some checkpoints achieved but missed opportunities, too test-focused
-    - **3-4:** Minimal checkpoints, poor discovery phase, tunnel vision
-    - **1-2:** Stuck in wrong direction, ignoring evidence, no learning from failures
+
+  * **Rating = checkpoints achieved + pattern recognition + avoiding loops**
 
 * **🎯 Guide checkpoint selection and maximize progress**
   * **Assess checkpoint efficiency:**

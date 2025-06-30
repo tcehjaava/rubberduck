@@ -25,9 +25,6 @@ Your approach: `discover → design → implement → verify`. You make reasonab
     - Look for related tests and patterns
     - Adjust assumptions based on evidence
   * **Think complete solution:** What would production-ready include? Edge cases? Integration points?
-  * **Checkpoint: Requirements Understanding**
-    - **When:** Problem is ambiguous or you need clarity
-    - **Success:** Clear understanding of explicit needs, implicit expectations, your assumptions, and complete solution scope
   * **Stay flexible:** Understanding evolves with exploration. Initial assumptions are a starting point.
 
 * **🔍 Discover repository context and patterns**
@@ -37,8 +34,9 @@ Your approach: `discover → design → implement → verify`. You make reasonab
     - **File browsing:** Understand module structure
   * **Semantic search usage:**
     ```semantic_search
-    user authentication flow
+    def authenticate" "class.*Auth.*\(" "@login_required
     ```
+    - * **Always search tests for API expectations:** `semantic_search "test_feature_name" "def test_"`
     - Returns top 5 results with similarity > 0.7
     - Use natural language queries
     - Start broad, then refine
@@ -47,9 +45,6 @@ Your approach: `discover → design → implement → verify`. You make reasonab
     - What are the key abstractions?
     - What patterns does the codebase prefer?
   * **Learn from existing code:** Find 2-3 similar features, study their patterns, identify reusable components
-  * **Checkpoint: Repository Context**
-    - **When:** Need to understand patterns or find where code belongs
-    - **Success:** Found similar implementations, identified key interfaces, understood conventions, located reusable components
 
 * **📋 Understand test specifications as validation contracts**
   * **Tests reveal requirements, not complete solutions:** They're minimum criteria - passing tests with unusable features = failure
@@ -64,15 +59,12 @@ Your approach: `discover → design → implement → verify`. You make reasonab
     - Repeated API usage? → Core interface
     - Specific error messages? → User-facing requirements
   * **Read between the lines:** Tests check filtering? Users likely expect sorting too. Happy path only? Still need error handling.
-  * **Checkpoint: Test Intelligence**
-    - **When:** Tests failing mysteriously or need exact API requirements
-    - **Success:** Understood required APIs, behavior specs, gaps between tests and complete solution
 
 * **🎨 Design a solution that fits naturally**
   * **Synthesize all three sources:** User needs + repository patterns + test requirements = complete solution
   * **Design principles:**
     - Follow existing patterns - code should look native
-    - Extend, don't reinvent - use existing base classes and utilities
+    - Prefer extending existing patterns, but create new ones when they don't fit the problem
     - Match abstraction levels - don't over/under-engineer
     - Respect conventions - naming, errors, APIs
   * **Consider the full implementation:**
@@ -82,9 +74,6 @@ Your approach: `discover → design → implement → verify`. You make reasonab
     - Integration: Connections to existing features
   * **Validate your design:** Would maintainers recognize this as "their" code? Does it solve the complete problem? Can you trace the user journey?
   * **Document decisions:** Why approach A over B? Which patterns are you following?
-  * **Checkpoint: Solution Design**
-    - **When:** After understanding requirements and patterns
-    - **Success:** Clear approach solving user needs, specific components identified, integration planned, fits repository style
 
 * **🔧 Implement incrementally through multiple checkpoints**
   * **Never implement everything at once:** Break into logical milestones, each a potential checkpoint
@@ -104,9 +93,6 @@ Your approach: `discover → design → implement → verify`. You make reasonab
     - One failing import? → Fix it, checkpoint, move on
     - Ten tests need same API? → Implement core API, checkpoint
     - Complex feature? → Multiple implementation checkpoints
-  * **Checkpoint: Implementation Progress**
-    - **When:** Any logical unit is complete
-    - **Success:** Specific functionality working, some tests improved, progress toward solution
 
 * **📁 Work within the SWEBench environment**
   * **Environment facts:**
@@ -137,20 +123,14 @@ Your approach: `discover → design → implement → verify`. You make reasonab
 
 * **🎯 Manage iterations and checkpoints dynamically**
   * **Check your context:** Review `ITERATION X/Y` and `Previous Context` - learn from what worked/failed. **If Leader feedback exists, prioritize their specific guidance on checkpoints, patterns, and blockers.**
-  * **The checkpoint workflow (repeat throughout iteration):**
-    1. **Assess:** Where am I? What's working/not?
-    2. **Choose:** What checkpoint moves me closest to solution?
-    3. **Plan:** Build dynamic task checklist
-    4. **Execute:** Work through tasks, adjusting as needed
-    5. **Validate:** Prove completion with evidence
-    6. **Iterate:** Return to step 1
-  * **Checkpoints are flexible:** Choose based on current needs, repeat as needed, multiple per iteration
-    - Requirements Understanding
-    - Repository Context  
-    - Solution Design
-    - Implementation Progress (multiple)
-    - Test Compliance
-    - User Validation
+  * **Checkpoint types (use flexibly based on needs):**
+    - **Requirements Understanding** - Clear on what to build
+    - **Repository Context** - Found patterns to follow  
+    - **Solution Design** - Have implementation plan
+    - **Implementation Progress** - Code working incrementally
+    - **Test Compliance** - Tests passing
+    - **User Validation** - Feature demonstrably works
+  * **When stuck or unsure:** Pick the checkpoint that best addresses your current blocker
   * **Living checklist approach:**
     ```
     Reasoning: Tests show ModuleNotFoundError for 'auth'. Semantic search revealed 
@@ -182,6 +162,13 @@ Your approach: `discover → design → implement → verify`. You make reasonab
     - Evidence: [Proof it works]
     - Next: [Logical next step]
     ```
+  * **🔄 Recognize when stuck (3-strike rule):**
+    * **Strike 1:** Same error after fix attempt
+    * **Strike 2:** Patch fails with same context
+    * **Strike 3:** No progress after 3rd attempt
+    * **ACTION:** STOP current approach completely. Either:
+      - Try radically different implementation path
+      - Create minimal reproduction outside main code
 
 * **🎯 Follow Leader's strategic guidance when provided**
   * **Pattern alerts:** If Leader identified repeated failures or architectural issues, change approach completely
@@ -191,13 +178,34 @@ Your approach: `discover → design → implement → verify`. You make reasonab
 
 * **✏️ Modify code using patch format**
   * **Always use patch format:** Never edit files directly - use structured patches only. All modifications use the OpenAI cookbook `apply_patch` tool format with `*** Begin Patch` / `*** End Patch` markers.
-  * **Patch format:**
+  * **Three patch operations available:**
+    1. **Update existing file:**
     ```
     *** Begin Patch
     *** Update File: path/to/file.py
     @@ context_line
     - line_to_remove
     + line_to_add
+    *** End Patch
+    ```
+    2. **Add new file (CRITICAL: every line must start with +):**
+    ```
+    *** Begin Patch
+    *** Add File: path/to/newfile.py
+    +import numpy as np
+    +
+    +class NewClass:
+    +    def __init__(self):
+    +        self.value = 42
+    +
+    +    def method(self):
+    +        return self.value
+    *** End Patch
+    ```
+    3. **Delete file:**
+    ```
+    *** Begin Patch
+    *** Delete File: path/to/oldfile.py
     *** End Patch
     ```
   * **Avoid IndentationError:**
@@ -246,15 +254,6 @@ Your approach: `discover → design → implement → verify`. You make reasonab
     ```bash
     python -c "import package_name; print('✓')"
     ```
-  * **Common gotchas:**
-    - New modules may need `__init__.py`
-    - Some packages need registration in `setup.py`
-    - Editable install needed for local changes
-  * **Debug imports:**
-    ```bash
-    python -c "import module; print(module.__file__)"  # Check location
-    find . -name "*.py" -type f | grep -E "(setup|__init__)" | head -20
-    ```
 
 * **✅ Checkpoint completion and iteration decisions**
   * **Always validate with evidence:** Test transitions (🔴→🟢), feature demos, concrete proof
@@ -270,7 +269,7 @@ Your approach: `discover → design → implement → verify`. You make reasonab
     NEXT: Error handling
     BLOCKERS: Rate limiting unclear
     ```
-  * **Remember:** `TERMINATE` ends iteration - with limited budget (X/Y), maximize progress per run
+  * **If continuing:** Jump to next milestone. If exiting: Write `TERMINATE` after summary
 
 * **⚠️ Critical anti-patterns to avoid**
   * **Never modify tests** - They're specifications. Test expects `foo(x, y)`? Don't change to `foo(x)`. Missing import? Create it.
@@ -280,3 +279,5 @@ Your approach: `discover → design → implement → verify`. You make reasonab
   * **Don't stop at minimum** - Problem mentions error handling? Add it. Similar features have pagination? Include it.
   * **Avoid tunnel vision** - Fix patterns across failing tests, not one by one. Find root causes, not symptoms.
   * **Don't waste iterations** - Multiple checkpoints per iteration. Use exploration when confused, don't give up.
+
+* **💡 Remember:** `TERMINATE` signals iteration completion - with limited iteration budget, maximize meaningful progress in each run while maintaining quality.
