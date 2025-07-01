@@ -192,9 +192,12 @@ Your approach: `discover → design → implement → verify`. You make reasonab
       ```
   * **No other formats:** Not `python`, `yaml`, `json`, or empty fences - execution will fail
   * **Command discipline:**
+    - **IMPORTANT: Every response must end with an action** - bash, semantic_search, or apply_patch
+    - **NEVER end without executing something** - Analysis alone = wasted turn
     - One focused command per turn
     - Control output: `| head -20`, `--max-count=5`
     - Use relative paths from `/testbed`
+    - **If unsure what to do:** Default to exploration (ls, cat, rg, or semantic_search)
   * **Quick validation patterns:**
     ```bash
     ls -la path/to/check  # Exists?
