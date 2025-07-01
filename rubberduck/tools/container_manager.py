@@ -136,19 +136,12 @@ if [[ ! -f .swebench_initial_commit ]]; then
 fi
 
 INITIAL_COMMIT=$(cat .swebench_initial_commit)
-echo "Comparing against initial commit: $INITIAL_COMMIT"
 
-echo "=== CURRENT STATUS ==="
-git --no-pager status --short
-
-echo -e "\n=== ALL CHANGES (COMMITTED + UNCOMMITTED) SINCE BOOTSTRAP ==="
-git --no-pager diff $INITIAL_COMMIT --color=never
-
-echo -e "\n=== COMMIT HISTORY SINCE BOOTSTRAP ==="
-git --no-pager log $INITIAL_COMMIT..HEAD --oneline --graph
-
-echo -e "\n=== FILES CHANGED SUMMARY ==="
-git --no-pager diff $INITIAL_COMMIT --name-status
+# Show a clean diff of all changes since bootstrap
+git add -A
+git --no-pager diff --cached $INITIAL_COMMIT --stat
+echo ""
+git --no-pager diff --cached $INITIAL_COMMIT
 """
 
     try:
