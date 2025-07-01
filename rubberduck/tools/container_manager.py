@@ -1,5 +1,4 @@
 import io
-import shlex
 import tarfile
 import uuid
 from pathlib import Path
@@ -14,9 +13,6 @@ from swebench.harness.test_spec.test_spec import make_test_spec
 
 from rubberduck.models.swebench_instance import (
     SWEBenchVerifiedInstance,
-)
-from rubberduck.utils.tests_env import (
-    prune_env,
 )
 
 _COMMAND_TIMEOUT = 300
@@ -98,31 +94,8 @@ chmod +x /usr/local/bin/apply_patch
 
 
 def bootstrap_script(instance: SWEBenchVerifiedInstance, ws_repo: str = _TESTBED) -> str:
-    run_collect_content = _get_file_content("run_collect.sh")
-    run_tests_content = _get_file_content("run_tests.sh")
-
     return rf"""#!/usr/bin/env bash
 set -euo pipefail
-
-cat > "{ws_repo}/run_collect.sh" <<'RC_EOF'
-{run_collect_content}
-RC_EOF
-chmod +x "{ws_repo}/run_collect.sh"
-
-cat > "{ws_repo}/run_tests.sh" <<'RT_EOF'
-{run_tests_content}
-RT_EOF
-chmod +x "{ws_repo}/run_tests.sh"
-
-# Patch file should already be uploaded to /testbed/test.patch
-if [[ ! -f "{ws_repo}/test.patch" ]]; then
-    echo "Error: Patch file not found at {ws_repo}/test.patch"
-    exit 1
-fi
-
-# Apply the patch
-echo "Applying patch..."
-git apply --recount --whitespace=nowarn "{ws_repo}/test.patch"
 
 # Install dependencies
 echo "Installing GitPython..."
@@ -133,12 +106,22 @@ echo "Updating .gitignore..."
 cat >> "{ws_repo}/.gitignore" <<'GITIGNORE_EOF'
 
 # SWEBench test files
-test.patch
-tests.env
-run_collect.sh
-run_tests.sh
 script-*.sh
+.swebench_initial_commit
 GITIGNORE_EOF
+
+# Commit any existing changes (like .gitignore)
+cd {ws_repo}
+git add -A
+git commit -m "Bootstrap: Updated .gitignore" || true
+
+# Create an empty reference commit
+# This marks the exact point where the agent starts working
+git commit --allow-empty -m "[SWEBENCH-REF] Agent work starts here"
+
+# Save the reference commit hash
+git rev-parse HEAD > {ws_repo}/.swebench_initial_commit
+echo "Created reference commit: $(cat {ws_repo}/.swebench_initial_commit)"
 """
 
 
@@ -146,11 +129,26 @@ def get_final_diff(container: Container) -> str:
     git_script = r"""#!/usr/bin/env bash
 set -euo pipefail
 
-echo "=== GIT STATUS ==="
-git --no-pager status --porcelain
+# Read the saved initial commit (survives bashrc reloads)
+if [[ ! -f .swebench_initial_commit ]]; then
+    echo "ERROR: No initial commit found. Was bootstrap run?"
+    exit 1
+fi
 
-echo -e "\n=== GIT DIFF ==="
-git --no-pager diff HEAD --color=never
+INITIAL_COMMIT=$(cat .swebench_initial_commit)
+echo "Comparing against initial commit: $INITIAL_COMMIT"
+
+echo "=== CURRENT STATUS ==="
+git --no-pager status --short
+
+echo -e "\n=== ALL CHANGES (COMMITTED + UNCOMMITTED) SINCE BOOTSTRAP ==="
+git --no-pager diff $INITIAL_COMMIT --color=never
+
+echo -e "\n=== COMMIT HISTORY SINCE BOOTSTRAP ==="
+git --no-pager log $INITIAL_COMMIT..HEAD --oneline --graph
+
+echo -e "\n=== FILES CHANGED SUMMARY ==="
+git --no-pager diff $INITIAL_COMMIT --name-status
 """
 
     try:
@@ -207,27 +205,8 @@ def create_container(
         raise RuntimeError(f"apply_patch failed (exit={exit_code})\n{output}")
     logger.info(f"apply_patch phase finished successfully: {output}")
 
-    patch_bytes = tar_bytes("test.patch", instance.test_patch.encode())
-    container.put_archive(_TESTBED, patch_bytes)
-    logger.info("Patch uploaded")
-
     exit_code, output = run_script_in_container(container, bootstrap_script(instance=instance))
     logger.info(f"Runner finished (exit={exit_code})\n{output}")
-
-    fail_final, pass_final = prune_env(container, instance.fail_to_pass, instance.pass_to_pass, _TESTBED)
-
-    env_text = (
-        "FAIL_TO_PASS_NODES=(" + " ".join(shlex.quote(n) for n in fail_final) + ")\n"
-        "PASS_TO_PASS_NODES=(" + " ".join(shlex.quote(n) for n in pass_final) + ")\n"
-    )
-
-    logger.info("Writing tests.env...")
-    container.exec_run(
-        ["bash", "-lc", f"printf %s {shlex.quote(env_text)} > {shlex.quote(f'{_TESTBED}/tests.env')}"],
-        user="root",
-        workdir=_TESTBED,
-    )
-    logger.info("tests.env updated")
 
     return container
 
