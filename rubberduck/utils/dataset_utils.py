@@ -56,4 +56,8 @@ class DatasetUtils:
         row["FAIL_TO_PASS"] = _sanitize_node_ids(row["FAIL_TO_PASS"])
         row["PASS_TO_PASS"] = _sanitize_node_ids(row["PASS_TO_PASS"])
 
+        row["FAIL_TO_PASS"] = []
+        row["PASS_TO_PASS"] = []
+        row["test_patch"] = ""
+
         return SWEBenchVerifiedInstance(**row)
