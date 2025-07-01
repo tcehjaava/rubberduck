@@ -108,6 +108,8 @@ cat >> "{ws_repo}/.gitignore" <<'GITIGNORE_EOF'
 # SWEBench test files
 script-*.sh
 .swebench_initial_commit
+result.log
+*.log
 GITIGNORE_EOF
 
 # Commit any existing changes (like .gitignore)

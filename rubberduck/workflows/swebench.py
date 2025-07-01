@@ -428,7 +428,7 @@ class SWEBenchWorkflow:
             bundle = _REG.get(tid)
 
             if bundle and bundle.docker_runner:
-                diff_output = get_final_diff(bundle.docker_runner)
+                diff_output = format_content_with_indent(get_final_diff(bundle.docker_runner), indent="")
 
                 updated_state = {
                     **state,
