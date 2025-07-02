@@ -95,16 +95,20 @@ When existing tests fail and relate to the problem, use them as implementation g
     ```semantic_search
     # Start broad - understand the domain
     main architecture components how does X feature work
-    
+    ```
+
+    ```semantic_search
     # Find similar features and patterns
     authentication implementation pattern example
-    
+    ```
+
+    ```semantic_search
     # Locate the actual problem area
     error_message_from_issue related functionality 
     ```
   * **Clarify ambiguities through code evidence:**
     - User says "fix login" → Which login? Web? API? Admin?
-    - "Doesn't work" → What's the expected behavior? Find it in tests
+    - "Doesn't work" → What's the expected behavior?
     - "Like feature X" → Find feature X, understand its patterns
     - Wrong assumptions → The code is truth, not the description
   * **Reconstruction process:**
@@ -229,6 +233,22 @@ When existing tests fail and relate to the problem, use them as implementation g
     - Found 3 auth validators? Use the same pattern
     - All errors use CustomException? Don't use raw Exception
     - Existing retry logic? Reuse it, don't reinvent
+  * **Study the change context and dependencies:**
+    ```bash
+    # 1. Immediate context - what's around your change
+    rg "target_function|target_class" -B15 -A15
+    
+    # 2. Who calls this - understand consumers
+    rg "function_name\(" --type py -B2 -A2
+    rg "from.*module import.*ClassName" --type py
+    
+    # 3. What it calls - understand dependencies  
+    # Check the function/class implementation
+    ```
+    - How is this code used throughout the system?
+    - What assumptions do callers make about behavior?
+    - Will your change break any existing usage patterns?
+    - Your solution must work for ALL consumers, not just your case
   * **Validate design BEFORE coding:**
     ```
     DESIGN CHECK:
