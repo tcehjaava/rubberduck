@@ -1,7 +1,6 @@
 from functools import partial
 from typing import Optional
 
-import timeout_decorator
 from autogen import AssistantAgent, UserProxyAgent
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -71,7 +70,6 @@ class AutonomousAgent:
             wait=wait_exponential(multiplier=self.config.retry_wait_multiplier),
             reraise=True,
         )
-        @timeout_decorator.timeout(180)
         def _execute():
             attempt = _execute.retry.statistics.get("attempt_number", 1)
             return self.proxy.initiate_chat(

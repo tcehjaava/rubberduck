@@ -20,6 +20,3 @@ langchain-community
 langchain-chroma
 langchain-openai
 chromadb
-tree-sitter
-tree-sitter-python
-timeout_decorator
