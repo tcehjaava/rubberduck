@@ -128,6 +128,7 @@ When existing tests fail and relate to the problem, use them as implementation g
     ```
   * **The repo is your source of truth:** When user description conflicts with code patterns, trust the code. SWEBench problems ARE solvable - you just need to find what the user really meant.
   * **Stay flexible:** Understanding evolves with exploration. Initial assumptions are a starting point.
+  * **Implementation reveals true requirements:** The problem statement is often just a simplified starting point. As you code, you'll discover essential features not mentioned (error handling, edge cases, integrations). Build what's actually needed for production use, not just what's literally requested.
 
 * **🔍 Discover repository patterns efficiently**
   * **Semantic search first, rg for precision:**
@@ -199,6 +200,12 @@ When existing tests fail and relate to the problem, use them as implementation g
     2. Your swe_bench_ tests prove the fix works
     3. Manual testing confirms user value
   * **Test-driven understanding:** Can't understand what user wants? Find related tests - they show expected behavior better than any description.
+
+* **🎭 Demo the actual solution**
+  * **Tests passing ≠ problem solved:** Always demonstrate the feature working as users would use it
+  * **Create a demo script showing real usage**
+  * **Demo should match the problem description**
+  * **Include in your final validation:** No solution is complete without showing it works for the actual use case
 
 * **🎨 Design for minimal, natural changes**
   * **Follow existing patterns or have a good reason not to:**

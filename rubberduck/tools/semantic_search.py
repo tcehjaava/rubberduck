@@ -118,8 +118,12 @@ print(json.dumps(files))
                     if member.isfile():
                         file_obj = tar.extractfile(member)
                         if file_obj:
-                            content = file_obj.read().decode("utf-8")
-                            return content
+                            try:
+                                content = file_obj.read().decode("utf-8")
+                                return content
+                            except UnicodeDecodeError:
+                                # File contains binary data, skip it
+                                raise RuntimeError(f"BINARY_FILE: {file_path}")
 
             raise RuntimeError(f"Could not extract {file_path} from archive")
 
@@ -137,6 +141,9 @@ print(json.dumps(files))
             except RuntimeError as e:
                 if "FILE_NOT_FOUND" in str(e):
                     logger.info(f"Skipping non-existent file: {file_path}")
+                    continue
+                elif "BINARY_FILE" in str(e):
+                    logger.info(f"Skipping binary file: {file_path}")
                     continue
                 raise
 
