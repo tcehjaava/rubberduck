@@ -42,6 +42,7 @@ EVALUATION CRITERIA:
    - Algorithmic complexity
    - Required domain expertise
    - Interconnected system changes
+   - Important: The changes required can be easily inferred from the problem statement
 
 2. CATEGORY:
    - "easy": Can be solved by pattern matching or simple logic

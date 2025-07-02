@@ -22,3 +22,4 @@ langchain-openai
 chromadb
 tree-sitter
 tree-sitter-python
+timeout_decorator
