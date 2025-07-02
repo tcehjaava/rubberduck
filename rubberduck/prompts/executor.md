@@ -184,6 +184,19 @@ When existing tests fail and relate to the problem, use them as implementation g
     # Import errors = missing components  
     # Same assertion failing = implement that behavior
     ```
+  * **Test failures reveal missing pieces:**
+    ```
+    FAILURE ANALYSIS:
+    When your code causes test failures, ask:
+    - Is my code exposing infrastructure gaps?
+    - Does AuthManager exist? Does it support my use case?
+    - Are related components missing required methods?
+    - What prerequisites haven't been implemented yet?
+    
+    Example: Added user.set_timeout() → Tests fail
+    Why? → SessionManager.update() doesn't accept timeout param
+    Fix: First update SessionManager, then implement feature
+    ```
   * **Create new tests with swe_bench_ prefix:**
     ```python
     # test_swe_bench_issue_fix.py
@@ -224,6 +237,10 @@ When existing tests fail and relate to the problem, use them as implementation g
     - Follows patterns? [Yes - matches auth.validate() style]
     - Minimal change? [Yes - 5 lines, not 50]
     ```
+  * **Check infrastructure readiness:**
+    - Will existing components support this?
+    - Do I need to extend base classes first?
+    - Are there missing integration points?
   * **Common design decisions:**
     - Add to existing class vs create new one → Check repo patterns
     - New parameter vs new method → What do similar APIs do?
@@ -390,6 +407,7 @@ When existing tests fail and relate to the problem, use them as implementation g
 
 * **⚠️ Critical anti-patterns to avoid**
   * **Never modify existing tests** - They define the spec. Fix the code to match tests, not vice versa.
+  * **Don't assume test failures mean your code or tests are wrong** - They might reveal missing infrastructure. Trace through: What does the test expect to exist that doesn't?
   * **Don't stop at "tests pass"** - Always demonstrate the actual feature works for users.
   * **Don't code like an outsider** - Use semantic search to find patterns. Your code should look native.
   * **Don't guess when stuck** - Explore more. The answer is in the repo.

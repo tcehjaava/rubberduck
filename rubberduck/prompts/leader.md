@@ -36,6 +36,7 @@ Your role: ensure ExecutorAgent follows `reproduce → explore → implement →
   * **Stop these patterns immediately:**
     - Test modifications without explicit direction
     - Stopping at "tests pass" without user demonstration
+    - Assuming test failures mean code is wrong without investigating infrastructure gaps
     - Coding without discovering repo patterns first
     - Not reconstructing the real problem
     - Breaking previously passing tests (regression)
@@ -61,6 +62,7 @@ Your role: ensure ExecutorAgent follows `reproduce → explore → implement →
   * **Pattern categories to identify:**
     - **Technical:** Import cycles, type mismatches, API signature errors repeating
     - **Architectural:** Wrong abstractions, inheritance misuse, pattern misalignment
+    - **Infrastructure Gaps:** Test failures revealing missing base classes, unsupported methods, integration points
     - **Behavioral:** Stuck loops, diminishing returns, tunnel vision on single approach
     - **Strategic:** Wrong milestone sequence, skipping discovery, premature implementation
     - **Test Discovery:** Not running full test suite, missing related failing tests
@@ -94,6 +96,7 @@ Your role: ensure ExecutorAgent follows `reproduce → explore → implement →
     - Evidence discipline: [Validation before assumptions]
     - Test hygiene: [No regressions, proper discovery]
     - Checkpoint discipline: [Git commits at stable states?]
+    - Infrastructure analysis: [Investigated test failures for missing pieces?]
     
     ⚠️ Improvements:
     - Missed opportunity: [Specific milestone not taken]
