@@ -20,3 +20,5 @@ langchain-community
 langchain-chroma
 langchain-openai
 chromadb
+
+sb-cli

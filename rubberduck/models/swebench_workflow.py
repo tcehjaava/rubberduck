@@ -1,4 +1,5 @@
 from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, TypedDict
 
 from rubberduck.models.swebench_instance import (
@@ -12,6 +13,7 @@ class SWEBenchWorkflowState(TypedDict):
     max_attempts: int
     result: Any
     error_message: str
+    log_dir: Path
     memory: Dict[str, Any]
 
 

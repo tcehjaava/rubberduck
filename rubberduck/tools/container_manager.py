@@ -139,11 +139,12 @@ fi
 
 INITIAL_COMMIT=$(cat .swebench_initial_commit)
 
-# Show a clean diff of all changes since bootstrap
+# Stage all changes
 git add -A
-git --no-pager diff --cached $INITIAL_COMMIT --stat
-echo ""
-git --no-pager diff --cached $INITIAL_COMMIT
+
+# Create a proper patch file that can be applied
+# Using format-patch style output with unified diff format
+git --no-pager diff --cached $INITIAL_COMMIT --no-color --no-ext-diff
 """
 
     try:

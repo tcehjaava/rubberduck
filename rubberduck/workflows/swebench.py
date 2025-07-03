@@ -1,6 +1,7 @@
 import atexit
 import copy
 from contextlib import ExitStack
+from pathlib import Path
 from typing import Any, Dict, Union
 
 from langchain_core.runnables import RunnableConfig
@@ -31,7 +32,6 @@ from rubberduck.tools.semantic_search import SemanticSearch
 from rubberduck.utils.dataset_utils import DatasetUtils
 from rubberduck.utils.logger import (
     dump_single_entry,
-    get_log_dir,
 )
 from rubberduck.utils.message_helpers import (
     build_all_iteration_logs,
@@ -173,7 +173,7 @@ class SWEBenchWorkflow:
         mem.setdefault(key, []).append(copy.deepcopy(result))
 
         if node_key not in _SKIP_NODES:
-            dump_single_entry(key, mem[key][-1], len(mem[key]), get_log_dir())
+            dump_single_entry(key, mem[key][-1], len(mem[key]), state.get("log_dir"), state.get("instance").instance_id)
         return mem
 
     @staticmethod
@@ -249,6 +249,7 @@ class SWEBenchWorkflow:
     def _init_node(self, state: SWEBenchWorkflowState, *, config: RunnableConfig) -> SWEBenchWorkflowState:
         tid = config["configurable"]["thread_id"]
         instance_id = config["configurable"]["instance_id"]
+        log_dir = config["configurable"].get("log_dir")
         logger.info(f"INIT – loading instance {instance_id}")
 
         try:
@@ -268,6 +269,7 @@ class SWEBenchWorkflow:
                 "max_attempts": state.get("max_attempts", _MAX_ATTEMPTS),
                 "instance": instance,
                 "result": "Initialization complete",
+                "log_dir": Path(log_dir),
                 "error_message": "",
                 "memory": self._update_memory({"memory": memory}, "initialised", SWEBenchWorkflowNode.INIT),
             }
@@ -385,7 +387,13 @@ class SWEBenchWorkflow:
 
             updated_memory = self._update_memory(state, result, SWEBenchWorkflowNode.LEADER)
             updated_memory = self._update_memory(
-                {"memory": updated_memory}, getattr(result, "summary", "No leader response."), "leader_feedback"
+                {
+                    "memory": updated_memory,
+                    "instance": state["instance"],
+                    "log_dir": state["log_dir"],
+                },
+                getattr(result, "summary", "No leader response."),
+                "leader_feedback",
             )
 
             return {
@@ -428,7 +436,7 @@ class SWEBenchWorkflow:
             bundle = _REG.get(tid)
 
             if bundle and bundle.docker_runner:
-                diff_output = format_content_with_indent(get_final_diff(bundle.docker_runner), indent="")
+                diff_output = get_final_diff(bundle.docker_runner).rstrip()
 
                 updated_state = {
                     **state,
@@ -469,7 +477,7 @@ class SWEBenchWorkflow:
             return "complete"
         return "continue"
 
-    def run(self, instance_id: str, thread_id: str) -> Dict[str, Any]:
+    def run(self, instance_id: str, thread_id: str, log_dir: Path) -> Dict[str, Any]:
         logger.info(f"Starting SWEBenchWorkflow with thread_id: {thread_id}")
         final = self.workflow.invoke(
             {},
@@ -478,6 +486,7 @@ class SWEBenchWorkflow:
                 "configurable": {
                     "thread_id": thread_id,
                     "instance_id": instance_id,
+                    "log_dir": str(log_dir),
                 },
             },
         )

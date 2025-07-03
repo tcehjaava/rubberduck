@@ -1,5 +1,4 @@
 import json
-from contextvars import ContextVar
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Sequence
@@ -8,8 +7,6 @@ from autogen import ChatResult
 from loguru import logger
 
 from rubberduck.utils.message_helpers import format_chat_history
-
-_CURRENT_LOG_DIR: ContextVar[Path] = ContextVar("_CURRENT_LOG_DIR")
 
 
 def setup_logger(run_id: str = None):
@@ -43,15 +40,11 @@ def setup_logger(run_id: str = None):
         level="INFO",
     )
 
-    _CURRENT_LOG_DIR.set(log_dir)
     return logger, log_dir
 
 
-def get_log_dir() -> Path:
-    return _CURRENT_LOG_DIR.get()
-
-
-def dump_single_entry(node_name: str, entry: Any, idx: int, log_dir: Path) -> None:
+def dump_single_entry(node_name: str, entry: Any, idx: int, log_dir: Path, instance_id: str) -> None:
+    log_dir = log_dir / instance_id
     log_dir.mkdir(parents=True, exist_ok=True)
 
     if isinstance(entry, ChatResult):
