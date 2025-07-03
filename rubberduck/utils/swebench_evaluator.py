@@ -22,7 +22,9 @@ class SWEBenchEvaluator:
         thread_id = f"{instance_id}_{uuid.uuid4().hex[:8]}"
         try:
             instance = DatasetUtils.load_instance(instance_id=instance_id)
+
             logger.info(f"Actual SWEBench dataset patch for {instance_id}: {instance.patch}")
+            logger.info(f"Actual SWEBench dataset test patch for {instance_id}: {instance.test_patch}")
 
             result = self.workflow.run(instance_id, thread_id, self.log_dir)
             return {

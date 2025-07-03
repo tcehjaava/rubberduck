@@ -6,7 +6,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("instance_ids", nargs="+", help="Instance IDs")
-    parser.add_argument("--workers", type=int, default=4)
+    parser.add_argument("--workers", type=int, default=1)
     args = parser.parse_args()
 
     evaluator = SWEBenchEvaluator(max_workers=args.workers)
