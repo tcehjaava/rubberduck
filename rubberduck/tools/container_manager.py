@@ -99,7 +99,7 @@ set -euo pipefail
 
 # Install dependencies
 echo "Installing GitPython..."
-pip install --no-cache-dir GitPython --root-user-action=ignore
+pip install --no-cache-dir GitPython
 
 # Update .gitignore to exclude generated files
 echo "Updating .gitignore..."
