@@ -31,11 +31,13 @@ def setup_logger(run_id: str = None):
         enqueue=True,  # For thread-safe logging
         format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{line} - {message}",
         level="INFO",
+        encoding="utf-8",
+        errors="replace",
     )
 
     # Also log to console
     logger.add(
-        lambda msg: print(msg, end=""),
+        lambda msg: print(msg.encode("utf-8", errors="replace").decode("utf-8"), end=""),
         format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{line} - {message}",
         level="INFO",
     )

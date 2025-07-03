@@ -106,6 +106,11 @@ print(json.dumps(files))
 
     def _read_file_from_container(self, file_path: str) -> str:
         try:
+            file_path.encode("utf-8")
+        except UnicodeEncodeError:
+            raise RuntimeError(f"INVALID_ENCODING: Cannot process file with invalid UTF-8 path: {file_path}")
+
+        try:
             bits, stat = self.container.get_archive(file_path)
 
             file_data = io.BytesIO()
@@ -144,6 +149,9 @@ print(json.dumps(files))
                     continue
                 elif "BINARY_FILE" in str(e):
                     logger.info(f"Skipping binary file: {file_path}")
+                    continue
+                elif "INVALID_ENCODING" in str(e):
+                    logger.warning("Skipping file with invalid UTF-8 encoding in path")
                     continue
                 raise
 
