@@ -64,12 +64,19 @@ class SWEBenchEvaluator:
 
     def run_harness(self, predictions_path: Path, predictions: list):
         cmd = [
-            "sb-cli",
-            "submit",
-            "swe-bench_verified",
-            "test",
+            "python",
+            "-m",
+            "swebench.harness.run_evaluation",
             "--predictions_path",
             str(predictions_path),
+            "--run_id",
+            self.run_id,
+            "--modal",
+            "true",
+            "--dataset_name",
+            "princeton-nlp/SWE-bench_Verified",
+            "--report_dir",
+            str(self.log_dir),
         ]
 
         result = subprocess.run(cmd, capture_output=True, text=True)

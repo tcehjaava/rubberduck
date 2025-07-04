@@ -21,4 +21,5 @@ langchain-chroma
 langchain-openai
 chromadb
 
-sb-cli
+modal
+swebench[modal]
