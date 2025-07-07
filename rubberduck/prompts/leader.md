@@ -215,12 +215,14 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
 
 * **⚠️ CRITICAL ANTI-PATTERNS TO AVOID**
   * **Never declare COMPLETE without:**
+    - **5-ring ripple analysis:** Verify executor completed full 5-ring analysis, Otherwise instruct them to do so
     - **Full test suite passing:** All tests must pass, not just the targeted ones
     - **Regression verification:** Existing functionality remains intact
     - **Edge case coverage:** Common and uncommon scenarios handled
     - **Working demo:** Actual execution showing the fix in action for all consumers
     - **Problem statement validation:** Solution addresses all original requirements
     - **Modifying existing tests:** Do not modify existing tests to fit new code; fix the code to pass existing tests
+  * **Monitor executor compliance:** If executor bypasses any key instructions in it's system prompt, **remind them**
   * **Common premature completion mistakes:**
     ```
     ❌ "Main test passes" → Ignoring related test failures
