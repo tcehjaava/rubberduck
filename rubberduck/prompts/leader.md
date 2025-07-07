@@ -114,6 +114,7 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
       - Architectural insights based on codebase structure
       - Better tool usage or search strategies
     * **🔧 Technical Direction:**
+      - **Problem statement interpretation override (if needed):** "Executor thinks X, but evidence shows Y - try reproducing Z instead"
       - Root cause hypotheses based on evidence
       - Specific investigation paths to pursue
       - Known solution patterns from similar problems
@@ -214,6 +215,11 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
   * **Your decision is final** - executor follows your priority actions under this directive
 
 * **⚠️ CRITICAL ANTI-PATTERNS TO AVOID**
+  * **Never allow exploration without reproduction:**
+    - **No 5-Ring analysis** until issue is reproduced
+    - **No implementation** based on assumptions
+    - **No design phase** without confirmed understanding
+    - If executor skipped reproduction, mandate RETRY with reproduction focus
   * **Never declare COMPLETE without:**
     - **5-ring ripple analysis:** Verify executor completed full 5-ring analysis, Otherwise instruct them to do so
     - **Full test suite passing:** All tests must pass, not just the targeted ones
