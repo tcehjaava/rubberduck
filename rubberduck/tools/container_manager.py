@@ -106,6 +106,13 @@ echo "Updating .gitignore..."
 cat >> "{ws_repo}/.gitignore" <<'GITIGNORE_EOF'
 
 # SWEBench test files
+*.txt
+*.out
+*.err
+test_output/
+test_results/
+.coverage
+coverage.xml
 script-*.sh
 .swebench_initial_commit
 result.log
