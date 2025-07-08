@@ -58,3 +58,5 @@ chroma_db
 .langgraph_api/store.pckl
 .langgraph_api/store.vectors.pckl
 sb-cli-reports/
+
+rubberduck-agent.*
