@@ -322,15 +322,24 @@ You work with two primary sources of truth:
     - Or: patch as the entire response
     - **Every response must end with an executable action**
   * **Always use patch format:** Never edit files directly - use structured patches only. All modifications use the OpenAI cookbook `apply_patch` tool format with `*** Begin Patch` / `*** End Patch` markers.
-  * **Generate patches immediately:** When you decide to make a code change, create the patch in the SAME response. Never say "I will prepare a patch" and then have an empty response - this wastes turns. Your response should either explore/analyze AND end with a patch, or just contain the patch directly.
+  * **⚠️ CRITICAL: Context Lines Are MANDATORY**
+    - **NEVER use empty `@@` markers** - they cause code to be inserted at the wrong location
+    - **Always include 2-3 lines of context** before and after your changes
+    - **For class methods:** Include the class definition or previous method as context
+    - **Check first:** `rg -B3 -A3 "insertion_point" file.py` to see exact context
   * **Three patch operations available:**
     1. **Update existing file:**
        ```
        *** Begin Patch
        *** Update File: path/to/file.py
-       @@ context_line
-       - line_to_remove
-       + line_to_add
+       @@
+       class MyClass:
+           def existing_method(self):
+               return True
+       +    
+       +    def new_method(self):
+       +        return False
+       @@
        *** End Patch
        ```
     2. **Add new file (CRITICAL: every line must start with +):**
@@ -351,9 +360,10 @@ You work with two primary sources of truth:
        *** End Patch
        ```
   * **⚠️ Critical Avoid IndentationError:**
-    - Check current indentation first: `rg -A2 -B2 "function_name" file.py`
+    - Check current indentation first: `rg -B5 -A5 "class|def" target_file.py | grep -A10 "insertion_point"`
     - **Include parent context in patch**
-    - Copy exact whitespace - count spaces
+    - **Count spaces exactly** - Python is strict about indentation
+    - **Never use `@@` alone** - always follow with context lines
 
 * **📦 Package management**
   * **Your code changes aren't live until installed:**
