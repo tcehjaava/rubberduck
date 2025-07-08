@@ -121,7 +121,14 @@ You work with two primary sources of truth:
     
     REPRODUCTION RESULT:
     Status: ✓ Successfully reproduced / ❌ Failed to reproduce
-    Evidence: [Actual output showing the problem]
+
+    Problem statement reports: [What the user said would happen]
+    Reproduction shows: [What actually happened in your test]
+
+    ✓ Match confirmed: [How they align]
+    OR
+    ❌ Mismatch: [Why they differ - infrastructure issue? Different error? Need different test?]
+
     Learnings: [What the reproduction revealed about the real issue]
     ```
   * **Dynamic investigation:** Start with category questions, expand based on discoveries
@@ -129,6 +136,7 @@ You work with two primary sources of truth:
   * **Success = Reproduction:** No moving forward without seeing the issue happen
 
 * **🔍 5-Ring Ripple Analysis (MANDATORY SEQUENCE)**
+  * **⚠️ CRITICAL: Finding files is 10% of the work. Reading and understanding code is 90%.**
   * **Required Milestones (must complete in order):**
     1. "Ring 0 Analysis: Identify Epicenters"
     2. "Ring 1 Analysis: Direct Dependencies" 
@@ -137,41 +145,67 @@ You work with two primary sources of truth:
     5. "Ring 4 Analysis: System Patterns"
     6. "Ring 5 Analysis: Edge of Impact"
     7. "Analysis Synthesis: Design Requirements"
-  * **Goal:** Explore the codebase thoroughly to understand dependencies, consumers, and patterns. Look upstream and downstream from the issue.
+  * **Goal:** Extract technical requirements by understanding HOW the system works, not just WHERE files are.
+  * **⚠️ CRITICAL: Shallow exploration kills solutions. Finding files is not analysis - reading and understanding code IS analysis. For every component you discover, you must:**
+    - **Extract and show the actual code** (not just "I found X in Y")
+    - **Trace how it's used** (rg/grep for callers, find concrete examples)
+    - **Compare with similar patterns** (how do others solve this?)
+    - **Document what it requires** (attributes, parameters, dependencies)
+    - **Prove your conclusions** (show the exact code lines that support claims)
   * **Milestone Template:**
     ```
     CURRENT MILESTONE: Ring [N] Analysis: [Description]
     
     Components to analyze this ring:
-    □ [Component 1]
-    □ [Component 2]
+    □ [Component 1] - [Why this matters to the problem]
+    □ [Component 2] - [Why this matters to the problem]
     ...
     
-    For each component:
-    - 🔼 Upstream: [explore who depends on this]
-    - 🔽 Downstream: [explore what this depends on]
-    - 🔄 Parallel: [explore similar patterns]
-    - 📖 IMPLEMENTATION: [READ the actual code - understand HOW it works]
-      - What parameters/attributes does it use?
-      - What edge cases does it handle?
-      - What patterns does it follow?
-    - 🔬 TECHNICAL EXTRACTION: [Extract reusable patterns]
-      - Similar implementations to study: [list]
-      - Technical requirements discovered: [list]
-      - Implementation patterns to follow: [list]
-    - 🎯 RELEVANCE: How does this help/hinder solving "[problem statement]"?
-    - 🔧 ACTION: Can we leverage/modify/remove this for our solution?
-    
-    [Execute searches and analysis]
+    For each component - MANDATORY DEEP ANALYSIS:
+
+      📂 DISCOVERY:
+      - File: [exact path]
+      - Purpose: [what this component does in the system]
+      - Used by: [rg/grep/semantic_search for usage - who calls this?]
+
+      📖 CODE READING (MANDATORY - extract actual code):
+      [Extract 20-50 lines of the most relevant implementation]
+
+      🔬 TECHNICAL DEEP DIVE:
+      - Key functions/methods: [List with signatures]
+      - Data flow: [How data transforms through this component]
+      - Critical attributes: [What instance/class variables are used?]
+      - Error handling: [How does it handle failures?]
+      - Edge cases: [What special conditions does it check?]
+      - Dependencies: [What does this import and rely on?]
+
+      🔍 PATTERN EXTRACTION:
+      - Similar implementations: [Find 2-3 similar patterns in codebase, use rg/grep/semantic_search]
+      - Differences: [How do they differ and why?]
+      - Common patterns: [What approach do they all follow?]
+      - Missing in our case: [What does this have that we need?]
+
+      ⚠️ PROOF REQUIRED: Every conclusion needs code evidence
+      Example: "It handles time synchronization" 
+      → PROOF: [Show the actual code lines that do this]
+
+      💡 TECHNICAL REQUIREMENTS DISCOVERED:
+      - [Requirement 1]: because [code evidence]
+      - [Requirement 2]: because [code evidence]
+
+      🎯 RELEVANCE: How does this help/hinder solving "[problem statement]"?
+
+      [Execute searches and analysis]
     
     RING [N] COMPLETE:
-    - Components found: [list]
-    - Key patterns: [discoveries]
-    - Problem blockers identified: [what prevents the solution]
-    - Solution enablers found: [what we can build upon]
-    - Added to next ring: [new components to explore]
+    - Components analyzed: [count]
+    - Code lines examined: [approximate total]
+    - Technical requirements found: [list]
+    - Implementation patterns discovered: [list]
+    - Critical missing pieces identified: [list]
+    - Questions for next ring: [what to investigate deeper]
     ```
-  * **This transforms you from "fixing what's asked" to "building what's needed" - the difference between junior and senior engineering.**
+  * **The 5-Ring analysis transforms you from "fixing what's asked" to "building what's needed" - the difference between junior and senior engineering.**
 
 * **🎯 Evolve the Problem Understanding**
   * **After 5-Ring Analysis:** Now that you deeply understand the system, reinterpret the problem statement with expert eyes. Problem statements are often written by users who don't know the codebase - they describe symptoms, not root causes.
