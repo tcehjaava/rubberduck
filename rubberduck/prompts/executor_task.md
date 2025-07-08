@@ -6,7 +6,7 @@
 
 {setup_report}
 
-📋 Problem Statement:
+📋 Problem Statement Provided by the User:
 
 {problem_statement}
 

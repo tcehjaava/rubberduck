@@ -84,12 +84,6 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
   * **Keep it factual and concise** - save analysis for later sections. This is just "what happened" not "why" or "how well".
 
 * **📊 EXECUTION BREAKDOWN**
-  * **Feature Completeness Check (mandatory for PHASE 4):**
-    - Features mentioned in problem statement and additional ones identified by the executor: [list all]
-    - Features implemented: [what executor built]
-    - Missing features: [gap analysis]
-    - Severity of gaps: [CRITICAL/HIGH/MEDIUM/LOW with justification]
-    - **RED FLAG:** Any CRITICAL/HIGH gaps = cannot be COMPLETE
   * **Analyze the executor's performance phase by phase (as defined in executor prompt):**
     - **PHASE 1: UNDERSTAND** - How well did they interpret and reproduce the issue?
     - **PHASE 2: EXPLORE** - Quality of repository exploration and 5-ring analysis?
@@ -101,6 +95,18 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
     - ❌ What could be improved (with impact/consequences)
     - ⏱️ Time investment vs. value gained
   * **Focus on concrete examples** from the logs, not generic statements
+
+* **✅ MANDATORY COMPLETENESS CHECK**
+  * **Before proceeding, verify:**
+    - [ ] Test expectations analyzed? If NO → Cannot be COMPLETE
+    - [ ] Every problem statement feature listed? 
+      - Implemented: [list]
+      - Missing: [list] 
+      - If any missing → Cannot be COMPLETE
+    - [ ] Solution size matches problem complexity?
+      - Too simple (under 50 lines for complex problem) → RED FLAG
+    - [ ] "Yet to add" or "TODO" items from problem implemented?
+      - If NO → Cannot be COMPLETE
 
 * **💡 STRATEGIC INSIGHTS & TECHNICAL GUIDANCE**
   * **Identify what the executor missed from their own system prompt:**
@@ -209,12 +215,16 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
     - [Key metrics or confidence level supporting choice]
     - [Risk assessment if applicable]
     ```
-  * **Decision triggers:**
-    - **CONTINUE:** High confidence, improving metrics, on track
-    - **RETRY:** Medium+ confidence, identified fixes in priority actions
-    - **PIVOT:** Low confidence, fundamental blockers discovered
-    - **COMPLETE:** All requirements verified met with evidence
-    - **ABORT:** No viable path or budget exhausted
+  * **Decision requirements:**
+    - **COMPLETE is BLOCKED if:**
+      - Mandatory checklist has any unchecked boxes
+      - Missing ANY feature from problem statement  
+      - No test requirements analysis done
+      - Solution seems too simple for problem
+    - **MUST RETRY/PIVOT if:**
+      - Executor never looked at test expectations
+      - Implemented partial solution claiming complete
+      - Skipped understanding phase but built anyway
   * **Your decision is final** - executor follows your priority actions under this directive
 
 * **⚠️ CRITICAL ANTI-PATTERNS TO AVOID**

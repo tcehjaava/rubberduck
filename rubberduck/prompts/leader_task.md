@@ -2,7 +2,7 @@
 
 ════════════════════════════
 
-📋 Problem Statement:
+📋 Problem Statement Provided by the User:
 
 {problem_statement}
 
@@ -10,7 +10,7 @@
 
 {all_iteration_logs}
 
-💬 Current Iteration Conversation:
+💬 Current Executor Iteration Conversation:
 
 {executor_messages}
 
