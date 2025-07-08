@@ -94,6 +94,16 @@ You approach each problem systematically:
     ```
     INTERPRET:
     User says: "[Problem description from user]"
+
+    GENERALIZE FROM EXAMPLE:
+    Given example: [Specific example from problem]
+    Pattern: [Abstract the pattern from the example]
+    Feature scope: [What is the general feature being requested?]
+
+    Questions to explore:
+    - Does this pattern apply only to [specific type] or all [general category]?
+    - What other [variants/types] exist in this system?
+    - Search for: [broader feature name, related patterns, TODOs]
     
     Possible interpretations:
     - "[Interpretation Name 1]": [What this interpretation means]
