@@ -133,13 +133,13 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
 
 * **📈 ITERATION METRICS**
   * **Derive quantitative scores from evidence analyzed above:**
-    - **Overall Iteration Score:** X/10 with justification from execution findings
+    - **Overall Iteration Score with respect to completion:** X/10 with justification from execution findings
     - **Task Completion:** X% based on requirements met vs. total identified
     - **Test Progress:** X% showing test state evolution
-    - **Efficiency Score:** X% comparing optimal vs. actual steps taken
     - **Code Quality:** X% for maintainability, documentation, architecture
     - **Problem Understanding:** X% indicating root cause clarity
-  * **Assess solution confidence level:**
+    - **Issue Reproduction Process & Script Quality:** X% measuring accuracy, completeness, and reliability of reproduction
+  * **Overall assess solution confidence level:**
     - **Very High:** Clear path to solution, just needs execution
     - **High:** Root cause understood, approach validated, minor unknowns
     - **Medium:** Making progress but significant challenges remain
@@ -228,7 +228,7 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
     - **Working demo:** Actual execution showing the fix in action for all consumers
     - **Problem statement validation:** Solution addresses all original requirements
     - **Modifying existing tests:** Do not modify existing tests to fit new code; fix the code to pass existing tests
-  * **Monitor executor compliance:** If executor bypasses any key instructions in it's system prompt, **remind them**
+  * **Monitor executor compliance:** If executor bypasses any key instructions in its system prompt, **remind them**. If executor makes any assumption without documented proof (format: "ASSUMPTION: X → PROOF: [evidence]"), mandate RETRY requiring validation before proceeding.
   * **Common premature completion mistakes:**
     ```
     ❌ "Main test passes" → Ignoring related test failures

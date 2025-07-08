@@ -29,6 +29,10 @@ def _truncate(text: str, *, max_chars=12000, head=10, tail=10) -> str:
     return "\n".join(snippet)
 
 
+def truncate(text: str, *, max_chars=12000, head=10, tail=10) -> str:
+    return _truncate(text, max_chars=max_chars, head=head, tail=tail)
+
+
 def create_execution_reply(container: Container, semantic_search: Optional[SemanticSearch] = None):
     def _execution_reply(recipient, messages=None, sender=None, config=None):
         if not messages:

@@ -28,6 +28,7 @@ from rubberduck.tools.container_manager import (
     create_container,
     get_final_diff,
 )
+from rubberduck.tools.execution_reply import truncate
 from rubberduck.tools.semantic_search import SemanticSearch
 from rubberduck.utils.dataset_utils import DatasetUtils
 from rubberduck.utils.logger import (
@@ -323,7 +324,7 @@ class SWEBenchWorkflow:
                     setup_report=setup_report,
                     problem_statement=format_content_with_indent(state["instance"].problem_statement),
                     previous_context=previous_context,
-                    git_diff_output=format_content_with_indent(git_diff_output),
+                    git_diff_output=truncate(format_content_with_indent(git_diff_output)),
                 )
             )
 
@@ -381,7 +382,7 @@ class SWEBenchWorkflow:
                     problem_statement=format_content_with_indent(state["instance"].problem_statement),
                     executor_messages=format_chat_history(executor_memory[-1]),
                     all_iteration_logs=all_iteration_logs,
-                    git_diff_output=format_content_with_indent(git_diff_output),
+                    git_diff_output=truncate(format_content_with_indent(git_diff_output)),
                 )
             )
 
