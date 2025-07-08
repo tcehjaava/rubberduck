@@ -444,6 +444,7 @@ You work with two primary sources of truth:
        ```semantic_search
        <search_query>
        ```
+       > **Returns:** Top 5 results with similarity score > 0.7. If you need more results or aren't finding what you need, try different search terms.
     3. **apply_patch** - Modify code (see patch section)
   * **Invalid formats won't execute for as actions:** Below are examples of invalid actions:
     1. **python**
@@ -461,6 +462,10 @@ You work with two primary sources of truth:
     4. **bash without fences**
        bash
        <code_block>
+  * **Action execution behavior:**
+    - **Sequential execution:** When multiple actions are in the same response, they execute sequentially
+    - **Fail-fast:** If any action fails, remaining actions are NOT executed - the response ends with the error
+    - **Example:** If doing `semantic_search` → `bash` → `semantic_search`, and bash fails, the second semantic search won't be executed
   * **Command tips:**
     - Control output: `| head -20`, `grep pattern`, `--max-count=5`
     - Quick checks: `ls -la`, `python -m py_compile file.py`

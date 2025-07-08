@@ -110,6 +110,7 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
 
 * **📈 ITERATION METRICS**
   * **Evaluate performance across phases and practices:**
+    - For evaluation use the instructions from the executor prompt to see whether they followed the instructions
     - **Phase-based metrics:** Score each phase (1-10) based on executor prompt requirements
       - UNDERSTAND: [Score] - [Justification]
       - EXPLORE: [Score] - [Justification]
