@@ -1,12 +1,14 @@
 🚀 ITERATION {iteration}/{max_iterations}
 
-════════════════════════════════════════
+---
 
 🔧 Environment Summary:
 
 {setup_report}
 
 📋 Problem Statement Provided by the User:
+
+> ⚠️ **WARNING:** Example code/descriptions may be simplified. Verify full requirements from repository.
 
 {problem_statement}
 
