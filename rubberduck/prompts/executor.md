@@ -92,14 +92,14 @@ You work with two primary sources of truth:
   * **Goal:** Transform vague problem statements into proven, reproducible issues through systematic investigation
   * **Investigation Template:**
     ```
-    INVESTIGATING: "[Problem statement]"
+    [Milestone: Investigation]: "[Problem statement]"
     
     Initial exploration checklist:
-    □ [Core functionality] - ?
-    □ [Existing tests] - ?
-    □ [Similar patterns] - ?
-    □ [Current features] - ?
-    □ [User value] - ?
+    □ [Core functionality questions]
+    □ [Existing tests questions]
+    □ [Similar patterns questions]
+    □ [Current features questions]
+    □ [User value questions]
     
     [Execute searches and add more questions as you discover the codebase]
     
@@ -114,6 +114,8 @@ You work with two primary sources of truth:
     INVESTIGATION OUTCOME:
     Key insights: [What you've learned that helps solve the problem]
     
+    [Milestone: Reproduction]
+
     Reproduction plan: [Concrete steps to demonstrate the issue accurately based on your findings]
     
     → Executing reproduction plan...
