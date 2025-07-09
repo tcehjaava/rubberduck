@@ -8,13 +8,13 @@
 
 {problem_statement}
 
-🗣️ **Previous Leader Feedback**  
-
-{leader_feedback_history}
-
 📚 **Iteration History**
 
 {all_iteration_logs}
+
+🗣️ **Previous Leader Feedback**  
+
+{leader_feedback_history}
 
 💬 **Current Executor Iteration Conversation**
 
