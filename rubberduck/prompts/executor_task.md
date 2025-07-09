@@ -1,21 +1,21 @@
-🚀 ITERATION {iteration}/{max_iterations}
+🚀 **ITERATION {iteration}/{max_iterations}**
 
 ---
 
-🔧 Environment Summary:
+🔧 **Environment Summary**
 
 {setup_report}
 
-📋 Problem Statement Provided by the User:
+📋 **Problem Statement Provided by the User**
 
 > ⚠️ **WARNING:** Example code/descriptions may be simplified. Verify full requirements from repository.
 
 {problem_statement}
 
-📚 Previous Last 2 Iterations Context:
+📚 **Previous Last 2 Iterations Context**
 
 {previous_context}
 
-📦 Current Repository State:
+📦 **Current Repository State**
 
 {git_diff_output}

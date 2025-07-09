@@ -105,6 +105,19 @@ def build_previous_context(leader_feedback: list, logger_memory: list, last_n_it
     return format_content_with_indent("\n".join(lines))
 
 
+def build_leader_feedback_history(feedback: list) -> str:
+    if not feedback:
+        return "📋 No leader feedback so far."
+
+    lines = []
+    for i, item in enumerate(feedback, 1):
+        lines.append(f"\n🗒️ LEADER FEEDBACK {i}")
+        lines.append("─" * 40)
+        lines.append(format_content_with_indent(item))
+        lines.append("")
+    return format_content_with_indent("\n".join(lines))
+
+
 def is_termination_msg(msg: dict, termination_marker: str = "TERMINATE") -> bool:
     if msg is None:
         return False
