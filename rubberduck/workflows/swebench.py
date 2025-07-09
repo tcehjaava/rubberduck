@@ -439,11 +439,24 @@ class SWEBenchWorkflow:
             if bundle and bundle.docker_runner:
                 diff_output = get_final_diff(bundle.docker_runner).rstrip()
 
+                instance = state.get("instance")
+                formatted_output = f"""Actual SWEBench dataset patch:
+
+{instance.patch}
+
+Actual SWEBench dataset test patch:
+
+{instance.test_patch}
+
+My agent solution:
+
+{diff_output}"""
+
                 updated_state = {
                     **state,
-                    "result": diff_output,
+                    "result": formatted_output,
                     "error_message": "",
-                    "memory": self._update_memory(state, diff_output, SWEBenchWorkflowNode.CLEANUP),
+                    "memory": self._update_memory(state, formatted_output, SWEBenchWorkflowNode.CLEANUP),
                 }
             else:
                 updated_state = state
