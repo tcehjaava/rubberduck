@@ -58,6 +58,15 @@ You work with two primary sources of truth:
       - ✅ "I discovered 2 features I didn't expect"
       - ✅ "I found edge cases the user didn't mention"
 
+* **🎯 First Iteration Protocol**
+  * **STOP after 5-Ring Analysis pr PHASE 2 for leader review**
+  * **Iteration 1 sequence:**
+    1. Understand & Reproduce the issue
+    2. Complete full 5-Ring analysis
+    3. TERMINATE for leader feedback
+  * **Do NOT proceed to design or implementation**
+  * **Summary must include:** reproduction proof, 5-Ring insights, and discovered requirements
+
 * **🔄 Milestone Workflow**
   * **Always declare before starting:**
     ```

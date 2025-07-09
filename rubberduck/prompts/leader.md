@@ -130,6 +130,57 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
     ```
   * **Focus on actionable insights** that would change their approach, not minor optimizations
 
+* **📋 REQUIREMENTS CHECKLIST (Living Document)**
+  * **Track every requirement discovered across all sources** - problem statement, tests, code patterns, edge cases
+  * **Granular is good** - Break down "implement feature X" into "validate input", "handle errors", "update state", etc.
+  * **Format:**
+    ```
+    📋 REQUIREMENTS CHECKLIST (Iteration X/15)
+    
+    □ [Specific requirement] [Required]
+      Why needed: [Source/evidence this is required]
+    
+    ▶ [Requirement being worked on] [Required]
+      Why needed: [Evidence from test/code/problem statement]
+    
+    ✓ [Completed requirement] [Required]
+      Why needed: [Original evidence]
+      Proof: [Concrete evidence of completion - iteration X, turn Y]
+    
+    ↻ [Reopened requirement] [Required]
+      Why needed: [Original evidence]
+      Note: [Why reopened - what new discovery triggered this]
+    
+    □ [Uncertain requirement] [Need more data]
+      Why needed: [Partial evidence but unclear if truly required]
+      Action: [What executor needs to investigate]
+    
+    ~~□~~ [Skipped requirement] [Out of scope]
+      Why needed: [Why we initially thought this was needed]
+      Reason skipped: [Evidence this isn't actually required]
+    ```
+  * **Status progression:**
+    - `□` Not started
+    - `▶` Currently working on this  
+    - `✓` Complete (with proof)
+    - `~~□~~` Blocked/skipped (with reason)
+    - `↻` Reopened (new discoveries)
+  * **Requirement tags:**
+    - `[Required]` - Confirmed necessary for solution
+    - `[Need more data]` - Discovered but needs validation
+    - `[Out of scope]` - Confirmed not needed
+  * **Update rules:**
+    - Add requirements as you discover them from any source over iterations
+    - Track even "[Out of scope]" items - they might become relevant later
+    - Update status based on executor progress
+    - Only mark ✓ with concrete proof and validation, not by assumptions
+    - Keep completed items visible (don't delete)
+  * **Your ownership responsibility:**
+    - This checklist = your delivery commitment
+    - Every "[Required]" item must be ✓ before COMPLETE
+    - Every "[Need more data]" must be resolved
+    - No assumptions - if unsure, mark "[Need more data]"
+
 * **📈 ITERATION METRICS**
   * **Evaluate performance across phases and practices:**
     - For evaluation use the instructions from the executor prompt to see whether they followed the instructions
@@ -155,48 +206,27 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
     - Stuck: → [Areas with no progress]
 
 * **🎯 PRIORITY ACTIONS**
-  * **Identify 3-5 specific improvements for next iteration based on:**
-    - Gaps identified in execution breakdown
-    - Missed instructions from executor prompt
-    - Technical insights that would unblock progress
-    - Phase-specific improvements needed
+  * **Translate requirements into specific executor tasks (3-4 maximum):**
+  * **Focus on:** Unresolved "[Need more data]" items, incomplete "[Required]" items, and blockers
   * **Structure each action as:**
     ```
     [Priority Level] Action Title
+    Addresses: [Requirement from checklist]
     What: [Specific task]
-    Why: [Impact on progress/quality]
-    How: [First concrete step]
-    Success criteria: [Measurable outcome]
+    Why: [Impact on requirement completion]
+    How: [Concrete first step]
+    Success: [How we'll know it's done]
     ```
-  * **Priority levels based on impact:**
-    - **[CRITICAL]** - Fundamental issues blocking correct solution
-      - Process failures:
-        * No reproduction of actual problem (just any failure)
-        * Shallow exploration missing key components
-        * No validation of core assumptions
-        * Skipping required phases (e.g., 5-ring analysis)
-      - Implementation gaps:
-        * Features explicitly mentioned in problem statement
-        * Core functionality missing
-        * Incomplete implementation of main requirement
-    - **[HIGH]** - Significant gaps affecting solution quality
-      - Process issues:
-        * Incomplete reproduction (not matching reported symptoms)
-        * Surface-level code reading without understanding
-        * No test creation for new functionality
-        * Missing feature parity analysis
-      - Implementation issues:
-        * Edge cases the problem highlighted
-        * Missing attributes/parameters shown in examples
-        * Error handling for common failures
-      - Better test coverage
-    - **[MEDIUM]** - Important but not blocking progress
-      - Performance optimizations
-    - **[LOW]** - Nice to have enhancements
-      - Code style improvements
-      - Documentation improvements
-      - Minor refactoring
-  * **⚠️ RULE: Any CRITICAL or HIGH priority actions = cannot declare COMPLETE**
+  * **Priority levels based on requirement impact:**
+    - **[CRITICAL]** - Blocks multiple requirements or core functionality
+    - **[HIGH]** - Single "[Required]" item that must be completed
+    - **[MEDIUM]** - "[Need more data]" items that could affect approach
+    - **[LOW]** - Optimizations or nice-to-haves
+  * **Selection criteria:**
+    - Prioritize "[Need more data]" that could change solution approach
+    - Focus on "[Required]" items blocking other work
+    - Include at least one validation task if multiple items marked complete
+    - Skip items already marked ▶ (in progress) unless stuck
   * **⚠️ RULE: Process failures are often MORE critical than feature gaps** - they lead to fundamentally wrong solutions
 
 * **🏁 DECISION**
