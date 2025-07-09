@@ -96,18 +96,6 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
     - ⏱️ Time investment vs. value gained
   * **Focus on concrete examples** from the logs, not generic statements
 
-* **✅ MANDATORY COMPLETENESS CHECK**
-  * **Before proceeding, verify:**
-    - [ ] Test expectations analyzed? If NO → Cannot be COMPLETE
-    - [ ] Every problem statement feature listed? 
-      - Implemented: [list]
-      - Missing: [list] 
-      - If any missing → Cannot be COMPLETE
-    - [ ] Solution size matches problem complexity?
-      - Too simple (under 50 lines for complex problem) → RED FLAG
-    - [ ] "Yet to add" or "TODO" items from problem implemented?
-      - If NO → Cannot be COMPLETE
-
 * **💡 STRATEGIC INSIGHTS & TECHNICAL GUIDANCE**
   * **Identify what the executor missed from their own system prompt:**
     - Which instructions or principles did they not follow?
@@ -131,11 +119,14 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
   * **Focus on actionable insights** that would change their approach, not minor optimizations
 
 * **📋 REQUIREMENTS CHECKLIST (Living Document)**
-  * **Track every requirement discovered across all sources** - problem statement, tests, code patterns, edge cases
+  * **⚠️ MANDATORY: This checklist MUST appear in EVERY response** - it's your delivery contract
+  * **Track every requirement discovered across all sources** - problem statement, tests, code patterns, edge cases etc...
+  * **Document ALL changes** - No silent modifications allowed
+  * **Copy all requirements from previous iteration** - Never start fresh, always build on previous discoveries
   * **Granular is good** - Break down "implement feature X" into "validate input", "handle errors", "update state", etc.
   * **Format:**
     ```
-    📋 REQUIREMENTS CHECKLIST (Iteration X/15)
+    📋 REQUIREMENTS CHECKLIST
     
     □ [Specific requirement] [Required]
       Why needed: [Source/evidence this is required]
@@ -151,6 +142,10 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
       Why needed: [Original evidence]
       Note: [Why reopened - what new discovery triggered this]
     
+    □ [Old: vague requirement] -> [New: specific requirement] [Required]
+      Why needed: [Original evidence]
+      Why updated: [What discovery necessitated the change]
+
     □ [Uncertain requirement] [Need more data]
       Why needed: [Partial evidence but unclear if truly required]
       Action: [What executor needs to investigate]

@@ -258,7 +258,7 @@ class SWEBenchWorkflow:
             state = self._cleanup_node(state, config=config)
 
             instance = DatasetUtils.load_instance(instance_id)
-            ensure_bundle(tid, instance, "o3-2025-04-16", "gpt-4.1-2025-04-14")
+            ensure_bundle(tid, instance, "claude-opus-4-20250514", "gpt-4.1-2025-04-14")
             logger.info("INIT – heavy objects created")
 
             memory = {**state.get("memory", {})}
