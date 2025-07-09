@@ -68,7 +68,7 @@ def build_all_iteration_logs(logger_memory: list) -> str:
     return format_content_with_indent("\n".join(lines))
 
 
-def build_previous_context(leader_feedback: list, logger_memory: list, last_n_iterations: int = 2) -> str:
+def build_previous_context(leader_feedback: list, logger_memory: list, last_n_iterations: int = 3) -> str:
     if not leader_feedback and not logger_memory:
         return "  🔄 This is the first iteration. No previous context available."
 

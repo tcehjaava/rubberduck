@@ -35,8 +35,6 @@ from rubberduck.utils.logger import (
     dump_single_entry,
 )
 from rubberduck.utils.message_helpers import (
-    build_all_iteration_logs,
-    build_leader_feedback_history,
     build_previous_context,
     format_chat_history,
     format_content_with_indent,
@@ -370,21 +368,20 @@ class SWEBenchWorkflow:
             tid = config["configurable"]["thread_id"]
             bundle = ensure_bundle(tid)
 
-            all_iteration_logs = build_all_iteration_logs(state["memory"].get(SWEBenchWorkflowNode.LOGGER.value, []))
-
             executor_memory = state["memory"].get(SWEBenchWorkflowNode.EXECUTOR.value, [])
             assert len(executor_memory) > 0, "Executor doesn't have any memory"
 
             git_diff_output = get_final_diff(bundle.docker_runner)
-            leader_feedback_history = build_leader_feedback_history(state["memory"].get("leader_feedback", []))
+            previous_context = build_previous_context(
+                state["memory"].get("leader_feedback", []), state["memory"].get(SWEBenchWorkflowNode.LOGGER.value, [])
+            )
 
             result = bundle.leader_agent.execute_task(
                 load_markdown_message(
                     "leader_task.md",
                     problem_statement=format_content_with_indent(state["instance"].problem_statement),
-                    leader_feedback_history=leader_feedback_history,
+                    previous_context=previous_context,
                     executor_messages=format_chat_history(executor_memory[-1]),
-                    all_iteration_logs=all_iteration_logs,
                     git_diff_output=truncate(format_content_with_indent(git_diff_output)),
                 )
             )
