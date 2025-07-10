@@ -175,10 +175,42 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
 
 * **🎯 NEXT ITERATION TASKS**
   * **Define 3-5 tasks that ExecutorAgent can complete in one iteration (~40 turns):**
-  * **Task selection based on:**
-    - Unresolved "[Need more data]" items from requirements
-    - Incomplete "[Required]" items blocking progress
-    - Validation needs for supposedly complete work
+  * **⚠️ CRITICAL: Prioritize [Need more data] items EARLY**
+    - **Launch investigation tasks for ALL [Need more data] items immediately**
+    - **Don't wait until deep in implementation to clarify requirements**
+    - **Leaving [Need more data] unresolved leads to:**
+      - Major implementation changes when assumptions prove wrong
+      - Solutions that don't meet actual user needs
+      - Wasted iterations on the wrong approach
+    - **Early clarity prevents late-stage rework**
+  * **Task selection priority order:**
+    1. **First priority:** Any "[Need more data]" items - investigate these NOW
+    2. **Second priority:** Blocked "[Required]" items preventing progress
+    3. **Third priority:** Next logical "[Required]" items in the solution flow
+    4. **Fourth priority:** Validation of supposedly complete work
+  * **Structure each task:**
+    ```
+    Task 1: [Clear, action-oriented title]
+    Objective: [What needs to be accomplished in detail]
+    Context: [Key information from previous discoveries: everything you need to know to solve the same task, even if you have no context.]
+    Success criteria: [Concrete evidence that proves completion]
+    ```
+  * **Task sizing guidelines:**
+    - 3-5 tasks total to fill the iteration effectively
+    - Tasks should build on each other when possible
+    - Use your iteration budget wisely—don't commit to too little.
+  * **Remember:** ExecutorAgent starts fresh - include necessary context in each task
+
+* **🎯 NEXT ITERATION TASKS**
+  * **Define 3-5 tasks that ExecutorAgent can complete in one iteration (~40 turns):**
+  * **⚠️ CRITICAL: Investigate [Need more data] items FIRST**
+    - Clarifying requirements early prevents costly rework later
+    - Don't proceed with assumptions - get concrete answers now
+  * **Task priority:**
+    1. Any "[Need more data]" items
+    2. Blocked "[Required]" items
+    3. Next logical "[Required]" items
+    4. Validation of completed work
   * **Structure each task:**
     ```
     Task 1: [Clear, action-oriented title]
@@ -211,7 +243,7 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
     ```
   * **Decision criteria:**
     - **COMPLETE only when:**
-      - All [Required] items in checklist are ✓ with proof
+      - All [Required] and [Need more data] items in checklist are ✓ with proof
       - Solution delivers what the user actually needs (not just what they asked for)
       - User can successfully use this solution for their real problem
       - Production-ready code that handles edge cases
