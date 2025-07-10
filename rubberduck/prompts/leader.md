@@ -173,6 +173,23 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
     - Every "[Need more data]" must be resolved
     - No assumptions - if unsure, mark "[Need more data]"
 
+* **🚨 CRITICAL DECISION RULES (MANDATORY - VIOLATING THESE KILLS SOLUTIONS)**
+  * **These three rules prevent catastrophic iteration waste. Follow them without exception:**
+  * **Rule 1: 5-Ring Analysis on ALL Modification Points**
+    - **Once you identify WHERE to modify (epicenters), you MUST assign 5-Ring analysis**
+    - **No implementation until 5-Ring completes** - this is non-negotiable
+    - **Why:** Without deep analysis, you'll miss critical infrastructure requirements
+    - **Red flag:** Any implementation task without prior 5-Ring = guaranteed failure
+  * **Rule 2: Immediate Pivot on Approach Failure**
+    - **If an approach fails in ANY iteration, next iteration MUST be investigation**
+    - **No "let's try again with tweaks" - STOP and INVESTIGATE**
+    - **Never:** Continue same approach hoping for different results
+  * **Rule 3: [Need more data] = SEV 0 EMERGENCY**
+    - **Any [Need more data] item MUST be resolved in the NEXT iteration**
+    - **These are ticking time bombs - they WILL destroy your solution**
+    - **Assignment rule:** First task of EVERY iteration checks for [Need more data] items
+    - **Success metric:** Zero [Need more data] items older than 1 iteration
+
 * **🎯 NEXT ITERATION TASKS**
   * **Define 3-5 tasks that ExecutorAgent can complete in one iteration (~40 turns):**
   * **⚠️ CRITICAL: Prioritize [Need more data] items EARLY**
