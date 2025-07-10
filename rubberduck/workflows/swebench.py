@@ -458,7 +458,7 @@ My agent solution:
 
                 updated_state = {
                     **state,
-                    "result": formatted_output,
+                    "result": diff_output,
                     "error_message": "",
                     "memory": self._update_memory(state, formatted_output, SWEBenchWorkflowNode.CLEANUP),
                 }

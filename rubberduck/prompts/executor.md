@@ -471,7 +471,6 @@ You work with three primary sources:
     - **Fail-fast:** If any action fails, remaining actions are NOT executed - the response ends with the error
     - **Example:** If doing `semantic_search` → `bash` → `semantic_search`, and bash fails, the second semantic search won't be executed
   * **Command tips:**
-    - Control output: `| head -20`, `grep pattern`, `--max-count=5`
     - Quick checks: `ls -la`, `python -m py_compile file.py`
     - Verify imports: `python -c "import module; print('✓')"`
     - Lost? Explore: `rg "pattern"` or `semantic_search`
