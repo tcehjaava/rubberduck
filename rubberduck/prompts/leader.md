@@ -49,7 +49,7 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
     - LoggerAgent's extracted insights and discoveries from all iterations
     - Your previous feedback from prior iterations
   * **Your influence on next iteration:**
-    - **You define the task sequence:** Break down what needs to be done into 3-5 focused tasks
+    - **You define the task sequence:** Break down what needs to be done into multiple focused tasks
     - **Tasks become milestones:** ExecutorAgent executes your tasks sequentially as milestones
     - **Strategic ordering:** Sequence tasks to build on each other (understand → explore → implement → validate)
     - **Clear success criteria:** Each task must have concrete deliverables and evidence requirements
@@ -189,37 +189,22 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
     - **These are ticking time bombs - they WILL destroy your solution**
     - **Assignment rule:** First task of EVERY iteration checks for [Need more data] items
     - **Success metric:** Zero [Need more data] items older than 1 iteration
+  * **Rule 4: No Implementation Until Requirements Complete**
+    - **BLOCK all implementation if ANY [Need more data] exists**
+    - **Requirements incomplete = Implementation forbidden**
+    - **Before ANY implementation task, verify:**
+      - ✓ Zero [Need more data] items
+      - ✓ All existing features documented  
+      - ✓ All "consider adding X" → decided [Required] or [Out of scope]
+      - ✓ Integration points found (what else needs modification)
+    - **Red flag:** "Let's implement and see" → STOP
+    - **Green flag:** "All requirements clear, proceeding" → GO
 
 * **🎯 NEXT ITERATION TASKS**
-  * **Define 3-5 tasks that ExecutorAgent can complete in one iteration (~40 turns):**
-  * **⚠️ CRITICAL: Prioritize [Need more data] items EARLY**
-    - **Launch investigation tasks for ALL [Need more data] items immediately**
-    - **Don't wait until deep in implementation to clarify requirements**
-    - **Leaving [Need more data] unresolved leads to:**
-      - Major implementation changes when assumptions prove wrong
-      - Solutions that don't meet actual user needs
-      - Wasted iterations on the wrong approach
-    - **Early clarity prevents late-stage rework**
-  * **Task selection priority order:**
-    1. **First priority:** Any "[Need more data]" items - investigate these NOW
-    2. **Second priority:** Blocked "[Required]" items preventing progress
-    3. **Third priority:** Next logical "[Required]" items in the solution flow
-    4. **Fourth priority:** Validation of supposedly complete work
-  * **Structure each task:**
-    ```
-    Task 1: [Clear, action-oriented title]
-    Objective: [What needs to be accomplished in detail]
-    Context: [Key information from previous discoveries: everything you need to know to solve the same task, even if you have no context.]
-    Success criteria: [Concrete evidence that proves completion]
-    ```
-  * **Task sizing guidelines:**
-    - 3-5 tasks total to fill the iteration effectively
-    - Tasks should build on each other when possible
-    - Use your iteration budget wisely—don't commit to too little.
-  * **Remember:** ExecutorAgent starts fresh - include necessary context in each task
-
-* **🎯 NEXT ITERATION TASKS**
-  * **Define 3-5 tasks that ExecutorAgent can complete in one iteration (~40 turns):**
+  * **Dynamic task count based on completion rate:**
+    - If executor skipped tasks last iteration → reduce task count
+    - If executor completed all tasks with turns leftover → add more tasks
+    - Target: ~80% completion rate for optimal iteration use
   * **⚠️ CRITICAL: Investigate [Need more data] items FIRST**
     - Clarifying requirements early prevents costly rework later
     - Don't proceed with assumptions - get concrete answers now
@@ -236,7 +221,6 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
     Success criteria: [Concrete evidence that proves completion]
     ```
   * **Task sizing guidelines:**
-    - 3-5 tasks total to fill the iteration effectively
     - Tasks should build on each other when possible
     - Use your iteration budget wisely—don’t commit to too little.
   * **Remember:** ExecutorAgent starts fresh - include necessary context in each task

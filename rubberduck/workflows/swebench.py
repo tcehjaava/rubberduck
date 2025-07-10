@@ -372,7 +372,7 @@ class SWEBenchWorkflow:
             executor_messages = (
                 format_chat_history(executor_memory[-1])
                 if executor_memory
-                else "This is the first iteration. No executor messages available."
+                else "  This is the first iteration. No executor messages available."
             )
 
             git_diff_output = get_final_diff(bundle.docker_runner)
