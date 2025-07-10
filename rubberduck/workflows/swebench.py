@@ -204,22 +204,7 @@ class SWEBenchWorkflow:
         workflow.add_conditional_edges(
             SWEBenchWorkflowNode.SETUP.value,
             self._should_continue,
-            {"continue": SWEBenchWorkflowNode.EXECUTOR.value, "complete": SWEBenchWorkflowNode.CLEANUP.value},
-        )
-
-        workflow.add_conditional_edges(
-            SWEBenchWorkflowNode.EXECUTOR.value,
-            self._should_continue,
-            {"continue": SWEBenchWorkflowNode.LOGGER.value, "complete": SWEBenchWorkflowNode.CLEANUP.value},
-        )
-
-        workflow.add_conditional_edges(
-            SWEBenchWorkflowNode.LOGGER.value,
-            self._should_continue,
-            {
-                "continue": SWEBenchWorkflowNode.LEADER.value,
-                "complete": SWEBenchWorkflowNode.CLEANUP.value,
-            },
+            {"continue": SWEBenchWorkflowNode.LEADER.value, "complete": SWEBenchWorkflowNode.CLEANUP.value},
         )
 
         workflow.add_conditional_edges(
@@ -236,6 +221,21 @@ class SWEBenchWorkflow:
             self._should_leader_continue,
             {
                 "continue": SWEBenchWorkflowNode.EXECUTOR.value,
+                "complete": SWEBenchWorkflowNode.CLEANUP.value,
+            },
+        )
+
+        workflow.add_conditional_edges(
+            SWEBenchWorkflowNode.EXECUTOR.value,
+            self._should_continue,
+            {"continue": SWEBenchWorkflowNode.LOGGER.value, "complete": SWEBenchWorkflowNode.CLEANUP.value},
+        )
+
+        workflow.add_conditional_edges(
+            SWEBenchWorkflowNode.LOGGER.value,
+            self._should_continue,
+            {
+                "continue": SWEBenchWorkflowNode.LEADER.value,
                 "complete": SWEBenchWorkflowNode.CLEANUP.value,
             },
         )
@@ -369,7 +369,11 @@ class SWEBenchWorkflow:
             bundle = ensure_bundle(tid)
 
             executor_memory = state["memory"].get(SWEBenchWorkflowNode.EXECUTOR.value, [])
-            assert len(executor_memory) > 0, "Executor doesn't have any memory"
+            executor_messages = (
+                format_chat_history(executor_memory[-1])
+                if executor_memory
+                else "This is the first iteration. No executor messages available."
+            )
 
             git_diff_output = get_final_diff(bundle.docker_runner)
             previous_context = build_previous_context(
@@ -381,7 +385,7 @@ class SWEBenchWorkflow:
                     "leader_task.md",
                     problem_statement=format_content_with_indent(state["instance"].problem_statement),
                     previous_context=previous_context,
-                    executor_messages=format_chat_history(executor_memory[-1]),
+                    executor_messages=executor_messages,
                     git_diff_output=truncate(format_content_with_indent(git_diff_output)),
                 )
             )
