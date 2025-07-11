@@ -251,7 +251,11 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
       - New discoveries invalidate current design*
   * **Rule 8: SWEBench Problems Are VERIFIED - Never Accept "Already Works"**
     - ExecutorAgent can't reproduce? They're wrong. Launch investigation: wrong version? config? test setup?
-    - The problem exists - find it.
+    - **Can't find the issue? Re-read requirements like a PM:** What outcome does the user expect? "Working" and "working correctly" are different.
+    - The problem exists - find it. The code MUST change.
+  **Rule 9: Build What Users Expect**
+    - Before implementing, ask: "As a user, what would I expect here?"
+    - Match patterns from similar features in the repo and industry standards
 
 * **🎯 NEXT ITERATION TASKS**
   * **Dynamic task count based on completion rate:**

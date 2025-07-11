@@ -81,6 +81,9 @@ for root, dirs, filenames in os.walk('/testbed'):
     for filename in filenames:
         filepath = os.path.join(root, filename)
 
+        if os.path.islink(filepath):
+            continue
+
         try:
             if os.path.getsize(filepath) >= max_size:
                 continue

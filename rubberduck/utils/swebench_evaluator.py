@@ -35,7 +35,7 @@ class SWEBenchEvaluator:
             return {
                 "instance_id": instance_id,
                 "model_name_or_path": "rubberduck-agent",
-                "model_patch": result.get("result", ""),
+                "model_patch": model_patch,
             }
         except Exception:
             return {
