@@ -12,7 +12,7 @@ BASH_LANGS = {"bash", "sh", "shell"}
 def _split_commands(block: str) -> list[str]:
     if block.lstrip().startswith("```"):
         block = block.split("\n", 1)[1]
-    return [ln.strip() for ln in block.splitlines() if ln.strip() and not ln.lstrip().startswith("#")]
+    return [block.strip()] if block.strip() else []
 
 
 def _truncate(text: str, *, max_chars=12000, head=10, tail=10) -> str:

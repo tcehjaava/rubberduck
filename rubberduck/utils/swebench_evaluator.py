@@ -27,6 +27,11 @@ class SWEBenchEvaluator:
             logger.info(f"Actual SWEBench dataset test patch for {instance_id}: {instance.test_patch}")
 
             result = self.workflow.run(instance_id, thread_id, self.log_dir)
+            model_patch = result.get("result", "")
+
+            if model_patch and not model_patch.endswith("\n"):
+                model_patch += "\n"
+
             return {
                 "instance_id": instance_id,
                 "model_name_or_path": "rubberduck-agent",

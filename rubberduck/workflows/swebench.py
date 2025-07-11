@@ -54,7 +54,7 @@ _REG: Dict[str, BundleContainer] = {}
 _EXIT_STACKS: dict[str, ExitStack] = {}
 
 
-_MAX_ATTEMPTS = 15
+_MAX_ATTEMPTS = 20
 _EXECUTOR_MAX_TURNS = 100
 _LEADER_MAX_TURNS = 1
 
@@ -103,7 +103,7 @@ def ensure_bundle(
         AutonomousAgentConfig(
             assistant_name=SWEBenchWorkflowNode.LEADER.value.upper(),
             proxy_name=f"{SWEBenchWorkflowNode.LEADER.value.upper()}_PROXY",
-            system_message=load_markdown_message("leader.md", executor_system_prompt=executor_system_prompt),
+            system_message=load_markdown_message("leader.md"),
             model_config=model_leader,
             max_turns=_LEADER_MAX_TURNS,
         )
@@ -113,7 +113,7 @@ def ensure_bundle(
         AutonomousAgentConfig(
             assistant_name=SWEBenchWorkflowNode.LOGGER.value.upper(),
             proxy_name=f"{SWEBenchWorkflowNode.LOGGER.value.upper()}_PROXY",
-            system_message=load_markdown_message("log_extractor.md", executor_system_prompt=executor_system_prompt),
+            system_message=load_markdown_message("log_extractor.md"),
             model_config="o3-2025-04-16",
             max_turns=_LEADER_MAX_TURNS,
         )
@@ -256,7 +256,7 @@ class SWEBenchWorkflow:
             state = self._cleanup_node(state, config=config)
 
             instance = DatasetUtils.load_instance(instance_id)
-            ensure_bundle(tid, instance, "claude-opus-4-20250514", "gpt-4.1-2025-04-14")
+            ensure_bundle(tid, instance, "claude-opus-4-20250514", "claude-sonnet-4-20250514")
             logger.info("INIT – heavy objects created")
 
             memory = {**state.get("memory", {})}
@@ -377,7 +377,9 @@ class SWEBenchWorkflow:
 
             git_diff_output = get_final_diff(bundle.docker_runner)
             previous_context = build_previous_context(
-                state["memory"].get("leader_feedback", []), state["memory"].get(SWEBenchWorkflowNode.LOGGER.value, [])
+                state["memory"].get("leader_feedback", []),
+                state["memory"].get(SWEBenchWorkflowNode.LOGGER.value, []),
+                20,
             )
 
             result = bundle.leader_agent.execute_task(
