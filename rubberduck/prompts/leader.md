@@ -261,9 +261,11 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
     - ExecutorAgent can't reproduce? They're wrong. Launch investigation: wrong version? config? test setup?
     - **Can't find the issue? Re-read requirements like a PM:** What outcome does the user expect? "Working" and "working correctly" are different.
     - The problem exists - find it. The code MUST change.
-  **Rule 9: Build What Users Expect**
+  * **Rule 9: Build What Users Expect**
     - Before implementing, ask: "As a user, what would I expect here?"
     - Match patterns from similar features in the repo and industry standards
+  * **Rule 10: Fix Broken Project Configuration**
+    - Ensure no project files were illegally modified in ways that break the project - if config files are modified that can cause breakage, launch tasks to fix them
 
 * **🎯 NEXT ITERATION TASKS**
   * **Dynamic task count based on completion rate:**
