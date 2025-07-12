@@ -100,7 +100,9 @@ for root, dirs, filenames in os.walk('/testbed'):
 
 print(json.dumps(files))
 """
-        exit_code, output = run_script_in_container(self.container, f"python3 -c {shlex.quote(python_script)}")
+        exit_code, output = run_script_in_container(
+            self.container, f"python3 -c {shlex.quote(python_script)} 2>/dev/null"
+        )
 
         if exit_code != 0:
             raise RuntimeError(f"Failed to list files: {output}")
