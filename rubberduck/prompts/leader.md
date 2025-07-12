@@ -167,7 +167,15 @@ The instructions below are guidelines to ensure comprehensive analysis, but you 
       - Your design becomes grounded in the codebase reality
     - **YOU (LeaderAgent) generate the comprehensive design** based on full context
     - Include design in your response before implementation tasks
-    - Design covers: architecture, integration points, data flow, edge cases, **plus boilerplate or full implementation code**
+    - Design covers: 
+      - Architecture, integration points, data flow, edge cases
+      - **Implementation approach evaluation:**
+        ```
+        Option 1: [approach] - Best for [scenario], risk: [concern]
+        Option 2: [approach] - Best for [scenario], risk: [concern]
+        → Selected: [option] because [key deciding factor]
+        ```
+      - **Plus boilerplate or full implementation code**
     - This becomes ExecutorAgent's implementation blueprint **and starter code** in subsequent tasks
     - If discoveries require design changes, YOU update the design **and implementation code** first before new implementation tasks
     - **Design must reflect both your deep understanding AND the actual code you've examined**
