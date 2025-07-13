@@ -54,7 +54,7 @@ _REG: Dict[str, BundleContainer] = {}
 _EXIT_STACKS: dict[str, ExitStack] = {}
 
 
-_MAX_ATTEMPTS = 20
+_MAX_ATTEMPTS = 15
 _EXECUTOR_MAX_TURNS = 100
 _LEADER_MAX_TURNS = 1
 
@@ -77,8 +77,6 @@ def ensure_bundle(
 
     docker_runner = create_container(instance)
     stack.callback(lambda: cleanup_container(docker_runner))
-
-    # sleep(100000)
 
     semantic_search = SemanticSearch(
         config=SemanticSearchConfig(), instance_id=instance.instance_id, container=docker_runner
@@ -204,7 +202,22 @@ class SWEBenchWorkflow:
         workflow.add_conditional_edges(
             SWEBenchWorkflowNode.SETUP.value,
             self._should_continue,
-            {"continue": SWEBenchWorkflowNode.LEADER.value, "complete": SWEBenchWorkflowNode.CLEANUP.value},
+            {"continue": SWEBenchWorkflowNode.EXECUTOR.value, "complete": SWEBenchWorkflowNode.CLEANUP.value},
+        )
+
+        workflow.add_conditional_edges(
+            SWEBenchWorkflowNode.EXECUTOR.value,
+            self._should_continue,
+            {"continue": SWEBenchWorkflowNode.LOGGER.value, "complete": SWEBenchWorkflowNode.CLEANUP.value},
+        )
+
+        workflow.add_conditional_edges(
+            SWEBenchWorkflowNode.LOGGER.value,
+            self._should_continue,
+            {
+                "continue": SWEBenchWorkflowNode.LEADER.value,
+                "complete": SWEBenchWorkflowNode.CLEANUP.value,
+            },
         )
 
         workflow.add_conditional_edges(
@@ -221,21 +234,6 @@ class SWEBenchWorkflow:
             self._should_leader_continue,
             {
                 "continue": SWEBenchWorkflowNode.EXECUTOR.value,
-                "complete": SWEBenchWorkflowNode.CLEANUP.value,
-            },
-        )
-
-        workflow.add_conditional_edges(
-            SWEBenchWorkflowNode.EXECUTOR.value,
-            self._should_continue,
-            {"continue": SWEBenchWorkflowNode.LOGGER.value, "complete": SWEBenchWorkflowNode.CLEANUP.value},
-        )
-
-        workflow.add_conditional_edges(
-            SWEBenchWorkflowNode.LOGGER.value,
-            self._should_continue,
-            {
-                "continue": SWEBenchWorkflowNode.LEADER.value,
                 "complete": SWEBenchWorkflowNode.CLEANUP.value,
             },
         )
