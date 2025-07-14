@@ -3,6 +3,7 @@ from typing import Optional
 
 from autogen.code_utils import extract_code
 from docker.models.containers import Container
+from utils.message_helpers import is_termination_msg
 
 from rubberduck.tools.apply_patch import run_script_in_container
 from rubberduck.tools.semantic_search import SemanticSearch
@@ -37,6 +38,8 @@ def truncate(text: str, *, max_chars=12000, head=10, tail=10) -> str:
 def create_execution_reply(container: Container, semantic_search: Optional[SemanticSearch] = None):
     def _execution_reply(recipient, messages=None, sender=None, config=None):
         if not messages:
+            return False, None
+        elif is_termination_msg(messages[-1]):
             return False, None
 
         time.sleep(2)
