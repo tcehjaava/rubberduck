@@ -38,7 +38,7 @@ def format_chat_history(chat_result: Any, indent_response: bool = True) -> str:
 
     formatted_lines = []
 
-    for i, message in enumerate(chat_history):
+    for i, message in enumerate(chat_history[1:], start=1):
         role = message.get("role", "unknown")
         name = message.get("name", role)
         content = message.get("content", "")

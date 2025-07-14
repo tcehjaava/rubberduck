@@ -1,8 +1,8 @@
 from functools import partial
 from typing import Optional
 
-from autogen import AssistantAgent, UserProxyAgent
-from tenacity import retry, stop_after_attempt, wait_exponential
+from autogen import AssistantAgent, ChatResult, UserProxyAgent
+from loguru import logger
 
 from rubberduck.config import load_llm_config
 from rubberduck.models.autonomous_config import (
@@ -65,18 +65,35 @@ class AutonomousAgent:
     def execute_task(self, task: str, custom_max_turns: Optional[int] = None):
         max_turns = custom_max_turns or self.config.max_turns
 
-        @retry(
-            stop=stop_after_attempt(self.config.retry_attempts),
-            wait=wait_exponential(multiplier=self.config.retry_wait_multiplier),
-            reraise=True,
-        )
         def _execute():
-            attempt = _execute.retry.statistics.get("attempt_number", 1)
-            return self.proxy.initiate_chat(
-                recipient=self.assistant,
-                message=task if attempt == 1 else None,
-                clear_history=(attempt == 1),
-                max_turns=max_turns,
-            )
+            try:
+                return self.proxy.initiate_chat(
+                    recipient=self.assistant,
+                    message=task,
+                    clear_history=True,
+                    max_turns=max_turns,
+                )
+            except Exception as e:
+                chat_history = self.proxy.chat_messages.get(self.assistant, []).copy()
+
+                message_count = len(chat_history)
+
+                chat_history.append(
+                    {
+                        "role": "system",
+                        "content": f"[ERROR] Execution stopped: {type(e).__name__}: {str(e)}",
+                        "name": "system",
+                    }
+                )
+
+                chat_result = ChatResult(
+                    chat_history=chat_history,
+                    summary=f"Execution stopped after {message_count} messages: {type(e).__name__}",
+                    human_input=self.proxy._human_input,
+                )
+
+                logger.warning(f"Error occurred after {message_count} messages: {e}", exc_info=True)
+
+                return chat_result
 
         return _execute()

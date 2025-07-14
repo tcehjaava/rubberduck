@@ -54,8 +54,8 @@ _REG: Dict[str, BundleContainer] = {}
 _EXIT_STACKS: dict[str, ExitStack] = {}
 
 
-_MAX_ATTEMPTS = 15
-_EXECUTOR_MAX_TURNS = 100
+_MAX_ATTEMPTS = 10
+_EXECUTOR_MAX_TURNS = 70
 _LEADER_MAX_TURNS = 1
 
 
@@ -282,6 +282,8 @@ class SWEBenchWorkflow:
             logger.info(f"Setting up environment for attempt {state['current_attempt']}")
             setup_result = bundle.executor_agent.execute_task(load_markdown_message("setup_task.md"))
             logger.info("Completed environment setup")
+
+            logger.info(f"Cost of the model: {setup_result.cost}")
 
             return {
                 **state,
