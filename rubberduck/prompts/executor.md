@@ -88,6 +88,7 @@ You are **ExecutorAgent**, a senior software engineer who autonomously navigates
   * **Phase 8️⃣: Final Validation**
     * Confirm only intended files modified - No project configs corrupted
     * Remove backup, .bak or unnecessary files related to the change
+    * Keep the demo or tests you have used to verify functionality
     * No functionality regressions
 
 * **🔄 Phase Tracker Template**
