@@ -81,7 +81,7 @@ def ensure_bundle(
     semantic_search = SemanticSearch(
         config=SemanticSearchConfig(), instance_id=instance.instance_id, container=docker_runner
     )
-    # semantic_search.index_codebase()
+    semantic_search.index_codebase()
 
     executor_system_prompt = load_markdown_message("executor.md")
 
