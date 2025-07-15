@@ -78,8 +78,21 @@ def ensure_bundle(
     docker_runner = create_container(instance)
     stack.callback(lambda: cleanup_container(docker_runner))
 
+    semantic_processor_agent = AutonomousAgent(
+        config=AutonomousAgentConfig(
+            assistant_name=SWEBenchWorkflowNode.SEMANTIC_PROCESSOR.value.upper(),
+            proxy_name=f"{SWEBenchWorkflowNode.SEMANTIC_PROCESSOR.value.upper()}_PROXY",
+            system_message=load_markdown_message("semantic_processor.md"),
+            model_config="claude-3-5-haiku-20241022",
+            max_turns=1,
+        )
+    )
+
     semantic_search = SemanticSearch(
-        config=SemanticSearchConfig(), instance_id=instance.instance_id, container=docker_runner
+        config=SemanticSearchConfig(),
+        instance=instance,
+        container=docker_runner,
+        processor_agent=semantic_processor_agent,
     )
     semantic_search.index_codebase()
 

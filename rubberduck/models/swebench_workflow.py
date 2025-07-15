@@ -25,6 +25,7 @@ class SWEBenchWorkflowNode(Enum):
     LOGGER = "logger"
     SETUP = "setup"
     CLEANUP = "cleanup"
+    SEMANTIC_PROCESSOR = "semantic_processor"
 
 
 class SWEBenchWorkflowConfig(TypedDict):

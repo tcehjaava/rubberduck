@@ -72,8 +72,5 @@ class EmbeddingsManager:
 
     def search(self, query: str, k: Optional[int] = None) -> List[Document]:
         k = k or self.config.top_k_results
-        results_with_scores = self.vectorstore.similarity_search_with_score(query, k=k * 2)
-
-        filtered_results = [doc for doc, score in results_with_scores if score >= 0.7][:k]
-
-        return filtered_results
+        results_with_scores = self.vectorstore.similarity_search_with_score(query, k=100)
+        return [doc for doc, score in results_with_scores]

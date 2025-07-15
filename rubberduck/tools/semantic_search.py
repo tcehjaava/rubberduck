@@ -6,33 +6,45 @@ import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import List, Optional
+from typing import TYPE_CHECKING, List
 
 from docker.models.containers import Container
 from langchain_core.documents import Document
 from loguru import logger
+from models.swebench_instance import SWEBenchVerifiedInstance
+from prompts import load_markdown_message
 
 from rubberduck.models.semantic_search_config import SemanticSearchConfig
 from rubberduck.tools.code_chunker import CodeChunker
 from rubberduck.tools.container_manager import run_script_in_container
 from rubberduck.tools.embeddings_manager import EmbeddingsManager
 
+if TYPE_CHECKING:
+    from rubberduck.agents.autonomous import AutonomousAgent
+
 
 class SemanticSearch:
-    def __init__(self, config: SemanticSearchConfig, instance_id: str, container: Container):
+    def __init__(
+        self,
+        config: SemanticSearchConfig,
+        instance: SWEBenchVerifiedInstance,
+        container: Container,
+        processor_agent: "AutonomousAgent",
+    ):
         self.config = config
-        self.instance_id = instance_id
+        self.instance = instance
         self.container = container
+        self.processor_agent = processor_agent
 
-        self.embeddings_manager = EmbeddingsManager(config, instance_id)
+        self.embeddings_manager = EmbeddingsManager(config, instance.instance_id)
         self.chunker = CodeChunker(config)
 
-        logger.info(f"SemanticSearch initialized for instance {instance_id}")
+        logger.info(f"SemanticSearch initialized for instance {instance.instance_id}")
 
     def _get_index_state_file(self) -> Path:
         state_dir = Path(self.config.persist_directory) / "index_states"
         state_dir.mkdir(exist_ok=True)
-        return state_dir / f"{self.instance_id}.json"
+        return state_dir / f"{self.instance.instance_id}.json"
 
     def _is_indexed(self) -> bool:
         state_file = self._get_index_state_file()
@@ -54,7 +66,7 @@ class SemanticSearch:
             "indexed": True,
             "indexed_at": time.time(),
             "file_count": file_count,
-            "instance_id": self.instance_id,
+            "instance.instance_id": self.instance.instance_id,
         }
 
         with open(state_file, "w") as f:
@@ -194,7 +206,7 @@ print(json.dumps(files))
         batch_size = 100
         total_documents = 0
 
-        with tempfile.TemporaryDirectory(prefix=f"semantic_search_{self.instance_id}_") as temp_dir:
+        with tempfile.TemporaryDirectory(prefix=f"semantic_search_{self.instance.instance_id}_") as temp_dir:
             temp_dir_path = Path(temp_dir)
 
             with ThreadPoolExecutor(max_workers=4) as executor:
@@ -215,23 +227,51 @@ print(json.dumps(files))
         self._mark_as_indexed(len(files))
         logger.info(f"Indexing complete. Processed {len(files)} files, created {total_documents} documents")
 
-    def search(self, query: str, k: Optional[int] = None) -> str:
-        logger.info(f"Searching for: {query}")
-        results = self.embeddings_manager.search(query, k)
-        logger.info(f"Found {len(results)} results")
-
-        if not results:
-            return "No relevant code found for the query."
-
-        formatted = [f"Found {len(results)} relevant code sections:\n"]
-
-        for i, doc in enumerate(results, 1):
+    def _prepare_doc_summaries(self, documents: List[Document]) -> str:
+        doc_summaries = []
+        for i, doc in enumerate(documents, 1):
             metadata = doc.metadata
             source = metadata.get("source", "unknown")
             segment_type = metadata.get("segment_type", "code")
 
-            formatted.append(f"{i}. [{source}] ({segment_type})")
-            formatted.append(doc.page_content)
-            formatted.append("-" * 80)
+            doc_summaries.append(f"{i}. [{source}] ({segment_type})")
+            doc_summaries.append(doc.page_content)
+            doc_summaries.append("-" * 80)
 
-        return "\n".join(formatted)
+        return "\n".join(doc_summaries)
+
+    def _rerank_results(self, query: str, documents: List[Document], top_k: int = 5) -> List[Document]:
+        if len(documents) <= top_k:
+            return documents
+
+        doc_summaries = self._prepare_doc_summaries(documents)
+
+        rerank_prompt = load_markdown_message(
+            "semantic_processor_rerank_task.md",
+            problem_statement=self.instance.problem_statement,
+            query=query,
+            top_k=top_k,
+            doc_summaries=doc_summaries,
+        )
+
+        fail_response = "Semantic Search Query Failed, Please try again!"
+
+        try:
+            result = self.processor_agent.execute_task(rerank_prompt)
+            return getattr(result, "summary", fail_response)
+        except Exception as e:
+            logger.error(f"Error during reranking: {e}")
+
+        return fail_response
+
+    def search(self, query: str, k: int = 100) -> str:
+        logger.info(f"Searching for: {query}")
+
+        candidates = self.embeddings_manager.search(query, k=k)
+
+        if not candidates:
+            return "No relevant code found for the query."
+
+        logger.info(f"Retrieved {len(candidates)} candidates from vector search")
+
+        return f"Most relevant code sections:\n{self._rerank_results(query, candidates)}"
