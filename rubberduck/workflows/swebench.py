@@ -283,8 +283,6 @@ class SWEBenchWorkflow:
             setup_result = bundle.executor_agent.execute_task(load_markdown_message("setup_task.md"))
             logger.info("Completed environment setup")
 
-            logger.info(f"Cost of the model: {setup_result.cost}")
-
             return {
                 **state,
                 "result": setup_result,
