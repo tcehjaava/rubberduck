@@ -70,15 +70,15 @@ class SemanticSearchConfig:
                 "*.whl",
                 "*.tar.gz",
                 "*.zip",
+                "*.rst",
+                "*.md",
+                "*.txt",
             ]
         if self.included_extensions is None:
             self.included_extensions = [
                 ".py",
                 ".pyx",
                 ".pyi",
-                ".md",
-                ".rst",
-                ".txt",
                 ".json",
                 ".yaml",
                 ".yml",

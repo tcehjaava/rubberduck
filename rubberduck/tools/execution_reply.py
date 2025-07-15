@@ -5,7 +5,7 @@ from autogen.code_utils import extract_code
 from docker.models.containers import Container
 from utils.message_helpers import is_termination_msg
 
-from rubberduck.tools.apply_patch import run_script_in_container
+from rubberduck.tools.container_manager import run_script_in_container
 from rubberduck.tools.semantic_search import SemanticSearch
 
 BASH_LANGS = {"bash", "sh", "shell"}

@@ -8,10 +8,6 @@ from rubberduck.config import load_llm_config
 from rubberduck.models.autonomous_config import (
     AutonomousAgentConfig,
 )
-from rubberduck.tools.apply_patch import (
-    create_patch_reply,
-    prepend_patch_status,
-)
 from rubberduck.tools.execution_reply import create_execution_reply
 from rubberduck.utils.message_helpers import (
     clean_message_content,
@@ -46,19 +42,11 @@ class AutonomousAgent:
         if self.config.docker_runner:
             self.proxy.register_reply(
                 trigger=self.assistant,
-                reply_func=create_patch_reply(self.config.docker_runner),
-                position=0,
-            )
-
-            self.proxy.register_reply(
-                trigger=self.assistant,
                 reply_func=create_execution_reply(
                     self.config.docker_runner, semantic_search=self.config.semantic_search
                 ),
-                position=1,
+                position=0,
             )
-
-            self.proxy.register_hook("process_message_before_send", prepend_patch_status)
 
         self.proxy.register_hook(hookable_method="process_last_received_message", hook=clean_message_content)
 

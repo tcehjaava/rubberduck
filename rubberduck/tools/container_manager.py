@@ -70,29 +70,6 @@ def run_script_in_container(
     return exit_code, output.decode()
 
 
-def apply_patch_script() -> str:
-    return rf"""#!/usr/bin/env bash
-set -euo pipefail
-
-VENV_DIR=/opt/py311env
-PY=$(command -v python3.11 || command -v python3 || true)
-[[ -z "$PY" ]] && {{ echo "[apply_patch] python not found" >&2; exit 127; }}
-
-[[ -d "$VENV_DIR" ]] || {{ "$PY" -m venv "$VENV_DIR"; "$VENV_DIR/bin/pip" install -q --no-cache-dir --upgrade pip; }}
-
-install -d /usr/local/lib
-cat >/usr/local/lib/apply_patch.py <<'AP_EOF'
-{_get_file_content("apply_patch.py")}
-AP_EOF
-
-cat >/usr/local/bin/apply_patch <<'SH_EOF'
-#!/usr/bin/env bash
-exec env -u CONDA_PREFIX -u CONDA_DEFAULT_ENV -u PYTHONPATH /opt/py311env/bin/python /usr/local/lib/apply_patch.py "$@"
-SH_EOF
-chmod +x /usr/local/bin/apply_patch
-"""
-
-
 def bootstrap_script(instance: SWEBenchVerifiedInstance, ws_repo: str = _TESTBED) -> str:
     return rf"""#!/usr/bin/env bash
 set -euo pipefail
@@ -202,11 +179,6 @@ def create_container(
 
     container.start()
     logger.info("Container started")
-
-    exit_code, output = run_script_in_container(container, apply_patch_script(), conda_neutral=True)
-    if exit_code:
-        raise RuntimeError(f"apply_patch failed (exit={exit_code})\n{output}")
-    logger.info(f"apply_patch phase finished successfully: {output}")
 
     exit_code, output = run_script_in_container(container, bootstrap_script(instance=instance))
     logger.info(f"Runner finished (exit={exit_code})\n{output}")
