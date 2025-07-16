@@ -1,4 +1,3 @@
-import time
 from typing import Optional
 
 from autogen.code_utils import extract_code
@@ -41,8 +40,6 @@ def create_execution_reply(container: Container, semantic_search: Optional[Seman
             return False, None
         elif is_termination_msg(messages[-1]):
             return False, None
-
-        time.sleep(3)
 
         last = messages[-1].get("content") or ""
         code_blocks = extract_code(last)
