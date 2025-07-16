@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, Dict, Union
 
 from langchain_core.runnables import RunnableConfig
-from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph.graph import END, StateGraph
 from loguru import logger
 
@@ -168,11 +167,6 @@ _SKIP_NODES: set[SWEBenchWorkflowNode] = {
 
 class SWEBenchWorkflow:
     def __init__(self):
-        _checkpointer_cm = PostgresSaver.from_conn_string("postgresql://postgres:postgres@localhost:5432/postgres")
-        self.checkpointer = _checkpointer_cm.__enter__()
-        self.checkpointer.setup()
-        atexit.register(_checkpointer_cm.__exit__, None, None, None)
-
         self.workflow = self._build_workflow()
 
     @staticmethod
@@ -255,7 +249,7 @@ class SWEBenchWorkflow:
 
         workflow.set_entry_point(SWEBenchWorkflowNode.INIT.value)
 
-        return workflow.compile(checkpointer=self.checkpointer)
+        return workflow.compile()
 
     def _init_node(self, state: SWEBenchWorkflowState, *, config: RunnableConfig) -> SWEBenchWorkflowState:
         tid = config["configurable"]["thread_id"]
