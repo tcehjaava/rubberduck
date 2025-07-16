@@ -80,7 +80,7 @@ class AutonomousAgent:
                     human_input=self.proxy._human_input,
                 )
 
-                logger.warning(f"Error occurred after {message_count} messages: {e}", exc_info=True)
+                logger.warning(f"Error occurred after {message_count} messages: {type(e).__name__}: {str(e)}")
 
                 return chat_result
 
