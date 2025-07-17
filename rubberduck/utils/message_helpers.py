@@ -126,7 +126,8 @@ def is_termination_msg(msg: dict, termination_marker: str = "TERMINATE") -> bool
     if content is None:
         return False
 
-    return content.rstrip().endswith(termination_marker)
+    cleaned_content = re.sub(r"[\*_~`\#\[\]\(\)]+", "", content)
+    return cleaned_content.rstrip().endswith(termination_marker)
 
 
 def clean_message_content(content: str | list) -> str:

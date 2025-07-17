@@ -5,8 +5,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from loguru import logger
-from utils.dataset_utils import DatasetUtils
 
+from rubberduck.utils.dataset_utils import DatasetUtils
 from rubberduck.utils.logger import setup_logger
 from rubberduck.workflows.swebench import SWEBenchWorkflow
 
