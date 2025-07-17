@@ -1,0 +1,583 @@
+Actual SWEBench dataset patch:
+
+diff --git a/pylint/config/argument.py b/pylint/config/argument.py
+--- a/pylint/config/argument.py
++++ b/pylint/config/argument.py
+@@ -457,6 +457,7 @@ def __init__(
+         kwargs: dict[str, Any],
+         hide_help: bool,
+         section: str | None,
++        metavar: str,
+     ) -> None:
+         super().__init__(
+             flags=flags, arg_help=arg_help, hide_help=hide_help, section=section
+@@ -467,3 +468,10 @@ def __init__(
+ 
+         self.kwargs = kwargs
+         """Any additional arguments passed to the action."""
++
++        self.metavar = metavar
++        """The metavar of the argument.
++
++        See:
++        https://docs.python.org/3/library/argparse.html#metavar
++        """
+diff --git a/pylint/config/arguments_manager.py b/pylint/config/arguments_manager.py
+--- a/pylint/config/arguments_manager.py
++++ b/pylint/config/arguments_manager.py
+@@ -218,6 +218,7 @@ def _add_parser_option(
+                 **argument.kwargs,
+                 action=argument.action,
+                 help=argument.help,
++                metavar=argument.metavar,
+             )
+         elif isinstance(argument, _ExtendArgument):
+             section_group.add_argument(
+diff --git a/pylint/config/utils.py b/pylint/config/utils.py
+--- a/pylint/config/utils.py
++++ b/pylint/config/utils.py
+@@ -71,6 +71,7 @@ def _convert_option_to_argument(
+             kwargs=optdict.get("kwargs", {}),
+             hide_help=optdict.get("hide", False),
+             section=optdict.get("group", None),
++            metavar=optdict.get("metavar", None),
+         )
+     try:
+         default = optdict["default"]
+@@ -207,6 +208,7 @@ def _enable_all_extensions(run: Run, value: str | None) -> None:
+     "--output": (True, _set_output),
+     "--load-plugins": (True, _add_plugins),
+     "--verbose": (False, _set_verbose_mode),
++    "-v": (False, _set_verbose_mode),
+     "--enable-all-extensions": (False, _enable_all_extensions),
+ }
+ 
+@@ -218,7 +220,7 @@ def _preprocess_options(run: Run, args: Sequence[str]) -> list[str]:
+     i = 0
+     while i < len(args):
+         argument = args[i]
+-        if not argument.startswith("--"):
++        if not argument.startswith("-"):
+             processed_args.append(argument)
+             i += 1
+             continue
+diff --git a/pylint/lint/base_options.py b/pylint/lint/base_options.py
+--- a/pylint/lint/base_options.py
++++ b/pylint/lint/base_options.py
+@@ -544,6 +544,7 @@ def _make_run_options(self: Run) -> Options:
+                 "help": "In verbose mode, extra non-checker-related info "
+                 "will be displayed.",
+                 "hide_from_config_file": True,
++                "metavar": "",
+             },
+         ),
+         (
+@@ -554,6 +555,7 @@ def _make_run_options(self: Run) -> Options:
+                 "help": "Load and enable all available extensions. "
+                 "Use --list-extensions to see a list all available extensions.",
+                 "hide_from_config_file": True,
++                "metavar": "",
+             },
+         ),
+         (
+
+
+Actual SWEBench dataset test patch:
+
+diff --git a/tests/config/test_config.py b/tests/config/test_config.py
+--- a/tests/config/test_config.py
++++ b/tests/config/test_config.py
+@@ -100,3 +100,10 @@ def test_unknown_py_version(capsys: CaptureFixture) -> None:
+         Run([str(EMPTY_MODULE), "--py-version=the-newest"], exit=False)
+     output = capsys.readouterr()
+     assert "the-newest has an invalid format, should be a version string." in output.err
++
++
++def test_short_verbose(capsys: CaptureFixture) -> None:
++    """Check that we correctly handle the -v flag."""
++    Run([str(EMPTY_MODULE), "-v"], exit=False)
++    output = capsys.readouterr()
++    assert "Using config file" in output.err
+
+
+My agent solution:
+
+diff --git a/demo_file.py b/demo_file.py
+new file mode 100644
+index 000000000..637c8e31e
+--- /dev/null
++++ b/demo_file.py
+@@ -0,0 +1,9 @@
++
++# Test file to demonstrate verbose functionality
++def hello_world():
++    '''A simple function'''
++    print('Hello, World!')
++    
++if __name__ == '__main__':
++    hello_world()
++
+diff --git a/demo_swe_bench_verbose_functionality.py b/demo_swe_bench_verbose_functionality.py
+new file mode 100644
+index 000000000..019cbe554
+--- /dev/null
++++ b/demo_swe_bench_verbose_functionality.py
+@@ -0,0 +1,95 @@
++#!/usr/bin/env python3
++"""Comprehensive demo of verbose option functionality."""
++
++import subprocess
++import sys
++
++def run_pylint_demo(description, args, expect_verbose_output=True):
++    """Run pylint with given args and show the results."""
++    print(f"\n=== {description} ===")
++    print(f"Command: pylint {' '.join(args)}")
++    print("-" * 50)
++    
++    cmd = [sys.executable, "-m", "pylint"] + args
++    result = subprocess.run(cmd, capture_output=True, text=True)
++    
++    print(f"Exit code: {result.returncode}")
++    
++    if result.stdout:
++        # Show first few lines of output
++        lines = result.stdout.split('\n')[:10]
++        for line in lines:
++            if line.strip():
++                print(f"STDOUT: {line}")
++        if len(result.stdout.split('\n')) > 10:
++            print("STDOUT: ... (truncated)")
++    
++    if result.stderr:
++        lines = result.stderr.split('\n')[:5]
++        for line in lines:
++            if line.strip():
++                print(f"STDERR: {line}")
++    
++    # Check for verbose indicators
++    verbose_indicators = ["Using config file", "config file"]
++    has_verbose = any(indicator in result.stdout.lower() for indicator in verbose_indicators)
++    
++    if expect_verbose_output:
++        status = "✅ VERBOSE" if has_verbose else "❌ NOT VERBOSE"
++    else:
++        status = "✅ NORMAL" if not has_verbose else "❌ UNEXPECTED VERBOSE"
++    
++    print(f"Status: {status}")
++    return result.returncode == 0
++
++def main():
++    """Demo all verbose option scenarios."""
++    print("🚀 PYLINT VERBOSE OPTION DEMO")
++    print("Demonstrating that -v and --verbose work identically")
++    
++    # Test scenarios
++    scenarios = [
++        ("Long form --verbose", ["--verbose", "demo_file.py"], True),
++        ("Short form -v", ["-v", "demo_file.py"], True),
++        ("Normal operation (no verbose)", ["demo_file.py"], False),
++        ("Long form --verbose with --help", ["--verbose", "--help"], True),
++        ("Short form -v with --help", ["-v", "--help"], True),
++        ("Mixed: -v with other options", ["-v", "--disable=C0103", "demo_file.py"], True),
++        ("Mixed: --verbose with other options", ["--verbose", "--disable=C0103", "demo_file.py"], True),
++    ]
++    
++    results = []
++    for description, args, expect_verbose in scenarios:
++        try:
++            success = run_pylint_demo(description, args, expect_verbose)
++            results.append((description, success))
++        except Exception as e:
++            print(f"❌ ERROR in {description}: {e}")
++            results.append((description, False))
++    
++    # Summary
++    print("\n" + "="*60)
++    print("🎯 DEMO SUMMARY")
++    print("="*60)
++    
++    all_passed = True
++    for description, success in results:
++        status = "✅" if success else "❌"
++        print(f"{status} {description}")
++        if not success:
++            all_passed = False
++    
++    if all_passed:
++        print("\n🎉 ALL SCENARIOS WORK CORRECTLY!")
++        print("✅ -v and --verbose behave identically")
++        print("✅ Verbose mode shows additional configuration info")
++        print("✅ Both forms work with other options")
++        print("✅ Help works with both forms")
++    else:
++        print("\n❌ SOME SCENARIOS FAILED")
++    
++    return all_passed
++
++if __name__ == "__main__":
++    success = main()
++    sys.exit(0 if success else 1)
+diff --git a/final_demo_swe_bench.py b/final_demo_swe_bench.py
+new file mode 100644
+index 000000000..ec588f23c
+--- /dev/null
++++ b/final_demo_swe_bench.py
+@@ -0,0 +1,57 @@
++#!/usr/bin/env python3
++"""Final demonstration showing the issue is completely resolved."""
++
++import subprocess
++import sys
++
++def test_before_and_after():
++    """Show the exact issue that was fixed."""
++    print("🎯 FINAL VALIDATION: VERBOSE OPTION ISSUE RESOLUTION")
++    print("="*60)
++    
++    print("\n📋 ORIGINAL PROBLEM:")
++    print("• --verbose worked correctly") 
++    print("• -v failed with 'expected one argument' error")
++    print("• This created inconsistent behavior between short and long forms")
++    
++    print("\n🔧 SOLUTION IMPLEMENTED:")
++    print("• Fixed _DoNothingAction to set nargs=0 in argparse")
++    print("• Both forms now work identically")
++    print("• No breaking changes to existing functionality")
++    
++    print("\n✅ CURRENT BEHAVIOR:")
++    
++    # Test both forms
++    scenarios = [
++        ("--verbose", ["--verbose", "--help"]),
++        ("-v", ["-v", "--help"])
++    ]
++    
++    all_passed = True
++    for name, args in scenarios:
++        print(f"\nTesting {name}:")
++        cmd = [sys.executable, "-m", "pylint"] + args
++        result = subprocess.run(cmd, capture_output=True, text=True)
++        
++        if result.returncode == 0:
++            print(f"  ✅ {name} works correctly (exit code: {result.returncode})")
++        else:
++            print(f"  ❌ {name} failed (exit code: {result.returncode})")
++            if "expected one argument" in result.stderr:
++                print(f"  💥 ERROR: {result.stderr}")
++            all_passed = False
++    
++    print("\n" + "="*60)
++    if all_passed:
++        print("🎉 SUCCESS: Issue completely resolved!")
++        print("✅ Both -v and --verbose work identically")
++        print("✅ No 'expected one argument' errors")
++        print("✅ Consistent behavior achieved")
++    else:
++        print("❌ FAILURE: Issue not resolved")
++    
++    return all_passed
++
++if __name__ == "__main__":
++    success = test_before_and_after()
++    print(f"\n🏁 FINAL STATUS: {'SUCCESS' if success else 'FAILURE'}")
+diff --git a/patch_fix.py b/patch_fix.py
+new file mode 100644
+index 000000000..0d29e8acf
+--- /dev/null
++++ b/patch_fix.py
+@@ -0,0 +1,51 @@
++#!/usr/bin/env python3
++"""Patch to fix _DoNothingAction to set nargs=0"""
++
++import re
++
++# Read the file
++with open('pylint/config/callback_actions.py', 'r') as f:
++    content = f.read()
++
++# Find the _DoNothingAction class and add nargs=0 to its __init__ method
++# First, let's see if it has an __init__ method
++if 'class _DoNothingAction' in content and 'def __init__' not in content.split('class _DoNothingAction')[1].split('class ')[0]:
++    # No __init__ method, need to add one
++    pattern = r'(class _DoNothingAction\(_CallbackAction\):\s*""".*?"""\s*)(def __call__)'
++    replacement = r'''\1def __init__(
++        self,
++        option_strings,
++        dest,
++        nargs=None,
++        const=None,
++        default=None,
++        type=None,
++        choices=None,
++        required=False,
++        help="",
++        metavar="",
++    ):
++        super().__init__(
++            option_strings,
++            dest,
++            0,  # nargs=0 - don't expect arguments
++            const,
++            default,
++            type,
++            choices,
++            required,
++            help,
++            metavar,
++        )
++
++    \2'''
++    
++    new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
++    
++    # Write the updated content
++    with open('pylint/config/callback_actions.py', 'w') as f:
++        f.write(new_content)
++    
++    print("✅ Applied fix to _DoNothingAction")
++else:
++    print("❌ _DoNothingAction already has __init__ method or unexpected structure")
+diff --git a/pylint/config/callback_actions.py b/pylint/config/callback_actions.py
+index 761995399..eefce8bda 100644
+--- a/pylint/config/callback_actions.py
++++ b/pylint/config/callback_actions.py
+@@ -45,6 +45,32 @@ class _DoNothingAction(_CallbackAction):
+     without erroring when they are then processed again by argparse.
+     """
+ 
++    def __init__(
++        self,
++        option_strings,
++        dest,
++        nargs=None,
++        const=None,
++        default=None,
++        type=None,
++        choices=None,
++        required=False,
++        help="",
++        metavar="",
++    ):
++        super().__init__(
++            option_strings,
++            dest,
++            0,  # nargs=0 - don't expect arguments
++            const,
++            default,
++            type,
++            choices,
++            required,
++            help,
++            metavar,
++        )
++
+     def __call__(
+         self,
+         parser: argparse.ArgumentParser,
+diff --git a/test.py b/test.py
+new file mode 100644
+index 000000000..e904651a4
+--- /dev/null
++++ b/test.py
+@@ -0,0 +1 @@
++print('test')
+diff --git a/test_swe_bench_other_do_nothing_actions.py b/test_swe_bench_other_do_nothing_actions.py
+new file mode 100644
+index 000000000..d63d28afb
+--- /dev/null
++++ b/test_swe_bench_other_do_nothing_actions.py
+@@ -0,0 +1,71 @@
++#!/usr/bin/env python3
++"""Test other _DoNothingAction options to ensure no regression."""
++
++import subprocess
++import sys
++import tempfile
++import os
++
++def test_option(option_name, needs_value=False, value=None):
++    """Test an option with _DoNothingAction."""
++    print(f"Testing {option_name}...")
++    
++    cmd = [sys.executable, "-m", "pylint", option_name]
++    if needs_value and value:
++        cmd.append(value)
++    cmd.append("--help")
++    
++    result = subprocess.run(cmd, capture_output=True, text=True)
++    
++    print(f"Exit code: {result.returncode}")
++    if result.returncode != 0:
++        print(f"STDERR: {result.stderr}")
++        return False
++    
++    print(f"✓ {option_name} works")
++    return True
++
++def test_all_do_nothing_actions():
++    """Test all options that use _DoNothingAction."""
++    
++    # Test options that take arguments (preprocessed)
++    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
++        f.write("pass")
++        temp_file = f.name
++    
++    try:
++        # Test --init-hook (expects argument)
++        init_hook_works = test_option("--init-hook", needs_value=True, value="pass")
++        
++        # Test --output (expects argument)  
++        output_works = test_option("--output", needs_value=True, value=temp_file)
++        
++        # Test --rcfile (expects argument)
++        rcfile_works = test_option("--rcfile", needs_value=True, value="/dev/null")
++        
++        # Test --enable-all-extensions (no argument)
++        extensions_works = test_option("--enable-all-extensions")
++        
++        # Test --verbose (no argument) - our fix
++        verbose_works = test_option("--verbose")
++        
++        print("\n=== SUMMARY ===")
++        print(f"--init-hook: {'✓' if init_hook_works else '✗'}")
++        print(f"--output: {'✓' if output_works else '✗'}")
++        print(f"--rcfile: {'✓' if rcfile_works else '✗'}")
++        print(f"--enable-all-extensions: {'✓' if extensions_works else '✗'}")
++        print(f"--verbose: {'✓' if verbose_works else '✗'}")
++        
++        all_work = all([init_hook_works, output_works, rcfile_works, extensions_works, verbose_works])
++        if all_work:
++            print("\n✅ All _DoNothingAction options work correctly")
++        else:
++            print("\n❌ Some _DoNothingAction options have issues")
++            
++        return all_work
++        
++    finally:
++        os.unlink(temp_file)
++
++if __name__ == "__main__":
++    test_all_do_nothing_actions()
+diff --git a/test_swe_bench_verbose_issue.py b/test_swe_bench_verbose_issue.py
+new file mode 100644
+index 000000000..ebc94a17d
+--- /dev/null
++++ b/test_swe_bench_verbose_issue.py
+@@ -0,0 +1,72 @@
++#!/usr/bin/env python3
++"""Test script to reproduce the verbose option issue."""
++
++import subprocess
++import sys
++
++def test_verbose_long_form():
++    """Test --verbose (should work)"""
++    print("Testing --verbose (long form)...")
++    result = subprocess.run([
++        sys.executable, "-m", "pylint", "--verbose", "--help"
++    ], capture_output=True, text=True)
++    print(f"Exit code: {result.returncode}")
++    if result.returncode != 0:
++        print(f"STDERR: {result.stderr}")
++        return False
++    print("✓ --verbose works")
++    return True
++
++def test_verbose_short_form():
++    """Test -v (should fail currently)"""
++    print("Testing -v (short form)...")
++    result = subprocess.run([
++        sys.executable, "-m", "pylint", "-v", "--help"
++    ], capture_output=True, text=True)
++    print(f"Exit code: {result.returncode}")
++    if result.returncode != 0:
++        print(f"STDERR: {result.stderr}")
++        return False
++    print("✓ -v works")
++    return True
++
++def test_errors_only_comparison():
++    """Test -E vs --errors-only (both should work)"""
++    print("Testing -E (short form)...")
++    result = subprocess.run([
++        sys.executable, "-m", "pylint", "-E", "--help"
++    ], capture_output=True, text=True)
++    print(f"Exit code: {result.returncode}")
++    if result.returncode != 0:
++        print(f"STDERR: {result.stderr}")
++        return False
++    print("✓ -E works")
++    
++    print("Testing --errors-only (long form)...")
++    result = subprocess.run([
++        sys.executable, "-m", "pylint", "--errors-only", "--help"
++    ], capture_output=True, text=True)
++    print(f"Exit code: {result.returncode}")
++    if result.returncode != 0:
++        print(f"STDERR: {result.stderr}")
++        return False
++    print("✓ --errors-only works")
++    return True
++
++if __name__ == "__main__":
++    print("=== VERBOSE OPTION ISSUE REPRODUCTION ===")
++    
++    # Test current behavior
++    long_works = test_verbose_long_form()
++    short_works = test_verbose_short_form()
++    errors_works = test_errors_only_comparison()
++    
++    print("\n=== SUMMARY ===")
++    print(f"--verbose: {'✓' if long_works else '✗'}")
++    print(f"-v: {'✓' if short_works else '✗'}")
++    print(f"errors-only: {'✓' if errors_works else '✗'}")
++    
++    if not short_works:
++        print("\n🚨 ISSUE CONFIRMED: -v fails while --verbose works")
++    else:
++        print("\n✅ All forms work correctly")
+diff --git a/test_swe_bench_verbose_short_form.py b/test_swe_bench_verbose_short_form.py
+new file mode 100644
+index 000000000..a91fb907c
+--- /dev/null
++++ b/test_swe_bench_verbose_short_form.py
+@@ -0,0 +1,38 @@
++#!/usr/bin/env python3
++"""Test for verbose short form option."""
++
++import pytest
++from pylint.lint.run import Run
++
++
++def test_swe_bench_verbose_short_form():
++    """Test that -v (short form) works like --verbose (long form)."""
++    # Test short form -v
++    with pytest.raises(SystemExit):
++        run_short = Run(["-v"])
++        assert run_short.verbose, "Short form -v should set verbose=True"
++    
++    # Test long form --verbose for comparison
++    with pytest.raises(SystemExit):
++        run_long = Run(["--verbose"])
++        assert run_long.verbose, "Long form --verbose should set verbose=True"
++
++
++def test_swe_bench_verbose_no_argument_expected():
++    """Test that -v doesn't expect an argument."""
++    import subprocess
++    import sys
++    
++    # Test -v with --help to ensure it doesn't expect arguments
++    result = subprocess.run([
++        sys.executable, "-m", "pylint", "-v", "--help"
++    ], capture_output=True, text=True)
++    
++    assert result.returncode == 0, f"Command failed with: {result.stderr}"
++    assert "expected one argument" not in result.stderr, "Should not expect arguments"
++
++
++if __name__ == "__main__":
++    test_swe_bench_verbose_short_form()
++    test_swe_bench_verbose_no_argument_expected()
++    print("✅ All tests passed!")

@@ -1,0 +1,90 @@
+Actual SWEBench dataset patch:
+
+diff --git a/pylint/lint/expand_modules.py b/pylint/lint/expand_modules.py
+--- a/pylint/lint/expand_modules.py
++++ b/pylint/lint/expand_modules.py
+@@ -52,6 +52,7 @@ def _is_ignored_file(
+     ignore_list_re: list[Pattern[str]],
+     ignore_list_paths_re: list[Pattern[str]],
+ ) -> bool:
++    element = os.path.normpath(element)
+     basename = os.path.basename(element)
+     return (
+         basename in ignore_list
+
+
+Actual SWEBench dataset test patch:
+
+diff --git a/tests/test_self.py b/tests/test_self.py
+--- a/tests/test_self.py
++++ b/tests/test_self.py
+@@ -1330,6 +1330,27 @@ def test_recursive_current_dir(self):
+                     code=0,
+                 )
+ 
++    def test_ignore_path_recursive_current_dir(self) -> None:
++        """Tests that path is normalized before checked that is ignored. GitHub issue #6964"""
++        with _test_sys_path():
++            # pytest is including directory HERE/regrtest_data to sys.path which causes
++            # astroid to believe that directory is a package.
++            sys.path = [
++                path
++                for path in sys.path
++                if not os.path.basename(path) == "regrtest_data"
++            ]
++            with _test_cwd():
++                os.chdir(join(HERE, "regrtest_data", "directory"))
++                self._runtest(
++                    [
++                        ".",
++                        "--recursive=y",
++                        "--ignore-paths=^ignored_subdirectory/.*",
++                    ],
++                    code=0,
++                )
++
+     def test_regression_recursive_current_dir(self):
+         with _test_sys_path():
+             # pytest is including directory HERE/regrtest_data to sys.path which causes
+
+
+My agent solution:
+
+diff --git a/pylint/lint/expand_modules.py b/pylint/lint/expand_modules.py
+index 5cacc0371..b9daae9ae 100644
+--- a/pylint/lint/expand_modules.py
++++ b/pylint/lint/expand_modules.py
+@@ -46,6 +46,26 @@ def _is_in_ignore_list_re(element: str, ignore_list_re: list[Pattern[str]]) -> b
+     return any(file_pattern.match(element) for file_pattern in ignore_list_re)
+ 
+ 
++def _is_in_ignore_list_re_directory_aware(element: str, ignore_list_paths_re: list[Pattern[str]]) -> bool:
++    """Determines if the element is matched in a regex ignore-list.
++    
++    For directories, also checks if the directory would be a prefix
++    of paths that match the patterns.
++    """
++    # Direct match check
++    if any(file_pattern.match(element) for file_pattern in ignore_list_paths_re):
++        return True
++    
++    # For directories, check if adding path separators would create matches
++    if os.path.isdir(element):
++        # Try both forward slash and backslash for cross-platform compatibility
++        test_paths = [element + "/dummy_file", element + "\dummy_file"]
++        for test_path in test_paths:
++            if any(file_pattern.match(test_path) for file_pattern in ignore_list_paths_re):
++                return True
++    
++    return False
++
+ def _is_ignored_file(
+     element: str,
+     ignore_list: list[str],
+@@ -56,7 +76,7 @@ def _is_ignored_file(
+     return (
+         basename in ignore_list
+         or _is_in_ignore_list_re(basename, ignore_list_re)
+-        or _is_in_ignore_list_re(element, ignore_list_paths_re)
++        or _is_in_ignore_list_re_directory_aware(element, ignore_list_paths_re)
+     )
