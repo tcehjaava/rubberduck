@@ -28,7 +28,7 @@ extend-fixable = ["I001"]
 leader_model = "claude-opus-4-20250514"
 executor_model = "claude-sonnet-4-20250514"
 semantic_processor_model = "claude-3-5-haiku-20241022"
-logger_model = "o3-2025-04-16"
+logger_model = "claude-sonnet-4-20250514"
 
 # Workflow limits
 max_iterations = 2
