@@ -14,8 +14,8 @@ Rubberduck is a multi-agent system that autonomously solves real software engine
                                     ├──→ Phase 1: Understand & Explore
                                     ├──→ Phase 2: Reproduce Issue
                                     ├──→ Phase 3: Design Solution
-                                    ├──→ Phase 4: Implement Fix
-                                    ├──→ Phase 5: Test & Validate
+                                    ├──→ Phase 4: Implement & Test
+                                    ├──→ Phase 5: Demo
                                     │
                                     ├──→ Tools:
                                     │    ├─ Bash (commands)
