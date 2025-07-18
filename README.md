@@ -1,5 +1,7 @@
 # Rubberduck 🦆
 
+> **Note:** This project is tightly coupled to the SWEBench dataset. In order to use it for general repositories, it requires some implementation changes.
+
 ## What is Rubberduck?
 
 Rubberduck is a multi-agent system that autonomously solves real software engineering problems. Unlike traditional AI coding assistants that require constant human guidance, Rubberduck agents work like engineering colleagues - they break down issues, explore codebases systematically, implement solutions, and validate fixes independently.
