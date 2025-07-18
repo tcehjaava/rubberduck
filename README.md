@@ -82,7 +82,7 @@ For a detailed explanation of the system, implementation insights, and results, 
    Install Modal and set up your account:
    ```bash
    pip install modal
-   modal token new
+   modal setup
    ```
    Follow the setup guide: https://modal.com/docs/guide/modal-user-account-setup
 
