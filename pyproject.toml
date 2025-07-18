@@ -31,7 +31,7 @@ semantic_processor_model = "claude-3-5-haiku-20241022"
 logger_model = "claude-sonnet-4-20250514"
 
 # Workflow limits
-max_iterations = 2
-executor_max_turns = 1
+max_iterations = 10
+executor_max_turns = 120
 leader_max_turns = 1
 recursion_limit = 1000
