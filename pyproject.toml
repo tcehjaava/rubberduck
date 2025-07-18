@@ -22,3 +22,16 @@ fix = true
 select = ["F401", "F841"]
 extend-select = ["I001"]
 extend-fixable = ["I001"]
+
+[tool.rubberduck.swebench]
+# Model configurations
+leader_model = "claude-opus-4-20250514"
+executor_model = "claude-sonnet-4-20250514"
+semantic_processor_model = "claude-3-5-haiku-20241022"
+logger_model = "o3-2025-04-16"
+
+# Workflow limits
+max_iterations = 2
+executor_max_turns = 1
+leader_max_turns = 1
+recursion_limit = 1000

@@ -9,6 +9,7 @@ from langgraph.graph import END, StateGraph
 from loguru import logger
 
 from rubberduck.agents.autonomous import AutonomousAgent
+from rubberduck.config import RubberduckConfig, load_rubberduck_config
 from rubberduck.models.autonomous_config import (
     AutonomousAgentConfig,
 )
@@ -53,16 +54,20 @@ _REG: Dict[str, BundleContainer] = {}
 _EXIT_STACKS: dict[str, ExitStack] = {}
 
 
-_MAX_ATTEMPTS = 10
-_EXECUTOR_MAX_TURNS = 120
-_LEADER_MAX_TURNS = 1
+# Configuration constants - loaded from pyproject.toml
+_config: RubberduckConfig | None = None
+
+
+def get_config() -> RubberduckConfig:
+    global _config
+    if _config is None:
+        _config = load_rubberduck_config()
+    return _config
 
 
 def ensure_bundle(
     thread_id: str,
     instance: SWEBenchVerifiedInstance | None = None,
-    model_leader: str | None = None,
-    model_exec: str | None = None,
 ) -> BundleContainer:
     if thread_id in _REG:
         return _REG[thread_id]
@@ -71,8 +76,8 @@ def ensure_bundle(
     _EXIT_STACKS[thread_id] = stack
 
     assert instance is not None, "instance must not be None"
-    assert model_leader is not None, "model_leader must not be None"
-    assert model_exec is not None, "model_exec must not be None"
+
+    config = get_config()
 
     docker_runner = create_container(instance)
     stack.callback(lambda: cleanup_container(docker_runner))
@@ -82,7 +87,7 @@ def ensure_bundle(
             assistant_name=SWEBenchWorkflowNode.SEMANTIC_PROCESSOR.value.upper(),
             proxy_name=f"{SWEBenchWorkflowNode.SEMANTIC_PROCESSOR.value.upper()}_PROXY",
             system_message=load_markdown_message("semantic_processor.md"),
-            model_config="claude-3-5-haiku-20241022",
+            model_config=config.semantic_processor_model,
             max_turns=1,
         )
     )
@@ -102,10 +107,10 @@ def ensure_bundle(
             assistant_name=SWEBenchWorkflowNode.EXECUTOR.value.upper(),
             proxy_name=f"{SWEBenchWorkflowNode.EXECUTOR.value.upper()}_PROXY",
             system_message=executor_system_prompt,
-            model_config=model_exec,
+            model_config=config.executor_model,
             docker_runner=docker_runner,
             semantic_search=semantic_search,
-            max_turns=_EXECUTOR_MAX_TURNS,
+            max_turns=config.executor_max_turns,
         )
     )
 
@@ -114,8 +119,8 @@ def ensure_bundle(
             assistant_name=SWEBenchWorkflowNode.LEADER.value.upper(),
             proxy_name=f"{SWEBenchWorkflowNode.LEADER.value.upper()}_PROXY",
             system_message=load_markdown_message("leader.md"),
-            model_config=model_leader,
-            max_turns=_LEADER_MAX_TURNS,
+            model_config=config.leader_model,
+            max_turns=config.leader_max_turns,
         )
     )
 
@@ -124,8 +129,8 @@ def ensure_bundle(
             assistant_name=SWEBenchWorkflowNode.LOGGER.value.upper(),
             proxy_name=f"{SWEBenchWorkflowNode.LOGGER.value.upper()}_PROXY",
             system_message=load_markdown_message("log_extractor.md"),
-            model_config="o3-2025-04-16",
-            max_turns=_LEADER_MAX_TURNS,
+            model_config=config.logger_model,
+            max_turns=config.leader_max_turns,
         )
     )
 
@@ -134,8 +139,8 @@ def ensure_bundle(
             assistant_name=SWEBenchWorkflowNode.LEADER_SHOULD_CONTINUE.value.upper(),
             proxy_name=f"{SWEBenchWorkflowNode.LEADER_SHOULD_CONTINUE.value.upper()}_PROXY",
             system_message=load_markdown_message("leader_should_continue.md"),
-            model_config=model_exec,
-            max_turns=_LEADER_MAX_TURNS,
+            model_config=config.executor_model,
+            max_turns=config.leader_max_turns,
         )
     )
 
@@ -261,7 +266,8 @@ class SWEBenchWorkflow:
             state = self._cleanup_node(state, config=config)
 
             instance = DatasetUtils.load_instance(instance_id)
-            ensure_bundle(tid, instance, "claude-opus-4-20250514", "claude-sonnet-4-20250514")
+            config = get_config()
+            ensure_bundle(tid, instance)
             logger.info("INIT – heavy objects created")
 
             memory = {**state.get("memory", {})}
@@ -271,7 +277,7 @@ class SWEBenchWorkflow:
             return {
                 **state,
                 "current_attempt": state.get("current_attempt", 1),
-                "max_attempts": state.get("max_attempts", _MAX_ATTEMPTS),
+                "max_attempts": state.get("max_attempts", config.max_iterations),
                 "instance": instance,
                 "result": "Initialization complete",
                 "log_dir": Path(log_dir),
@@ -507,7 +513,7 @@ My agent solution:
         final = self.workflow.invoke(
             {},
             config={
-                "recursion_limit": 1000,
+                "recursion_limit": get_config().recursion_limit,
                 "configurable": {
                     "thread_id": thread_id,
                     "instance_id": instance_id,
