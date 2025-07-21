@@ -1,6 +1,6 @@
 # Rubberduck 🦆
 
-> **Note:** This project is tightly coupled to the SWEBench dataset. In order to use it for general repositories, it requires some implementation changes.
+> **Note:** This project is tightly coupled to the SWEBench dataset. In order to use it for general purpose, it requires some implementation changes.
 
 ## What is Rubberduck?
 
